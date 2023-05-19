@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "site-pet-backend"
+version = "0.1.0"
+description = "Backend do website do PET-Informática."
+authors = ["PET-Informática <pet@din.uem.br>"]
+readme = "README.md"
+packages = [
+    {include = "api"},
+    {include = "app"},
+    {include = "core"}
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+uvicorn = {extras = ["standard"], version = "^0.22.0"}
+fastapi = "^0.95.2"
+pymongo = "^4.3.3"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
