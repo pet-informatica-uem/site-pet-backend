@@ -1,14 +1,14 @@
 from datetime import datetime
 
-from usuario import create_user
+from usuario import criarUsuario
 
-user_data = {
+dadosUsuario = {
     'nome': 'Alice',
     'email': 'alice@example.com',
-    'cpf': '12345678900',
+    'cpf': '1234954345',
     'curso': 'Ciência da Computação',
     'status': 'ativo',
     'senha': 'password123',
     'data_criacao': datetime.now()
 }
-create_user(user_data)
+criarUsuario(dadosUsuario)
