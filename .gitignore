@@ -95,3 +95,6 @@ Thumbs.db
 .LSOverride
 Icon
 ._*
+
+# logs
+*.log
