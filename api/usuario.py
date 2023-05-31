@@ -100,3 +100,22 @@ def cadastrarUsuario(
         logging.debug("Dados do usuã́rio criado: " + repr(usuarioCensurado))
 
         response.headers["Location"] = str(resultado.inserted_id)
+
+
+@roteador.post(
+    "/recupera",
+    name="Recuperar conta",
+    description="""
+        Envia um email para a conta fornecida para trocar a senha.
+        Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
+    """,
+)
+def recuperaConta(email: Annotated[EmailStr, Form()]):
+    email = EmailStr(email.lower())
+
+    # Verifica se o email é válido
+    if not ValidaEmail(email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email inválido.",
+        )
