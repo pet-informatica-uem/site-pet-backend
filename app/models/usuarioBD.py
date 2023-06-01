@@ -42,6 +42,13 @@ class UsuarioBD():
             return "Estado alterado"
         else:
             return "Usuário não encontrado"
+        
+    def setPetiano(self, idUsuario :str, petiano :str) -> str:
+        if self.__colecao.find_one({'_id': idUsuario}):
+            self.__colecao.update_one({'_id': idUsuario}, {'$set': {'petiano': petiano}})
+            return "Petiano alterado"
+        else:
+            return "Usuário não encontrado"
 
     def getIdUsuario(self, email :str) -> str:
         if self.__colecao.find_one({'email': email}):
@@ -64,6 +71,12 @@ class UsuarioBD():
     def getUsuario(self, idUsuario :str) -> str:
         if self.__colecao.find_one({'_id': idUsuario}):
             return self.__colecao.find_one({'_id': idUsuario})
+        else:
+            return "Usuário não encontrado"
+        
+    def getPetiano(self, idUsuario :str) -> str:
+        if self.__colecao.find_one({'_id': idUsuario}):
+            return self.__colecao.find_one({'_id': idUsuario})['petiano']
         else:
             return "Usuário não encontrado"
         

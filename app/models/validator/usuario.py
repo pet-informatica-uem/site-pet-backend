@@ -18,6 +18,7 @@ class ValidarUsuario():
             'curso': {'type': 'string', 'required': True},
             'estado': {'type': 'string', 'required': True, 'allowed': ['ativo', 'inativo']},
             'senha': {'type': 'string', 'required': True, 'minlength': 8},
+            'petiano': {'type': 'string', 'required': True, 'allowed': ['sim', 'nao', 'egresso']},
             'data_criacao': {'type': 'datetime'}
         }
 
