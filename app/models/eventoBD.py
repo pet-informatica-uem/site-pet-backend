@@ -15,11 +15,12 @@ class EventoBD():
         else:
             return self.__validarDados.errors
         
+    def removerEvento(self, nomeEvento :str) -> str:
+        self.__colecao.delete_one({'nome evento': nomeEvento})
+        return 'Evento removido com sucesso!'
+        
     def listarEventos(self) -> list:
         return list(self.__colecao.find({}, {'_id': 0}))
-    
-    def buscarEvento(self, nomeEvento :str) -> dict:
-        return self.__colecao.find_one({'nome evento': nomeEvento}, {'_id': 0})         # se não achou retorna 0
     
     def atualizarEvento(self, nomeEvento :str, dadosEvento :object) -> str:
         if self.__validarDados.validate(dadosEvento):
@@ -27,8 +28,22 @@ class EventoBD():
             return 'Evento atualizado com sucesso!'
         else:
             return self.__validarDados.errors
-        
-    def removerEvento(self, nomeEvento :str) -> str:
-        self.__colecao.delete_one({'nome evento': nomeEvento})
-        return 'Evento removido com sucesso!'
+    
+    def buscarEvento(self, nomeEvento :str) -> dict:
+        return self.__colecao.find_one({'nome evento': nomeEvento}, {'_id': 0})         # se não achou retorna 0
+    
+    def getInscritos(self, nomeEvento :str) -> list:
+        return self.__colecao.find_one({'nome evento': nomeEvento}, {'_id': 0, 'inscritos': 1})['inscritos']
+
+    # revisar daqui pra baixo
+    def setInscrito(self, nomeEvento :str, inscrito :str) -> str:
+        self.__colecao.update_one({'nome evento': nomeEvento}, {'$set': {'inscritos': inscrito}})
+        return 'Inscritos atualizados com sucesso!'
+    
+    def inscrever(self, nomeEvento :str, idUsuario :str) -> str:
+        if idUsuario in self.getInscritos(nomeEvento):
+            return 'Usuário já inscrito!'
+        else:
+            self.__colecao.update_one({'nome evento': nomeEvento}, {'$push': {'inscritos': email}})
+            return 'Usuário inscrito com sucesso!'
     
