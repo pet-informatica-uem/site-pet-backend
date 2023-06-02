@@ -1,5 +1,6 @@
 #https://pt.stackoverflow.com/questions/64608/como-validar-e-calcular-o-d%C3%ADgito-de-controle-de-um-cpf
-def ValidaCPF(cpf: str) -> bool:
+import re
+def validaCpf(cpf: str) -> bool:
 
     """
     Efetua a validacao do CPF, nao valida a formatacao!!!!!!.
@@ -22,7 +23,7 @@ def ValidaCPF(cpf: str) -> bool:
     """
 
     # Obtem apenas os numeros do CPF, ignorando pontuacoes
-    numbers = [int(digit) for digit in cpf if digit.isdigit()]
+    numbers = [int(digit) for digit in cpf if digit in "0123456789"]
 
     # Verifica se o CPF possui 11 numeros ou se todos sao iguais:
     if len(numbers) != 11 or len(set(numbers)) == 1:
@@ -43,8 +44,7 @@ def ValidaCPF(cpf: str) -> bool:
     return True
 
 #https://www.geeksforgeeks.org/check-if-email-address-valid-or-not-in-python/
-import re
-def ValidaEmail(email:str) -> bool:
+def validaEmail(email:str) -> bool:
 
     """
     Valida se um email estah na expressao regular correta.
@@ -62,20 +62,20 @@ def ValidaEmail(email:str) -> bool:
         return False
 
 #https://pt.stackoverflow.com/questions/519132/como-fazer-valida%C3%A7%C3%A3o-de-senha-em-python
-def ValidaSenha(senha1:str, senha2:str) -> bool:
+def validaSenha(senha1:str, senha2:str) -> bool:
 
     """
     Para a senha ser aceita ela deve ter:
-    -Ao menos 8 digitos\n"
-    -Ao menos uma letra MAIUSCULA\n"
-    -Ao menos um numero\n"
-    -Ao menos um caractere especial(!@#$%¨&*)\n")
+    -Ao menos 8 caracteres e ao máximo 64
+    -Ao menos uma letra MAIUSCULA
+    -Ao menos um numero
+    -Ao menos um caractere especial(!@#$%¨&*)
     -confirmacao de senha identica a senha
     """
     
     if senha1.islower(): #nao tem nenhum maiusculo:
         return False
-    if len(senha1) < 7: #nao tem 8 caracteres
+    if len(senha1) < 7 or len(senha1) > 64: #nao tem 8 caracteres ou excede 64 caracteres
         return False
     if senha1.isalpha():#nao tem nenhum numero
         return False
