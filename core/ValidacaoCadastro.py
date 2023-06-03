@@ -76,7 +76,7 @@ def validaSenha(senha1: str, senha2: str) -> bool:
 
     if senha1.islower():  # nao tem nenhum maiusculo:
         return False
-    if 7 < len(senha1) < 65:  # nao tem 8 caracteres ou excede 64 caracteres
+    if not 7 < len(senha1) < 65:  # nao tem 8 caracteres ou excede 64 caracteres
         return False
     if senha1.isalpha():  # nao tem nenhum numero
         return False
