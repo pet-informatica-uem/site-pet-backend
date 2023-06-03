@@ -1,7 +1,8 @@
-#https://pt.stackoverflow.com/questions/64608/como-validar-e-calcular-o-d%C3%ADgito-de-controle-de-um-cpf
 import re
-def validaCpf(cpf: str) -> bool:
 
+
+# https://pt.stackoverflow.com/questions/64608/como-validar-e-calcular-o-d%C3%ADgito-de-controle-de-um-cpf
+def validaCpf(cpf: str) -> bool:
     """
     Efetua a validacao do CPF, nao valida a formatacao!!!!!!.
 
@@ -30,40 +31,40 @@ def validaCpf(cpf: str) -> bool:
         return False
 
     # Validacao do primeiro digito verificador:
-    sum_of_products = sum(a*b for a, b in zip(numbers[0:9], range(10, 1, -1)))
+    sum_of_products = sum(a * b for a, b in zip(numbers[0:9], range(10, 1, -1)))
     expected_digit = (sum_of_products * 10 % 11) % 10
     if numbers[9] != expected_digit:
         return False
 
     # Validacao do segundo digito verificador:
-    sum_of_products = sum(a*b for a, b in zip(numbers[0:10], range(11, 1, -1)))
+    sum_of_products = sum(a * b for a, b in zip(numbers[0:10], range(11, 1, -1)))
     expected_digit = (sum_of_products * 10 % 11) % 10
     if numbers[10] != expected_digit:
         return False
 
     return True
 
-#https://www.geeksforgeeks.org/check-if-email-address-valid-or-not-in-python/
-def validaEmail(email:str) -> bool:
 
+# https://www.geeksforgeeks.org/check-if-email-address-valid-or-not-in-python/
+def validaEmail(email: str) -> bool:
     """
     Valida se um email estah na expressao regular correta.
 
     """
- 
+
     # expressao regular do gmail:
-    regex = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b'
- 
+    regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b"
+
     # vendo se o gmail estah na expressao regular:
-    if(re.fullmatch(regex, email)):
+    if re.fullmatch(regex, email):
         return True
- 
+
     else:
         return False
 
-#https://pt.stackoverflow.com/questions/519132/como-fazer-valida%C3%A7%C3%A3o-de-senha-em-python
-def validaSenha(senha1:str, senha2:str) -> bool:
 
+# https://pt.stackoverflow.com/questions/519132/como-fazer-valida%C3%A7%C3%A3o-de-senha-em-python
+def validaSenha(senha1: str, senha2: str) -> bool:
     """
     Para a senha ser aceita ela deve ter:
     -Ao menos 8 caracteres e ao máximo 64
@@ -72,14 +73,14 @@ def validaSenha(senha1:str, senha2:str) -> bool:
     -Ao menos um caractere especial(!@#$%¨&*)
     -confirmacao de senha identica a senha
     """
-    
-    if senha1.islower(): #nao tem nenhum maiusculo:
+
+    if senha1.islower():  # nao tem nenhum maiusculo:
         return False
-    if len(senha1) < 7 or len(senha1) > 64: #nao tem 8 caracteres ou excede 64 caracteres
+    if 7 < len(senha1) < 65:  # nao tem 8 caracteres ou excede 64 caracteres
         return False
-    if senha1.isalpha():#nao tem nenhum numero
+    if senha1.isalpha():  # nao tem nenhum numero
         return False
-    if senha1.isalnum(): #nao tem caracteres especiais
+    if senha1.isalnum():  # nao tem caracteres especiais
         return False
     if not senha1 == senha2:
         return False
