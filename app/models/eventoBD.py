@@ -40,10 +40,5 @@ class EventoBD():
         self.__colecao.update_one({'nome evento': nomeEvento}, {'$set': {'inscritos': inscrito}})
         return 'Inscritos atualizados com sucesso!'
     
-    def inscrever(self, nomeEvento :str, idUsuario :str) -> str:
-        if idUsuario in self.getInscritos(nomeEvento):
-            return 'Usuário já inscrito!'
-        else:
-            self.__colecao.update_one({'nome evento': nomeEvento}, {'$push': {'inscritos': email}})
-            return 'Usuário inscrito com sucesso!'
+    
     
