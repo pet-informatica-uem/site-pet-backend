@@ -1,5 +1,6 @@
 from app.schemas.usuario import CadastroUsuario
 from app.models.usuario import Usuario, UsuarioBd
+from app.controllers.usuario import RecuperaConta
 from core import bd, ValidaSenha, ValidaEmail, ValidaCPF, enviarEmail
 
 import logging
@@ -119,3 +120,7 @@ def recuperaConta(email: Annotated[EmailStr, Form()]):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email inválido.",
         )
+    
+    #Passa o email para o controlador
+    controlador = RecuperaConta(email)
+    return controlador.enviaEmail()
