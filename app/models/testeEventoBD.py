@@ -12,7 +12,7 @@ evento = {
             "data fim inscrição": datetime.now(),
             "local": 'sala 1',
             "total vagas ofertadas": '20',
-            "laboratorio": "sim",
+            "laboratorio": "sim",   # isso aqui não está bom, melhorar
             "vagas com notebook": '15',
             "vagas sem notebook": '5',
             "carga horária": '5',
