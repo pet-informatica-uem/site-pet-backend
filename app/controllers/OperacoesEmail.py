@@ -20,7 +20,7 @@ def enviarEmail(
 
 
 # Função para enviar verificação de email
-def verificaEmail(emailPet: str, senhaPet: str, emailDestino: str, codigo: int) -> None:
+def verificarEmail(emailPet: str, senhaPet: str, emailDestino: str, codigo: str) -> None:
     m: EmailMessage = EmailMessage()
     m["From"] = emailPet
     m["To"] = emailDestino
