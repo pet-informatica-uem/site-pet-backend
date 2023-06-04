@@ -31,7 +31,7 @@ def verificarEmail(emailPet: str, senhaPet: str, emailDestino: str, codigo: str)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto) as smtp:
         smtp.login(emailPet, senhaPet)
-        smtp.sendmail(emailPet, emailDestino, m.as_string)
+        smtp.sendmail(emailPet, emailDestino, m.as_string())
 
 
 # Função para enviar link troca de senha
