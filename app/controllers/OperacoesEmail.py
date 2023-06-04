@@ -12,11 +12,11 @@ def emailConfirmacaoEvento(
     dataEvento: str,
     coindicoesEvento: str,
 ) -> None:
-    m: EmailMessage = EmailMessage()
-    m["From"] = emailPet
-    m["To"] = emailDestino
-    m["Subject"] = "PET-Info: Você foi cadastrado no evento" + nomeEvento
-    m.set_content(
+    mensagem: EmailMessage = EmailMessage()
+    mensagem["From"] = emailPet
+    mensagem["To"] = emailDestino
+    mensagem["Subject"] = "PET-Info: Você foi cadastrado no evento" + nomeEvento
+    mensagem.set_content(
         "Nome do evento: "
         + nomeEvento
         + "\nLocal do Evento: "
@@ -27,8 +27,21 @@ def emailConfirmacaoEvento(
         + coindicoesEvento
     )
 
-    contexto: ssl.SSLContext = ssl.create_default_context()
+    enviarEmail(
+        emailPet,
+        senhaPet,
+        emailDestino,
+    )
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto) as smtp:
-        smtp.login(emailPet, senhaPet)
-        smtp.sendmail(emailPet, emailDestino, m.as_string)
+
+def enviarEmail(emailPet: str, senhaPet: str, emailDestino: str, mensagem: str) -> None:
+    try:
+        contexto: ssl.SSLContext = ssl.create_default_context()
+
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto) as smtp:
+            smtp.login(emailPet, senhaPet)
+            smtp.sendmail(emailPet, emailDestino, mensagem.as_string())
+
+        print("Sucesso! O email foi enviado")
+    except:
+        print("Erro! Falha ao enviar email")
