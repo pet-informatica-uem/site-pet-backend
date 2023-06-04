@@ -17,7 +17,7 @@ class ValidarUsuario:
             "email": {"type": "string", "required": True},
             "cpf": {"type": "string", "required": True},
             "curso": {"type": "string", "required": True},
-            "estado": {
+            "estado da conta": {
                 "type": "string",
                 "required": True,
                 "allowed": ["ativo", "inativo"],
@@ -29,6 +29,7 @@ class ValidarUsuario:
                 "allowed": ["sim", "nao", "egresso"],
             },
             "data_criacao": {"type": "datetime"},
+            "redes sociais": {}
         }
 
         validadorUsuarios = Validator(schemaUsuarios)
