@@ -42,10 +42,9 @@ class ValidarEvento:
                 },
             },
             "carga horária": {"type": "string", "required": True},
-            "pago": {"type": "string", "required": True, "allowed": ["sim", "nao"]},
-            "valor": {"type": "string", "required": False},
-            "arte evento": {"type": "binary", "required": True},
-            "arte qrcode": {"type": "binary", "required": False},
+            "valor": {"type": "integer", "required": True},
+            "arte evento": {"type": "string", "required": True},
+            "arte qrcode": {"type": "string", "required": False},
             "inscritos": {
                 "type": "list",
                 "required": False,
