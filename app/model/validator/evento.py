@@ -31,14 +31,16 @@ class ValidarEvento:
             "data inicio inscrição": {"type": "datetime", "required": True},
             "data fim inscrição": {"type": "datetime", "required": True},
             "local": {"type": "string", "required": True},
-            "total vagas ofertadas": {"type": "string", "required": True},
-            "laboratorio": {
-                "type": "string",
+            "vagas ofertadas": {
+                "type": "dict",
                 "required": True,
-                "allowed": ["sim", "nao"],
+                "schema": {
+                    "total vagas": {"type": "integer", "required": True},
+                    "vagas com notebook": {"type": "integer", "required": True},
+                    "vagas sem notebook": {"type": "integer", "required": True},
+                    "vagas preenchidas": {"type": "integer", "required": True},
+                },
             },
-            "vagas com notebook": {"type": "string", "required": True},
-            "vagas sem notebook": {"type": "string", "required": True},
             "carga horária": {"type": "string", "required": True},
             "pago": {"type": "string", "required": True, "allowed": ["sim", "nao"]},
             "valor": {"type": "string", "required": False},
