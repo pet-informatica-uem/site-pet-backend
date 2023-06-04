@@ -1,12 +1,12 @@
 from app.schemas.usuario import CadastroUsuario
 from app.models.usuario import Usuario, UsuarioBd
-from app.controllers.usuario import RecuperaConta
+from app.controllers.usuario import recuperaContaControlador
 from core import bd, ValidaSenha, ValidaEmail, ValidaCPF, enviarEmail
 
 import logging
 from pydantic import EmailStr
 from typing import Annotated
-from fastapi import APIRouter, Form, HTTPException, Response, status
+from fastapi import APIRouter, Form, HTTPException, Response, status, Request
 from bson import ObjectId
 
 from core.autenticacao import hashSenha
@@ -111,7 +111,7 @@ def cadastrarUsuario(
         Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
     """,
 )
-def recuperaConta(email: Annotated[EmailStr, Form()]):
+def recuperaConta(email: Annotated[EmailStr, Form()], request: Request):
     email = EmailStr(email.lower())
 
     # Verifica se o email é válido
@@ -122,5 +122,4 @@ def recuperaConta(email: Annotated[EmailStr, Form()]):
         )
     
     #Passa o email para o controlador
-    controlador = RecuperaConta(email)
-    return controlador.enviaEmail()
+    controlador = recuperaContaControlador(email, request.base_url())
