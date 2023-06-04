@@ -31,6 +31,7 @@ def emailConfirmacaoEvento(
         emailPet,
         senhaPet,
         emailDestino,
+        mensagem
     )
 
 
