@@ -21,6 +21,5 @@ from usuarioBD import UsuarioBD
 
 # print('\n\n\n')
 # print(usuarioBD.getIdUsuario(dadosUsuario['email']))
-# print(usuarioBD.getPetiano(usuarioBD.getIdUsuario(dadosUsuario['email'])))
 # print(usuarioBD.getUsuario(usuarioBD.getIdUsuario(dadosUsuario['email'])))
 
