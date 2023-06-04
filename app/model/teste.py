@@ -11,11 +11,11 @@ from usuarioBD import UsuarioBD
     'tipo conta': 'petiano',      petiano, petiano egresso ou estudante
     'tempo de pet': {},
     'redes sociais': {},        github, linkedin, instagram, twitter
-    'data_criacao': datetime.now()
+    'foto perfil': 'images/fotoUsuario/alguem.jpg',     passar a url da imagem
+    'data criacao': datetime.now()
 }'''
 
-
-usuarioBD = UsuarioBD()
+# usuarioBD = UsuarioBD()
 # erros = usuarioBD.criarUsuario(dadosUsuario)
 # print(erros)
 

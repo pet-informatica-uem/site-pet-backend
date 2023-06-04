@@ -37,7 +37,7 @@ class ValidarUsuario:
                 },
             },
             "redes sociais": {
-                "type": "dict",         # TODO testar se isso funciona, aqui está dicionário e não lista
+                "type": "dict",      
                 "required": False,
                 "schema": {
                     "github": {"type": "string"},
@@ -46,6 +46,7 @@ class ValidarUsuario:
                     "twitter": {"type": "string"},
                 },
             },
+            "foto perfil": {'type': 'string', 'required': False},  
             "data criacao": {"type": "datetime"},
         }
 
