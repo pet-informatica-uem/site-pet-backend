@@ -1,4 +1,4 @@
-from app.models.eventoBD import EventoBD
+from app.model.eventoBD import EventoBD
 from datetime import datetime
 
 evento = {

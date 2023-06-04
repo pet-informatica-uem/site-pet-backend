@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from app.models.validator.evento import ValidarEvento
+from app.model.validator.evento import ValidarEvento
 
 class EventoBD():
     def __init__(self) -> None:
