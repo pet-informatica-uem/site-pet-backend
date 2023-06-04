@@ -22,6 +22,9 @@ class EventoBD():
     def listarEventos(self) -> list:
         return list(self.__colecao.find({}, {'_id': 0}))
     
+    def getEvento(self, nomeEvento :str) -> dict:
+        return self.__colecao.find_one({'nome evento': nomeEvento}, {'_id': 0})
+    
     def atualizarEvento(self, nomeEvento :str, dadosEvento :object) -> str:
         if self.__validarDados.validate(dadosEvento):
             self.__colecao.update_one({'nome evento': nomeEvento}, {'$set': dadosEvento})
@@ -30,15 +33,48 @@ class EventoBD():
             return self.__validarDados.errors
     
     def buscarEvento(self, nomeEvento :str) -> dict:
-        return self.__colecao.find_one({'nome evento': nomeEvento}, {'_id': 0})         # se não achou retorna 0
+        return self.__colecao.find_one({'nome evento': nomeEvento}, {'_id': 0})
     
     def getInscritos(self, nomeEvento :str) -> list:
-        return self.__colecao.find_one({'nome evento': nomeEvento}, {'_id': 0, 'inscritos': 1})['inscritos']
+        inscritos :dict = self.__colecao.find_one({'nome evento': nomeEvento}, {'inscritos': 1, '_id': 0})
+        return inscritos['inscritos'] if inscritos else None
+    
+    def pushInscrito(self, nomeEvento :str, inscrito :str) -> str:
+        self.__colecao.update_one({'nome evento': nomeEvento}, {'$push': {'inscritos': inscrito}})
+        return 'Inscrito adicionado com sucesso!'
+    
+    # TODO testar daqui para baixo
+    # TODO não remove o inscrito por algum motivo 
+    def removerInscrito(self, nomeEvento: str, idUsuario: str) -> str:
+        result = self.__colecao.update_one(
+            {"nome evento": nomeEvento},
+            {"$pull": {"inscritos": {"idUsuario": idUsuario}}},
+        )
+        if result.modified_count > 0:
+            return "Inscrito removido com sucesso!"
+        else:
+            return "Não foi possível remover o inscrito."
 
-    # revisar daqui pra baixo
-    def setInscrito(self, nomeEvento :str, inscrito :str) -> str:
-        self.__colecao.update_one({'nome evento': nomeEvento}, {'$set': {'inscritos': inscrito}})
-        return 'Inscritos atualizados com sucesso!'
+    def getPresentes(self, nomeEvento :str) -> list:
+        presentes :dict = self.__colecao.find_one({'nome evento': nomeEvento}, {'presentes': 1, '_id': 0})
+        return presentes['presentes'] if presentes else None
+    
+    def pushPresente(self, nomeEvento :str, presente :str) -> str:
+        self.__colecao.update_one({'nome evento': nomeEvento}, {'$push': {'presentes': presente}})
+        return 'Presente adicionado com sucesso!'
+    
+    def removerPresente(self, nomeEvento: str, idUsuario: str) -> str:
+        result = self.__colecao.update_one(
+            {"nome evento": nomeEvento},
+            {"$pull": {"presentes": {"idUsuario": idUsuario}}},
+        )
+        if result.modified_count > 0:
+            return "Presente removido com sucesso!"
+        else:
+            return "Não foi possível remover o presente."
+        
+    
+
     
     
     

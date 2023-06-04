@@ -27,8 +27,7 @@ class ValidarEvento:
                 ],
             },
             "data criação": {"type": "datetime", "required": True},
-            "data evento": {"type": "datetime", "required": True},
-            "hora evento": {"type": "string", "required": True},
+            "data/hora evento": {"type": "datetime", "required": True},
             "data inicio inscrição": {"type": "datetime", "required": True},
             "data fim inscrição": {"type": "datetime", "required": True},
             "local": {"type": "string", "required": True},
@@ -44,7 +43,6 @@ class ValidarEvento:
             "pago": {"type": "string", "required": True, "allowed": ["sim", "nao"]},
             "valor": {"type": "string", "required": False},
             "arte evento": {"type": "binary", "required": True},
-            "qr code": {"type": "string", "required": True, "allowed": ["sim", "nao"]},
             "arte qrcode": {"type": "binary", "required": False},
             "inscritos": {
                 "type": "list",
@@ -52,9 +50,8 @@ class ValidarEvento:
                 "schema": {
                     "type": "dict",
                     "schema": {
-                        "idUsuario": {"type": "objectid"},
-                        "data": {"type": "datetime"},
-                        "hora": {"type": "string"},
+                        "idUsuario": {"type": "string"},
+                        "data/hora": {"type": "datetime"},
                     },
                 },
             },
@@ -64,9 +61,8 @@ class ValidarEvento:
                 "schema": {
                     "type": "dict",
                     "schema": {
-                        "idUsuario": {"type": "objectid"},
-                        "data": {"type": "datetime"},
-                        "hora": {"type": "string"},
+                        "idUsuario": {"type": "string"},
+                        "data/hora": {"type": "datetime"},
                     },
                 },
             },
