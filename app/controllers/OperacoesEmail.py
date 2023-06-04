@@ -1,7 +1,7 @@
 import ssl, smtplib
 from email.message import EmailMessage
 
- 
+
 # Função para enviar email customizado
 def emailGenerico(
     emailPet: str, senhaPet: str, emailDestino: str, titulo: str, texto: str
