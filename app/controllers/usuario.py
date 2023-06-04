@@ -29,7 +29,7 @@ def recuperaContaControlador(email: str, url_base: str) -> tuple:
     link = geraLink(email, url_base)
     enviarEmail(link)
     return (True, "enviado")
-    
+
 
 def geraLink(email: str, url_base: str):
     # Data de validade do token
@@ -41,4 +41,3 @@ def geraLink(email: str, url_base: str):
     # Gera o link para a troca de senha
     url = url_base + "/troca-senha/" + token
     return url
-
