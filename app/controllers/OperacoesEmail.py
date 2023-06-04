@@ -46,5 +46,7 @@ def enviarEmail(emailPet: str, senhaPet: str, emailDestino: str, mensagem: str) 
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto) as smtp:
             smtp.login(emailPet, senhaPet)
             smtp.sendmail(emailPet, emailDestino, mensagem.as_string())
+
+        print("Sucesso! O email foi enviado")
     except:
         print("Erro! Falha ao enviar email")
