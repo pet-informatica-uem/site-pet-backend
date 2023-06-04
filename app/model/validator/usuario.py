@@ -23,10 +23,18 @@ class ValidarUsuario:
                 "allowed": ["ativo", "inativo"],
             },
             "senha": {"type": "string", "required": True},
-            "tipo conta": {         # TODO colocar periodo do petiano no PET
+            "tipo conta": {       
                 "type": "string",
                 "required": True,
                 "allowed": ["petiano", "petiano egresso", "estudante"],
+            },
+            "tempo de pet": {
+                "type": "dict",
+                "required": False,
+                "schema": {
+                    "data inicio": {"type": "datetime"},
+                    "data fim": {"type": "datetime"},
+                },
             },
             "redes sociais": {
                 "type": "dict",         # TODO testar se isso funciona, aqui está dicionário e não lista

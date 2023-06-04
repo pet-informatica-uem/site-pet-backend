@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from app.models.validator.usuario import ValidarUsuario
+from app.model.validator.usuario import ValidarUsuario
 
 
 class UsuarioBD:
@@ -22,63 +22,31 @@ class UsuarioBD:
             return "Usuário deletado"
         else:
             return "Usuário não encontrado"
-
-    def setSenhaUsuario(self, idUsuario: str, senha: str) -> str:
+        
+    def atualizarUsuario(self, idUsuario: str, dadoUsuario: object) -> str:
         if self.__colecao.find_one({"_id": idUsuario}):
-            self.__colecao.update_one({"_id": idUsuario}, {"$set": {"senha": senha}})
-            return "Senha alterada"
+            self.__colecao.update_one({"_id": idUsuario}, {"$set": dadoUsuario})
+            return "Usuário atualizado"
         else:
             return "Usuário não encontrado"
-
-    def setCurso(self, idUsuario: str, curso: str) -> str:
-        if self.__colecao.find_one({"_id": idUsuario}):
-            self.__colecao.update_one({"_id": idUsuario}, {"$set": {"curso": curso}})
-            return "Curso alterado"
-        else:
-            return "Usuário não encontrado"
-
-    def setEstado(self, idUsuario: str, estado: str) -> str:
-        if self.__colecao.find_one({"_id": idUsuario}):
-            self.__colecao.update_one({"_id": idUsuario}, {"$set": {"estado": estado}})
-            return "Estado alterado"
-        else:
-            return "Usuário não encontrado"
-
-    def setPetiano(self, idUsuario: str, petiano: str) -> str:
-        if self.__colecao.find_one({"_id": idUsuario}):
-            self.__colecao.update_one(
-                {"_id": idUsuario}, {"$set": {"petiano": petiano}}
-            )
-            return "Petiano alterado"
-        else:
-            return "Usuário não encontrado"
-
-    def getIdUsuario(self, email: str) -> str:
-        if self.__colecao.find_one({"email": email}):
-            return self.__colecao.find_one({"email": email})["_id"]
-        else:
-            return "Usuário não encontrado"
-
-    def getSenha(self, idUsuario: str) -> str:
-        if self.__colecao.find_one({"_id": idUsuario}):
-            return self.__colecao.find_one({"_id": idUsuario})["senha"]
-        else:
-            return "Usuário não encontrado"
-
-    def getEstado(self, idUsuario: str) -> str:
-        if self.__colecao.find_one({"_id": idUsuario}):
-            return self.__colecao.find_one({"_id": idUsuario})["estado"]
-        else:
-            return "Usuário não encontrado"
-
+        
     def getUsuario(self, idUsuario: str) -> str:
         if self.__colecao.find_one({"_id": idUsuario}):
             return self.__colecao.find_one({"_id": idUsuario})
         else:
             return "Usuário não encontrado"
+        
+    def getListaUsuarios(self) -> list:
+        return list(self.__colecao.find())
+        
+    def getListaPetianos(self) -> list:
+        return list(self.__colecao.find({"petiano": "petiano"}))
+    
+    def getListaPetianosEgressos(self) -> list:
+        return list(self.__colecao.find({"petiano": "petiano egresso"}))
 
-    def getPetiano(self, idUsuario: str) -> str:
-        if self.__colecao.find_one({"_id": idUsuario}):
-            return self.__colecao.find_one({"_id": idUsuario})["petiano"]
+    def getIdUsuario(self, email: str) -> str:
+        if self.__colecao.find_one({"email": email}):
+            return self.__colecao.find_one({"email": email})["_id"]
         else:
             return "Usuário não encontrado"
