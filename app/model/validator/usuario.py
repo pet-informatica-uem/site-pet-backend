@@ -23,13 +23,22 @@ class ValidarUsuario:
                 "allowed": ["ativo", "inativo"],
             },
             "senha": {"type": "string", "required": True},
-            "petiano": {
+            "tipo conta": {         # TODO colocar periodo do petiano no PET
                 "type": "string",
                 "required": True,
-                "allowed": ["sim", "nao", "egresso"],
+                "allowed": ["petiano", "petiano egresso", "estudante"],
             },
-            "data_criacao": {"type": "datetime"},
-            "redes sociais": {}
+            "redes sociais": {
+                "type": "dict",         # TODO testar se isso funciona, aqui está dicionário e não lista
+                "required": False,
+                "schema": {
+                    "github": {"type": "string"},
+                    "linkedin": {"type": "string"},
+                    "instagram": {"type": "string"},
+                    "twitter": {"type": "string"},
+                },
+            },
+            "data criacao": {"type": "datetime"},
         }
 
         validadorUsuarios = Validator(schemaUsuarios)
