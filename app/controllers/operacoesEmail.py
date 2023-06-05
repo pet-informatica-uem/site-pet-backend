@@ -39,7 +39,7 @@ def resetarSenha(emailPet: str, senhaPet: str, emailDestino: str, link: str) -> 
     enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
 
 
-def enviarEmail(emailPet: str, senhaPet: str, emailDestino: str, mensagem: str) -> None:
+def enviarEmail(emailPet: str, senhaPet: str, emailDestino: str, mensagem: str) -> str:
     try:
         contexto: ssl.SSLContext = ssl.create_default_context()
 
@@ -47,6 +47,6 @@ def enviarEmail(emailPet: str, senhaPet: str, emailDestino: str, mensagem: str) 
             smtp.login(emailPet, senhaPet)
             smtp.sendmail(emailPet, emailDestino, mensagem.as_string())
 
-        print("Sucesso! O email foi enviado")
+        return "Sucesso! O email foi enviado"
     except:
-        print("Erro! Falha ao enviar email")
+        return "Erro! Falha ao enviar email"
