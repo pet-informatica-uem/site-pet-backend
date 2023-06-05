@@ -15,9 +15,23 @@ from usuarioBD import UsuarioBD
     'data criacao': datetime.now()
 }'''
 
-# usuarioBD = UsuarioBD()
-# erros = usuarioBD.criarUsuario(dadosUsuario)
-# print(erros)
+dadosUsuario = {
+    'nome': 'evento',
+    'email': 'even5to@example.com',
+    'cpf': '00890500000',
+    'curso': 'curso',
+    'estado da conta': 'ativo',   
+    'senha': 'senha123',   
+    'tipo conta': 'petiano',     
+    'tempo de pet': {},
+    'redes sociais': {},      
+    'foto perfil': 'images/fotoUsuario/alguem.jpg',    
+    'data criacao': datetime.now()
+}
+
+usuarioBD = UsuarioBD()
+erros = usuarioBD.criarUsuario(dadosUsuario)
+print(erros)
 
 # print('\n\n\n')
 # print(usuarioBD.getIdUsuario(dadosUsuario['email']))

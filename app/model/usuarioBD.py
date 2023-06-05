@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 from app.model.validator.usuario import ValidarUsuario
 
 
@@ -11,42 +12,60 @@ class UsuarioBD:
 
     def criarUsuario(self, dadoUsuario: object) -> str:
         if self.__validarDados.validate(dadoUsuario):
-            self.__colecao.insert_one(dadoUsuario)
-            return self.__colecao.find_one({"email": dadoUsuario["email"]})["_id"]
+            try:
+                self.__colecao.insert_one(dadoUsuario)
+                return {
+                    "mensagem": self.getIdUsuario(dadoUsuario["email"])['mensagem'],
+                    "status": "200",
+                }
+            except DuplicateKeyError:
+                return {"mensagem": DuplicateKeyError, "status": "400"}
         else:
-            return self.__validarDados.errors
+            return {"mensagem": self.__validarDados.errors, "status": "400"}
 
     def deletarUsuario(self, idUsuario: str) -> str:
         if self.__colecao.find_one({"_id": idUsuario}):
             self.__colecao.delete_one({"_id": idUsuario})
-            return "Usuário deletado"
+            return {"mensagem": "Usuário deletado", "status": "200"}
         else:
-            return "Usuário não encontrado"
-        
-    def atualizarUsuario(self, idUsuario: str, dadoUsuario: object) -> str:
+            return {"mensagem": "Usuário não encontrado", "status": "404"}
+
+    def atualizarUsuario(self, idUsuario: str, dadoUsuario: object) -> dict:
         if self.__colecao.find_one({"_id": idUsuario}):
             self.__colecao.update_one({"_id": idUsuario}, {"$set": dadoUsuario})
-            return "Usuário atualizado"
+            return {"mensagem": "Usuário atualizado", "status": "200"}
         else:
-            return "Usuário não encontrado"
-        
-    def getUsuario(self, idUsuario: str) -> str:
-        if self.__colecao.find_one({"_id": idUsuario}):
-            return self.__colecao.find_one({"_id": idUsuario})
-        else:
-            return "Usuário não encontrado"
-        
-    def getListaUsuarios(self) -> list:
-        return list(self.__colecao.find())
-        
-    def getListaPetianos(self) -> list:
-        return list(self.__colecao.find({"petiano": "petiano"}))
-    
-    def getListaPetianosEgressos(self) -> list:
-        return list(self.__colecao.find({"petiano": "petiano egresso"}))
+            return {"mensagem": "Usuário não encontrado", "status": "404"}
 
-    def getIdUsuario(self, email: str) -> str:
-        if self.__colecao.find_one({"email": email}):
-            return self.__colecao.find_one({"email": email})["_id"]
+    def getUsuario(self, idUsuario: str) -> dict:
+        if self.__colecao.find_one({"_id": idUsuario}):
+            return {
+                "mensagem": self.__colecao.find_one({"_id": idUsuario}),
+                "status": "200",
+            }
         else:
-            return "Usuário não encontrado"
+            return {"mensagem": "Usuário não encontrado", "status": "404"}
+
+    def getListaUsuarios(self) -> dict:
+        return {"mensagem": list(self.__colecao.find()), "status": "200"}
+
+    def getListaPetianos(self) -> dict:
+        return {
+            "mensagem": list(self.__colecao.find({"petiano": "petiano"})),
+            "status": "200",
+        }
+
+    def getListaPetianosEgressos(self) -> dict:
+        return {
+            "mensagem": list(self.__colecao.find({"petiano": "petiano egresso"})),
+            "status": "200",
+        }
+
+    def getIdUsuario(self, email: str) -> dict:
+        if usuario := self.__colecao.find_one({"email": email}):
+            return {
+                "mensagem": usuario["_id"],
+                "status": "200",
+            }
+        else:
+            return {"mensagem": "Usuário não encontrado", "status": "404"}
