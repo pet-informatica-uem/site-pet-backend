@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 from app.model.validator.evento import ValidarEvento
 
 class EventoBD():
@@ -8,6 +9,7 @@ class EventoBD():
         self.__colecao = db['eventos']
         self.__validarDados = ValidarEvento().evento()
 
+    # TODO o nome está como único, é necessária essa restrição?
     def cadastrarEvento(self, dadosEvento :object) -> str:
         if self.__validarDados.validate(dadosEvento):
             self.__colecao.insert_one(dadosEvento)
@@ -16,21 +18,28 @@ class EventoBD():
             return self.__validarDados.errors
         
     def removerEvento(self, nomeEvento :str) -> str:
-        self.__colecao.delete_one({'nome evento': nomeEvento})
-        return 'Evento removido com sucesso!'
+        resultado = self.__colecao.delete_one({'nome evento': nomeEvento})
+        if resultado.deleted_count:
+            return {'mensagem': 'Evento removido com sucesso!', 'status': "200"}
+        else:
+            return {'mensagem': 'Evento não encontrado!', 'status': "404"}
+           
         
     def listarEventos(self) -> list:
-        return list(self.__colecao.find({}, {'_id': 0}))
+        return {'mensagem': list(self.__colecao.find({}, {'_id': 0})), 'status': "200"}
     
     def getEvento(self, nomeEvento :str) -> dict:
-        return self.__colecao.find_one({'nome evento': nomeEvento}, {'_id': 0})
+        return {'mensagem': self.__colecao.find_one({'nome evento': nomeEvento}, {'_id': 0}), 'status': "200"}
     
     def atualizarEvento(self, nomeEvento :str, dadosEvento :object) -> str:
         if self.__validarDados.validate(dadosEvento):
-            self.__colecao.update_one({'nome evento': nomeEvento}, {'$set': dadosEvento})
-            return 'Evento atualizado com sucesso!'
+            try:
+                self.__colecao.update_one({'nome evento': nomeEvento}, {'$set': dadosEvento})
+                return {'mensagem': 'Evento atualizado com sucesso!', 'status': "200"}
+            except DuplicateKeyError:
+                return {'mensagem': 'Evento já cadastrado!', 'status': "409"}
         else:
-            return self.__validarDados.errors
+            return {'mensagem': self.__validarDados.errors, 'status': "400"}
     
     def buscarEvento(self, nomeEvento :str) -> dict:
         return self.__colecao.find_one({'nome evento': nomeEvento}, {'_id': 0})

@@ -21,9 +21,10 @@ evento = {
         }
 
 eventoTeste = EventoBD()
-print(eventoTeste.cadastrarEvento(evento))
-# print(eventoTeste.atualizarEvento('capacitação python26', evento))
-print(eventoTeste.buscarEvento('capacitação python27'))
+# print(eventoTeste.cadastrarEvento(evento))
+# print(eventoTeste.removerEvento('capacitação python6'))
+print(eventoTeste.atualizarEvento('capacitação python7', evento))
+# print(eventoTeste.buscarEvento('capacitação python27'))
 # print(eventoTeste.getInscritos('capacitação python26'))
 # print(eventoTeste.pushInscrito('capacitação python26', [{"idUsuario": '222222222b', "data/hora": datetime.now()}]))
 # print('\n\n')
