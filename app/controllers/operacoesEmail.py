@@ -7,32 +7,24 @@ def emailConfirmacaoEvento(
     emailPet: str,
     senhaPet: str,
     emailDestino: str,
-    nomeEvento: str,
-    localEvento: str,
-    dataEvento: str,
-    coindicoesEvento: str,
+    evento: dict,
 ) -> None:
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
-    mensagem["Subject"] = "PET-Info: Você foi cadastrado no evento" + nomeEvento
+    mensagem["Subject"] = "PET-Info: Você foi cadastrado no evento" + evento["nomeEvento"]
     mensagem.set_content(
         "Nome do evento: "
-        + nomeEvento
+        + evento["nomeEvento"]
         + "\nLocal do Evento: "
-        + localEvento
+        + evento["localEvento"]
         + "\nData do evento: "
-        + dataEvento
+        + evento["dataEvento"]
         + "Nesse evento você optou por: "
-        + coindicoesEvento
+        + evento["coindicoesEvento"]
     )
 
-    enviarEmail(
-        emailPet,
-        senhaPet,
-        emailDestino,
-        mensagem
-    )
+    enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
 
 
 def enviarEmail(emailPet: str, senhaPet: str, emailDestino: str, mensagem: str) -> str:
