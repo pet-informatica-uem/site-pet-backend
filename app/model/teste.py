@@ -17,8 +17,8 @@ from usuarioBD import UsuarioBD
 
 dadosUsuario = {
     'nome': 'evento',
-    'email': 'even5to@example.com',
-    'cpf': '00890500000',
+    'email': 'even7to@example.com',
+    'cpf': '00890500070',
     'curso': 'curso',
     'estado da conta': 'ativo',   
     'senha': 'senha123',   
@@ -30,10 +30,11 @@ dadosUsuario = {
 }
 
 usuarioBD = UsuarioBD()
-erros = usuarioBD.criarUsuario(dadosUsuario)
-print(erros)
+# erros = usuarioBD.criarUsuario(dadosUsuario)
+# print(erros)
 
-# print('\n\n\n')
-# print(usuarioBD.getIdUsuario(dadosUsuario['email']))
-# print(usuarioBD.getUsuario(usuarioBD.getIdUsuario(dadosUsuario['email'])))
+# print(usuarioBD.deletarUsuario('647cb6c4f17dbcd7f7d7d80a'))
+# print(usuarioBD.atualizarUsuario('647cb6c4f17dbcd7f7d7d80a', dadosUsuario))
+print(usuarioBD.getUsuario("647cc45b9f546e9fde0dfac0"))
+# print(usuarioBD.getListaUsuarios())
 
