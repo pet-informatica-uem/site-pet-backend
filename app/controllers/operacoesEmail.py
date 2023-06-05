@@ -47,6 +47,6 @@ def enviarEmail(emailPet: str, senhaPet: str, emailDestino: str, mensagem: str) 
             smtp.login(emailPet, senhaPet)
             smtp.sendmail(emailPet, emailDestino, mensagem.as_string())
 
-        return "Sucesso! O email foi enviado"
+        return {"mensagem": "Email enviado com sucesso", "status": "200"}
     except:
-        return "Erro! Falha ao enviar email"
+        return {"mensagem": "Falha ao enviar o email", "status": "400"}
