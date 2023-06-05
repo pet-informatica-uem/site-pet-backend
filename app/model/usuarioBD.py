@@ -19,7 +19,7 @@ class UsuarioBD:
                     "status": "200",
                 }
             except DuplicateKeyError:
-                return {"mensagem": DuplicateKeyError, "status": "400"}
+                return {"mensagem": "CPF ou email já existem", "status": "400"}
         else:
             return {"mensagem": self.__validarDados.errors, "status": "400"}
 
