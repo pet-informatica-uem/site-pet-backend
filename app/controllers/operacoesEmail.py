@@ -12,7 +12,9 @@ def emailConfirmacaoEvento(
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
-    mensagem["Subject"] = "PET-Info: Você foi cadastrado no evento" + evento["nomeEvento"]
+    mensagem["Subject"] = (
+        "PET-Info: Você foi cadastrado no evento" + evento["nomeEvento"]
+    )
     mensagem.set_content(
         "Nome do evento: "
         + evento["nomeEvento"]
@@ -35,6 +37,6 @@ def enviarEmail(emailPet: str, senhaPet: str, emailDestino: str, mensagem: str) 
             smtp.login(emailPet, senhaPet)
             smtp.sendmail(emailPet, emailDestino, mensagem.as_string())
 
-        return "Sucesso! O email foi enviado"
+        return {"mensagem": "Email enviado com sucesso", "status": "200"}
     except:
-        return "Erro! Falha ao enviar email"
+        return {"mensagem": "Falha ao enviar o email", "status": "400"}
