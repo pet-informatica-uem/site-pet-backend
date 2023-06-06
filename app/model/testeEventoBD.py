@@ -2,7 +2,7 @@ from app.model.eventoBD import EventoBD
 from datetime import datetime
 
 evento = {
-            "nome evento": 'capacitação python27',
+            "nome evento": 'capacitação python2',
             "resumo": 'evento teste',
             "pré-requisitos": 'nenhum',
             "nível conhecimento": "Não conheço nada",
@@ -16,18 +16,15 @@ evento = {
             "valor": 10,
             "arte evento": 'images/arteEvento/evento.png',
             "arte qrcode": 'images/arteQRCode/qrcode.png',
-            "inscritos": [{"idUsuario": '5f9f9b9b9b9b9b9b9b9b9b9b', "data/hora": datetime.now()}],
-            "presentes": [{"idUsuario": '5f9f9b9b9b9b9b9b9b9b9b9b', "data/hora": datetime.now()}],
+            "inscritos": [{'idUsuario': '0000000001', 'data/hora': datetime.now()}],
+            "presentes": [],
         }
 
 eventoTeste = EventoBD()
-# print(eventoTeste.cadastrarEvento(evento))
-# print(eventoTeste.removerEvento('capacitação python6'))
-print(eventoTeste.atualizarEvento('capacitação python7', evento))
-# print(eventoTeste.buscarEvento('capacitação python27'))
-# print(eventoTeste.getInscritos('capacitação python26'))
-# print(eventoTeste.pushInscrito('capacitação python26', [{"idUsuario": '222222222b', "data/hora": datetime.now()}]))
-# print('\n\n')
-# print(eventoTeste.removerInscrito('capacitação python26', "222222222b"))
-# print('\n\n')
-# print(eventoTeste.getInscritos('capacitação python26'))
+# print(eventoTeste.cadastrarEvento(evento))  
+# print(eventoTeste.removerEvento('capacitação python29'))
+# print(eventoTeste.listarEventos())
+# print(eventoTeste.atualizarEvento('capacitação python18', evento))
+# print(eventoTeste.getEvento('capacitação python18'))
+# print(eventoTeste.addInscrito('capacitação python2', '0000000002'))
+print(eventoTeste.removerInscrito('capacitação python2', '0000000002'))
