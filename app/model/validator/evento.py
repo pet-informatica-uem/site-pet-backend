@@ -53,7 +53,7 @@ class ValidarEvento:
                     "schema": {
                         "idUsuario": {"type": "string"},
                         "data/hora": {"type": "datetime"},
-                        # "pagamento": {"type": "boolean"}, TODO a pessoa pagou?
+                        "pagamento": {"type": "boolean"}, 
                     },
                 },
             },
