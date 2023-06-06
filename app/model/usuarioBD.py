@@ -1,5 +1,5 @@
 from pymongo import MongoClient
-from app.models.validator.usuario import ValidarUsuario
+from app.model.validator.usuario import ValidarUsuario
 
 
 class UsuarioBD:

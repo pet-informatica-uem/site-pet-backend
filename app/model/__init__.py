@@ -1,2 +1,2 @@
 
-from app.models.usuarioBD import UsuarioBD
+from app.model.usuarioBD import UsuarioBD
