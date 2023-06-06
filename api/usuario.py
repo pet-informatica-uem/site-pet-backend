@@ -19,15 +19,20 @@ def trocaSenha(token):
     sucesso, msg = trocaSenhaControlador(token)
 
     match (sucesso, msg):
+        case (False, "token_expirou"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Link expirou."
+            )
+
+        case (False, "token_invalido"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Link inválido."
+            )
+
         case (False, "interno"):
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Problema interno.",
-            )
-
-        case (False, "expirou"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Link expirou."
             )
 
         case (True, ""):
