@@ -3,7 +3,7 @@ from core import ValidaEmail
 
 from pydantic import EmailStr
 from typing import Annotated
-from fastapi import APIRouter, Form, HTTPException, status, Request
+from fastapi import APIRouter, Form, HTTPException, status, Request, Response
 
 
 roteador = APIRouter(prefix="/usuarios", tags=["Usuários"])
@@ -17,7 +17,7 @@ roteador = APIRouter(prefix="/usuarios", tags=["Usuários"])
         Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
     """,
 )
-def recuperaConta(email: Annotated[EmailStr, Form()], request: Request):
+def recuperaConta(email: Annotated[EmailStr, Form()], request: Request, response: Response):
     email = EmailStr(email.lower())
 
     # Verifica se o email é válido
@@ -28,4 +28,7 @@ def recuperaConta(email: Annotated[EmailStr, Form()], request: Request):
         )
 
     # Passa o email para o controlador
-    controlador = recuperaContaControlador(email, request.base_url())
+    resposta = recuperaContaControlador(email, request.base_url())
+
+    response.status_code = int(resposta.get("status"))
+    return resposta.get("mensagem")
