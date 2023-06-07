@@ -1,6 +1,6 @@
 from app.controllers.usuario import trocaSenhaControlador
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Response
 
 
 roteador = APIRouter(prefix="/usuarios", tags=["Usuários"])
@@ -14,26 +14,9 @@ roteador = APIRouter(prefix="/usuarios", tags=["Usuários"])
     """,
     status_code=status.HTTP_200_OK,
 )
-def trocaSenha(token):
+def trocaSenha(token, response: Response):
     # Despacha o token para o controlador
-    sucesso, msg = trocaSenhaControlador(token)
+    retorno = trocaSenhaControlador(token)
 
-    match (sucesso, msg):
-        case (False, "token_expirou"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Link expirou."
-            )
-
-        case (False, "token_invalido"):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Link inválido."
-            )
-
-        case (False, "interno"):
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Problema interno.",
-            )
-
-        case (True, ""):
-            return {"menssagem": "sucesso"}
+    response.status_code = retorno.get("status")
+    return {"mensagem": retorno.get("mensagem")}
