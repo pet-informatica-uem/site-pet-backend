@@ -31,4 +31,4 @@ def recuperaConta(email: Annotated[EmailStr, Form()], request: Request, response
     resposta = recuperaContaControlador(email, request.base_url())
 
     response.status_code = int(resposta.get("status"))
-    return resposta.get("mensagem")
+    return {"mensagem": resposta.get("mensagem")}

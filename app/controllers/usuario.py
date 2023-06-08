@@ -1,15 +1,10 @@
-from app.models.usuarioBD import UsuarioBD
 from core import enviarEmail
 from core.jwtoken import geraLink
 from core.usuario import verificaSeUsuarioExiste
 
-from datetime import datetime, timedelta
-
-import jwt
-
 
 # Envia um email para trocar de senha se o email estiver cadastrado no bd
-def recuperaContaControlador(email: str, url_base: str) -> tuple:
+def recuperaContaControlador(email: str, url_base: str) -> dict:
     # Verifica se o usuário está cadastrado no bd
     retorno = verificaSeUsuarioExiste(email)
     if retorno.get("status") != "200":
@@ -19,5 +14,6 @@ def recuperaContaControlador(email: str, url_base: str) -> tuple:
     if retorno.get("existe"):
         link = geraLink(email, url_base)
         enviarEmail(email, link)
-        return {"mensagem": "OK", "status": "200"}
+    
+    return {"mensagem": "OK", "status": "200"}
 

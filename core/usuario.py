@@ -3,10 +3,19 @@ from app.models.usuarioBD import UsuarioBD
 import logging
 
 
-# Retorna true se o usuário existe. Caso contrário, retorna false. 
-# Retorna uma mensagem de erro e status 500 se houver problema com a 
-# comunicação com o banco de dados.
 def verificaSeUsuarioExiste(email: str) -> dict:
+    """
+    Verifica se existe usuário associado a um email.
+
+    Parâmetros:
+        email (str): email a ser verificado
+
+    Retorno:
+        dict:
+            \n- {"existe": True, "status": "200"}: Existe usuário associado. False, caso contrário.
+            \n- {"mensagem": "Erro interno", "status": "500"}: Problema no banco de dados.
+    """
+
     try:
         conexao = UsuarioBD()
 
