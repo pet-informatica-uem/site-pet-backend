@@ -1,6 +1,9 @@
-from core import enviarEmail
 from core.jwtoken import geraLink
 from core.usuario import verificaSeUsuarioExiste
+from app.controllers.operacoesEmail import resetarSenha
+
+EMAIL_PET = "pet@din.uem.br"
+SENHA_EMAIL_PET = "0qvdd0Lw1JKF3lnRw6QU"
 
 
 # Envia um email para trocar de senha se o email estiver cadastrado no bd
@@ -13,7 +16,6 @@ def recuperaContaControlador(email: str, url_base: str) -> dict:
     # Gera o link e envia o email se o usuário estiver cadastrado
     if retorno.get("existe"):
         link = geraLink(email, url_base)
-        enviarEmail(email, link)
-    
-    return {"mensagem": "OK", "status": "200"}
+        resetarSenha(EMAIL_PET, SENHA_EMAIL_PET, email, link)  # Envio do email
 
+    return {"mensagem": "OK", "status": "200"}
