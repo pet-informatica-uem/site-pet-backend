@@ -17,13 +17,13 @@ def emailGenerico(
 
 # Função para enviar verificação de email
 def verificarEmail(
-    emailPet: str, senhaPet: str, emailDestino: str, codigo: str
+    emailPet: str, senhaPet: str, emailDestino: str, link: str
 ) -> None:
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
-    mensagem["Subject"] = "Pet-Info - Código de Verficação"
-    mensagem.set_content("Seu código de verificação é: " + codigo)
+    mensagem["Subject"] = "Pet-Info - Verficação de Conta"
+    mensagem.set_content("Clique no link para verificar sua conta: " + link)
 
     enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
 
