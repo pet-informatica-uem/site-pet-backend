@@ -1,6 +1,9 @@
 from app.controllers.usuario import trocaSenhaControlador
+from core.ValidacaoCadastro import validaSenha
 
-from fastapi import APIRouter, HTTPException, status, Response
+from fastapi import APIRouter, HTTPException, status, Response, Form
+
+from typing import Annotated
 
 
 roteador = APIRouter(prefix="/usuarios", tags=["Usuários"])
@@ -14,9 +17,16 @@ roteador = APIRouter(prefix="/usuarios", tags=["Usuários"])
     """,
     status_code=status.HTTP_200_OK,
 )
-def trocaSenha(token, response: Response):
+def trocaSenha(token, senha: Annotated[str, Form()],response: Response):
+    # Validacao basica da senha
+    if not validaSenha(senha, senha):
+        raise HTTPException(
+            status_code=400,
+            detail="Senha inválida."
+        )
+    
     # Despacha o token para o controlador
-    retorno = trocaSenhaControlador(token)
+    retorno = trocaSenhaControlador(token, senha)
 
-    response.status_code = retorno.get("status")
+    response.status_code = int(retorno.get("status"))
     return {"mensagem": retorno.get("mensagem")}
