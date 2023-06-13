@@ -1,7 +1,7 @@
 from typing import Annotated
 from datetime import datetime
 
-from fastapi import APIRouter, Form, UploadFile, File, status
+from fastapi import APIRouter, Form, UploadFile, status
 
 
 # Especifica o formato das datas para serem convertidos
@@ -30,10 +30,10 @@ def criaEvento(
     vagasSemNote: Annotated[int, Form()],
     cargaHoraria: Annotated[int, Form()],
     valor: Annotated[int, Form()],
-    imagemEvento: Annotated[UploadFile, File(description="Arte do evento.")] ,
-    imagemQrCode: Annotated[UploadFile | None, File(description="Arte do qrcode.")],
+    imagemEvento: UploadFile,
+    imagemQrCode: UploadFile | None,
 ):
-    evento = {
+    dadosEvento = {
         "nome evento": nomeEvento,
         "resumo": resumo,
         "pré-requisitos": preRequisitos,
@@ -51,8 +51,5 @@ def criaEvento(
         },
         "carga horária": cargaHoraria,
         "valor": valor,
-        "arte evento": imagemEvento,
-        "arte qrcode": imagemQrCode,
-        "inscritos": [],
-        "presentes": [],
     }
+

@@ -10,6 +10,16 @@ IMAGES_PATH = os.path.join(
 )
 
 
+# Retorna True se o arquivo for uma imagem válida. False, caso contrário.
+def validaImagem(imagem: bytes):
+    try:
+        img = Image.open(imagem)
+        img.close()
+        return True
+    except IOError:
+        return False
+
+
 def armazenaArteEvento(nomeEvento: str, arquivo: UploadFile) -> dict:
     path = os.path.join(IMAGES_PATH, "eventos", "arte")
     retorno = __armazenaImagem(path, nomeEvento, arquivo)
@@ -30,7 +40,7 @@ def __armazenaImagem(path: str, nomeEvento: str, arquivo: UploadFile):
         extensao = arquivo.filename.split(".")[-1]
         nome = geraNomeImagem(nomeEvento, extensao=extensao)
         pathDefinitivo = os.path.join(path, nome)
-        img.save(path)
+        img.save(pathDefinitivo)
         img.close()
         return {"mensagem": "Imagem salva com sucesso.", "status": "201"}
     except IOError:
