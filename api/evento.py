@@ -3,6 +3,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Form, UploadFile, status, HTTPException
 
+from app.models.evento import DadosEvento
 from app.controllers.evento import controladorNovoEvento
 
 
@@ -33,21 +34,23 @@ def criaEvento(
     imagemArte: UploadFile,
     imagemQrCode: UploadFile | None,
 ):
-    dadosEvento = {
-        "nome evento": nomeEvento,
-        "resumo": resumo,
-        "pré-requisitos": preRequisitos,
-        "data/hora evento": datetime.strptime(dataEvento, formatoString),
-        "data inicio inscrição": datetime.strptime(dataInicioInscr, formatoString),
-        "data fim inscrição": datetime.strptime(dataFimInscr, formatoString),
-        "local": local,
-        "vagas ofertadas": {
+    dadosEvento = DadosEvento(
+        nomeEvento= nomeEvento,
+        resumo= resumo,
+        preRequisitos= preRequisitos,
+        dataHoraEvento= datetime.strptime(dataEvento, formatoString),
+        inicioInscricao= datetime.strptime(dataInicioInscr, formatoString),
+        fimInscricao= datetime.strptime(dataFimInscr, formatoString),
+        local= local,
+        vagasOfertadas= {
             "vagas com notebook": vagasComNote,
             "vagas sem notebook": vagasSemNote,
         },
-        "carga horária": cargaHoraria,
-        "valor": valor,
-    }
+        cargaHoraria= cargaHoraria,
+        valor= valor,
+        arteEvento= "",
+        arteQrcode= ""
+    )
 
     imagens = {"arte": imagemArte, "qrcode": imagemQrCode}
 

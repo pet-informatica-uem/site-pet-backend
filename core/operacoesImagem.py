@@ -42,37 +42,10 @@ def armazenaQrCodeEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     return retorno
 
 
-def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str:
-    """Armazena a imagem no path fornecido usando um nome base.
-
-    Return: caminho para a imagem salva : str. None, se a imagem for inválida.
-    """
-
-    try:
-        img = Image.open(imagem)
-        extensao = img.format.lower()
-        nome = geraNomeImagem(nomeBase, extensao=extensao)
-        pathDefinitivo = os.path.join(path, nome)
-        img.save(pathDefinitivo)
-        img.close()
-        return pathDefinitivo
-    except IOError:
-        return None
-
-
-def geraNomeImagem(nomeBase: str, extensao: str) -> str:
-    """Gera um nome para a imagem a partir de um nome base e uma extensao,
-    adiciona uma timestamp para evitar problemas com o cache do navegador
-    """
-    estampa = int(time.time())
-    nome = f"{nomeBase}-{estampa}.{extensao}"
-
-    return nome
-
-
 def procuraImagem(nomeImagem: str) -> list[str]:
-    """ "Retorna uma lista com as imagens que contenham "nomeImagem" em seu nome.
-    Retorna uma lista vazia caso não encontre nada."""
+    """ "Retorna uma lista com os caminhos para as imagens que
+    contenham "nomeImagem" em seu nome. Retorna uma lista vazia
+    caso não encontre nada."""
 
     ls = os.walk(IMAGES_PATH)
     matches = []
@@ -82,3 +55,49 @@ def procuraImagem(nomeImagem: str) -> list[str]:
             if fnmatch.fnmatch(file, f"*{nomeImagem}*"):
                 matches.append(os.path.join(root, file))
     return matches
+
+
+def deletaImagem(nomeImagem: str) -> dict:
+    """Deleta uma imagem. Caso seja encontrada mais de uma imagem 
+    com o termo de busca, todas serão deletadas.
+
+    nomeImagem -- nome da imagem para ser removida
+
+    Return:
+    \n"status": "200" se deu certo.
+    \n"status": "404" se não encontrou imagem com esse nome.
+    """
+    imagens = procuraImagem(nomeImagem)
+    if (imagens):
+        for imagem in imagens:
+            os.remove(imagem)
+        return {"mensagem": "Imagem(s) deleta(s) com sucesso!", "status": "200"}
+    return {"mensagem": "Nenhuma imagem encontrada.", "status": "404"}
+
+
+def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str:
+    """Armazena a imagem no path fornecido usando um nome base.
+
+    Return: caminho para a imagem salva : str. None, se a imagem for inválida.
+    """
+
+    try:
+        img = Image.open(imagem)
+        extensao = img.format.lower()
+        nome = __geraNomeImagem(nomeBase, extensao=extensao)
+        pathDefinitivo = os.path.join(path, nome)
+        img.save(pathDefinitivo)
+        img.close()
+        return pathDefinitivo
+    except IOError:
+        return None
+
+
+def __geraNomeImagem(nomeBase: str, extensao: str) -> str:
+    """Gera um nome para a imagem a partir de um nome base e uma extensao,
+    adiciona uma timestamp para evitar problemas com o cache do navegador
+    """
+    estampa = int(time.time())
+    nome = f"{nomeBase}-{estampa}.{extensao}"
+
+    return nome
