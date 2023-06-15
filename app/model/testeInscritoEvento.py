@@ -1,12 +1,19 @@
 from app.model.inscritosEventoBD import InscritosEventoBD
-from app.model.eventoBD import EventoBD
-from datetime import datetime
 
+inscrito = {
+    "idEvento": "648b6a0cef60aa7ee0da482d",
+    "idUsuario": "00000000010",
+    "nivelConhecimento": "Não conheço nada",
+    "tipoInscricao": "com notebook",
+    "pagamento": False,
+}
 
 
 inscritos = InscritosEventoBD()
-# print(inscritos.setInscrito("6489ff39eb8a09969905edd2", "0000000004", "Não conheço nada", "vaga com notebook"))
+print(inscritos.setInscricao(inscrito))
 # print(inscritos.getListaInscritos("6489fcb006b47ec368259532"))
-# print(inscritos.unsetInscrito("6489dc80cd84cfa9d7a9acf6", "0000000004"))
 # print(inscritos.setPagamento("6489ff39eb8a09969905edd2", "0000000001"))
-print(inscritos.setPresenca("6489ff39eb8a09969905edd2", "0000000001"))
+# print(inscritos.setPresenca("6489ff39eb8a09969905edd2", "0000000001"))
+# print(eventoTeste.getVagas('capacitação python3'))
+# print(eventoTeste.setVagas('capacitação python4', 'com notebook'))
+# print(eventoTeste.setVagas('capacitação python4', 'sem notebook'))

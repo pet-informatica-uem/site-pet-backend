@@ -1,8 +1,7 @@
 from pymongo import MongoClient
-from pymongo.errors import DuplicateKeyError
 from datetime import datetime
 from bson.objectid import ObjectId
-from app.model.validator.dadosEvento import ValidarEvento
+from app.model.validator.inscritosEvento import ValidarInscritosEvento
 
 
 class InscritosEventoBD:
@@ -10,13 +9,16 @@ class InscritosEventoBD:
         cliente = MongoClient()
         db = cliente["petBD"]
         self.__colecao = db["inscritos eventos"]
-        self.__validarEvento = ValidarEvento().evento()
+        self.__validarEvento = ValidarInscritosEvento().inscritos()
 
-    def criarListaInscritos(self, idEvento: str) -> dict:
-        if self.__colecao.find_one({"idEvento": idEvento}) != None:
+    def criarListaInscritos(self, dadosListaInscritos: dict) -> dict:
+        if (
+            self.__colecao.find_one({"idEvento": dadosListaInscritos["idEvento"]})
+            != None
+        ):
             return {"mensagem": "Evento já cadastrado!", "status": "409"}
 
-        self.__colecao.insert_one({"idEvento": idEvento, "inscritos": []})
+        self.__colecao.insert_one(dadosListaInscritos)
         return {"mensagem": "Lista de inscritos criada com sucesso!", "status": "200"}
 
     def deletarListaInscritos(self, idEvento: str) -> dict:
@@ -37,53 +39,40 @@ class InscritosEventoBD:
         else:
             return {"mensagem": "Evento não encontrado!", "status": "404"}
 
-    def setInscrito(
-        self,
-        idEvento: str,
-        idUsuario: str,
-        nivelConhecimento: str,
-        tipoInscricao: str,
-    ) -> dict:
-        idEvento = ObjectId(idEvento)
-        if self.__colecao.find_one({"idEvento": idEvento}) == None:
-            return {"mensagem": "Evento não encontrado!", "status": "404"}
+    def setInscricao(self, dadosInscricao: dict) -> dict:
+        idEvento = ObjectId(dadosInscricao["idEvento"])
 
         usuariosInscritos = self.__colecao.find_one(
-            {"idEvento": idEvento, "inscritos.idUsuario": idUsuario}
+            {"idEvento": idEvento, "inscritos.idUsuario": dadosInscricao["idUsuario"]}
         )
 
         if usuariosInscritos:
             return {"mensagem": "Usuário já inscrito!", "status": "409"}
+
+        vagasOfertadas = self.__setVaga(idEvento, dadosInscricao["tipoInscricao"])
+        if vagasOfertadas["status"] != "200":
+            return {
+                "mensagem": vagasOfertadas["mensagem"],
+                "status": vagasOfertadas["status"],
+            }
 
         self.__colecao.update_one(
             {"idEvento": idEvento},
             {
                 "$push": {
                     "inscritos": {
-                        "idUsuario": idUsuario,
+                        "idUsuario": dadosInscricao["idUsuario"],
                         "data/hora": datetime.now(),
-                        "pagamento": False,
+                        "pagamento": dadosInscricao["pagamento"],
                         "presente": False,
-                        "nível conhecimento": nivelConhecimento,
-                        "tipo inscrição": tipoInscricao,
+                        "nível conhecimento": dadosInscricao["nivelConhecimento"],
+                        "tipo inscrição": dadosInscricao["tipoInscricao"],
                     }
                 }
             },
         )
 
         return {"mensagem": "Usuário inscrito com sucesso!", "status": "200"}
-
-    def unsetInscrito(self, idEvento: str, idUsuario: str) -> dict:
-        idEvento = ObjectId(idEvento)
-        resultado = self.__colecao.update_one(
-            {"idEvento": idEvento},
-            {"$pull": {"inscritos": {"idUsuario": idUsuario}}},
-        )
-
-        if resultado.modified_count == 1:
-            return {"mensagem": "Usuário removido com sucesso!", "status": "200"}
-        else:
-            return {"mensagem": "Usuário não encontrado!", "status": "404"}
 
     def setPresenca(self, idEvento: str, idUsuario: str) -> dict:
         idEvento = ObjectId(idEvento)
@@ -120,3 +109,41 @@ class InscritosEventoBD:
             return {"mensagem": "Pagamento registrado com sucesso!", "status": "200"}
         else:
             return {"mensagem": "Usuário não encontrado!", "status": "404"}
+
+    def __setVaga(self, idEvento: str, tipoVaga: str) -> dict:
+        idEvento = ObjectId(idEvento)
+        vagasOfertadas = self.getVagas(idEvento)
+        if vagasOfertadas["status"] == "404":
+            return {"mensagem": vagasOfertadas["mensagem"], "status": "404"}
+
+        vagasOfertadas = vagasOfertadas["mensagem"]
+
+        if tipoVaga == "com notebook" or tipoVaga == "sem notebook":
+            if (
+                vagasOfertadas["vagas preenchidas " + tipoVaga]
+                < vagasOfertadas["vagas " + tipoVaga]
+            ):
+                resultado = self.__colecao.update_one(
+                    {"idEvento": idEvento},
+                    {"$inc": {"vagas ofertadas.vagas preenchidas " + tipoVaga: 1}},
+                )
+                if resultado.modified_count > 0:
+                    return {"mensagem": "Vaga adicionada com sucesso!", "status": "200"}
+                else:
+                    return {
+                        "mensagem": "Não foi possível adicionar a vaga.",
+                        "status": "404",
+                    }
+            else:
+                return {"mensagem": "Não há vagas disponíveis.", "status": "410"}
+
+        else:
+            return {"mensagem": "Tipo de vaga inválido.", "status": "404"}
+
+    def getVagas(self, idEvento: str) -> dict:
+        idEvento = ObjectId(idEvento)
+        resultado = self.__colecao.find_one({"idEvento": idEvento})
+        if resultado:
+            return {"mensagem": resultado["vagas ofertadas"], "status": "200"}
+        else:
+            return {"mensagem": "Evento não encontrado!", "status": "404"}

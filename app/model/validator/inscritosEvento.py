@@ -13,6 +13,16 @@ class ValidarInscritosEvento:
 
         schemaEvento = {
             "idEvento": {"type": "string", "required": True},
+            "vagas ofertadas": {
+                "type": "dict",
+                "required": True,
+                "schema": {
+                    "vagas com notebook": {"type": "integer", "required": True},
+                    "vagas sem notebook": {"type": "integer", "required": True},
+                    "vagas preenchidas com notebook": {"type": "integer", "required": True},
+                    "vagas preenchidas sem notebook": {"type": "integer", "required": True},
+                },
+            },
             "inscritos": {
                 "type": "list",
                 "required": False,
