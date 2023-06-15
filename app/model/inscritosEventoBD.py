@@ -31,6 +31,35 @@ class InscritosEventoBD:
         else:
             return {"mensagem": "Evento não encontrado!", "status": "404"}
 
+    def atualizarVagasOfertadas(self, idEvento: str, dadosVagas: dict) -> dict:
+        idEvento = ObjectId(idEvento)
+
+        try:
+            self.__colecao.update_one(
+                {"idEvento": idEvento},
+                {
+                    "$set": {
+                        "vagas ofertadas": {
+                            "vagas com notebook": dadosVagas["vagas ofertadas"][
+                                "vagas com notebook"
+                            ],
+                            "vagas sem notebook": dadosVagas["vagas ofertadas"][
+                                "vagas sem notebook"
+                            ],
+                        }
+                    }
+                },
+            )
+            return {
+                "mensagem": "Quantidade de vagas atualizadas com sucesso!",
+                "status": "200",
+            }
+        except:
+            return {
+                "mensagem": "Não foi possível atualizar a quantidade de vagas.",
+                "status": "404",
+            }
+
     def getListaInscritos(self, idEvento: str) -> dict:
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"idEvento": idEvento})

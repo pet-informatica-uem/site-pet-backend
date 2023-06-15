@@ -49,11 +49,28 @@ class EventoBD:
         if self.getEvento(nomeEvento)["status"] == "404":
             return {"mensagem": "Evento não encontrado!", "status": "404"}
 
+        dadosVagasOfertadas = {
+            "vagas ofertadas": dadosEvento.pop("vagas ofertadas"),
+        }
+
+        evento = self.__colecao.find_one({"nome evento": nomeEvento})
+        dadosEvento["data criação"] = evento["data criação"]
+
         if self.__validarEvento.validate(dadosEvento):
             try:
-                self.__colecao.update_one(
+                resultado = self.__colecao.update_one(
                     {"nome evento": nomeEvento}, {"$set": dadosEvento}
                 )
+
+                resultado = self.__insctirosEvento.atualizarVagasOfertadas(
+                    evento["_id"], dadosVagasOfertadas
+                )
+                if resultado["status"] == "404":
+                    return {
+                        "mensagem": "Não foi possível atualizar a quantidade de vagas.",
+                        "status": "404",
+                    }
+
                 return {"mensagem": "Evento atualizado com sucesso!", "status": "200"}
             except DuplicateKeyError:
                 return {"mensagem": "Evento já cadastrado!", "status": "409"}
