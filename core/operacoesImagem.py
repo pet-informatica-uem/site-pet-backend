@@ -1,6 +1,5 @@
+import fnmatch
 import time, os
-
-from fastapi import UploadFile
 
 from PIL import Image
 
@@ -10,8 +9,9 @@ IMAGES_PATH = os.path.join(
 )
 
 
-# Retorna True se o arquivo for uma imagem válida. False, caso contrário.
-def validaImagem(imagem: bytes):
+def validaImagem(imagem: str | bytes) -> bool:
+    "Retorna True se o arquivo for uma imagem válida. False, caso contrário."
+
     try:
         img = Image.open(imagem)
         img.close()
@@ -20,37 +20,65 @@ def validaImagem(imagem: bytes):
         return False
 
 
-def armazenaArteEvento(nomeEvento: str, arquivo: UploadFile) -> dict:
+def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str:
+    """Armazena a imagem em "images/eventos/arte" usando um nome base para o arquivo.
+
+    Return: caminho para a imagem salva : str. None, se a imagem for inválida.
+    """
     path = os.path.join(IMAGES_PATH, "eventos", "arte")
     retorno = __armazenaImagem(path, nomeEvento, arquivo)
 
     return retorno
 
 
-def armazenaArteQrCodeEvento(nomeEvento: str, arquivo: UploadFile) -> dict:
+def armazenaQrCodeEvento(nomeEvento: str, arquivo: str | bytes) -> str:
+    """Armazena a imagem em "images/eventos/qrcode" usando um nome base para o arquivo.
+
+    Return: caminho para a imagem salva : str. None, se a imagem for inválida.
+    """
     path = os.path.join(IMAGES_PATH, "eventos", "qrcode")
     retorno = __armazenaImagem(path, nomeEvento, arquivo)
 
     return retorno
 
 
-def __armazenaImagem(path: str, nomeEvento: str, arquivo: UploadFile):
+def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str:
+    """Armazena a imagem no path fornecido usando um nome base.
+
+    Return: caminho para a imagem salva : str. None, se a imagem for inválida.
+    """
+
     try:
-        img = Image.open(arquivo.file)
-        extensao = arquivo.filename.split(".")[-1]
-        nome = geraNomeImagem(nomeEvento, extensao=extensao)
+        img = Image.open(imagem)
+        extensao = img.format.lower()
+        nome = geraNomeImagem(nomeBase, extensao=extensao)
         pathDefinitivo = os.path.join(path, nome)
         img.save(pathDefinitivo)
         img.close()
-        return {"mensagem": "Imagem salva com sucesso.", "status": "201"}
+        return pathDefinitivo
     except IOError:
-        return {"mensagem": "Imagem inválida.", "status": "400"}
+        return None
 
 
-# Gera um nome para a imagem a partir de um nome base e uma extensao,
-# adiciona uma timestamp para evitar problemas com o cache do navegador
 def geraNomeImagem(nomeBase: str, extensao: str) -> str:
+    """Gera um nome para a imagem a partir de um nome base e uma extensao,
+    adiciona uma timestamp para evitar problemas com o cache do navegador
+    """
     estampa = int(time.time())
     nome = f"{nomeBase}-{estampa}.{extensao}"
 
     return nome
+
+
+def procuraImagem(nomeImagem: str) -> list[str]:
+    """ "Retorna uma lista com as imagens que contenham "nomeImagem" em seu nome.
+    Retorna uma lista vazia caso não encontre nada."""
+
+    ls = os.walk(IMAGES_PATH)
+    matches = []
+    for grupo in ls:
+        root, dirs, files = grupo
+        for file in files:
+            if fnmatch.fnmatch(file, f"*{nomeImagem}*"):
+                matches.append(os.path.join(root, file))
+    return matches
