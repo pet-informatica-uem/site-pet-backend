@@ -5,38 +5,36 @@ from email.message import EmailMessage
 # Função para enviar email customizado
 def emailGenerico(
     emailPet: str, senhaPet: str, emailDestino: str, titulo: str, texto: str
-) -> None:
+) -> dict:
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
     mensagem["Subject"] = titulo
     mensagem.set_content(texto)
 
-    enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
+    return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
 
 
 # Função para enviar verificação de email
-def verificarEmail(
-    emailPet: str, senhaPet: str, emailDestino: str, link: str
-) -> None:
+def verificarEmail(emailPet: str, senhaPet: str, emailDestino: str, link: str) -> dict:
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
     mensagem["Subject"] = "Pet-Info - Verficação de Conta"
     mensagem.set_content("Clique no link para verificar sua conta: " + link)
 
-    enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
+    return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
 
 
 # Função para enviar link troca de senha
-def resetarSenha(emailPet: str, senhaPet: str, emailDestino: str, link: str) -> None:
+def resetarSenha(emailPet: str, senhaPet: str, emailDestino: str, link: str) -> dict:
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
     mensagem["Subject"] = "PET-Info - Reset de senha"
     mensagem.set_content("Para resetar sua senha, acesse o link: " + link)
-    
-    enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
+
+    return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
 
 
 # Função que envia email para avisar sobre inscrição do evento
@@ -45,7 +43,7 @@ def emailConfirmacaoEvento(
     senhaPet: str,
     emailDestino: str,
     evento: dict,
-    ) -> None:
+) -> dict:
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
@@ -63,11 +61,13 @@ def emailConfirmacaoEvento(
         + evento["coindicoesEvento"]
     )
 
-    enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
+    return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
 
-    
-#Função que faz o envio de emails
-def enviarEmail(emailPet: str, senhaPet: str, emailDestino: str, mensagem: str) -> str:
+
+# Função que faz o envio de emails
+def enviarEmail(
+    emailPet: str, senhaPet: str, emailDestino: str, mensagem: EmailMessage
+) -> dict:
     try:
         contexto: ssl.SSLContext = ssl.create_default_context()
 
