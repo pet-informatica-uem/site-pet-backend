@@ -1,1 +1,1 @@
-from eventoBD import EventoBD
+from app.model.usuarioBD import UsuarioBD
