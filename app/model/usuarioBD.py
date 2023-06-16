@@ -11,12 +11,12 @@ class UsuarioBD:
         self.__colecao = db["usuarios"]
         self.__validarDados = ValidarUsuario().usuario()
 
-    def criarUsuario(self, dadoUsuario: object) -> str:
+    def criarUsuario(self, dadoUsuario: object) -> dict:
         if self.__validarDados.validate(dadoUsuario):
             try:
-                self.__colecao.insert_one(dadoUsuario)
+                resultado = self.__colecao.insert_one(dadoUsuario)
                 return {
-                    "mensagem": self.getIdUsuario(dadoUsuario["email"])["mensagem"],
+                    "mensagem": resultado.inserted_id,
                     "status": "200",
                 }
             except DuplicateKeyError:
@@ -41,7 +41,7 @@ class UsuarioBD:
             except DuplicateKeyError:
                 return {"mensagem": "CPF ou email já existem", "status": "409"}
         else:
-            return {"mensagem": "Usuário não encontrado", "status": "404"}
+            return {"mensagem": self.__validarDados.errors, "status": "404"}
 
     def getUsuario(self, idUsuario: str) -> dict:
         idUsuario = ObjectId(idUsuario)

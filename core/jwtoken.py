@@ -1,29 +1,32 @@
-import jwt
+from jose import jwt, JWTError
+from datetime import datetime, timedelta
 
-from datetime import datetime
+from core.config import config
 
 
-# Palavra chave para assinar o token
-SECRET_KEY = "P#%w5R9h@#6eG&i@"
+# Gera um token que pode ser usado para confirmar um email
+def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
+    afirmacoes = {"sub": idUsuario, "email": email, "exp": datetime.now() + duracao}
+
+    token = jwt.encode(afirmacoes, config.SEGREDO_JWT, algorithm="HS256")
+    return token
 
 
 # Verifica a validade do token e retorno o email nele contido.
 # Falha, se o token for inválido (expirado ou corrompido).
-def processaTokenAtivaConta(token) -> dict:
+def processaTokenAtivaConta(token: str) -> dict:
     # Tenta decodificar o token
     try:
-        token_info = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-    except jwt.exceptions.DecodeError:
+        token_info = jwt.decode(token, config.SEGREDO_JWT, algorithms=["HS256"])
+    except JWTError:
         return {"mensagem": "Token inválido.", "status": "400"}
 
     # Recupera as informações do token
     email = token_info.get("email")
-    validade = token_info.get("validade")
+    idUsuario = token_info.get("sub")
 
-    # Verifica a validade do token
-    validade = datetime.fromtimestamp(validade)
-    if validade > datetime.utcnow():
-        return {"mensagem": "Token expirou.", "status": "400"}
+    if not email or not idUsuario:
+        return {"mensagem": "Token inválido.", "status": "400"}
 
     # Retorna o email
-    return {"email": email, "status": "200"}
+    return {"idUsuario": idUsuario, "email": email, "status": "200"}
