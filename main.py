@@ -1,8 +1,16 @@
 from fastapi import FastAPI
+from api import usuario
+import logging
+
+logging.basicConfig(
+    handlers=[
+        logging.FileHandler("output.log", encoding="utf-8"),
+        logging.StreamHandler(),
+    ],
+    encoding="utf-8",
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
 
 petBack = FastAPI()
-
-
-@petBack.get("/")
-def read_root():
-    return {"Hello": "World"}
+petBack.include_router(usuario.usuario)
