@@ -17,5 +17,5 @@ def geraLink(email: str, url_base: str):
     token = jwt.encode(token_info, SECRET_KEY)
 
     # Gera o link para a troca de senha
-    url = url_base + "/troca-senha/" + token
+    url = url_base + "/usuarios/troca-senha/?token=" + token
     return url

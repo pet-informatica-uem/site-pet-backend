@@ -16,6 +16,6 @@ def recuperaContaControlador(email: str, url_base: str) -> dict:
     # Gera o link e envia o email se o usuário estiver cadastrado
     if retorno.get("existe"):
         link = geraLink(email, url_base)
-        resetarSenha(EMAIL_PET, SENHA_EMAIL_PET, email, link)  # Envio do email
+        resetarSenha(EMAIL_PET, SENHA_EMAIL_PET, email, link)  # Envia o email
 
     return {"mensagem": "OK", "status": "200"}
