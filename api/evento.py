@@ -43,8 +43,8 @@ def criaEvento(
         fimInscricao= datetime.strptime(dataFimInscr, formatoString),
         local= local,
         vagasOfertadas= {
-            "vagas com notebook": vagasComNote,
-            "vagas sem notebook": vagasSemNote,
+            "comNote": vagasComNote,
+            "semNote": vagasSemNote,
         },
         cargaHoraria= cargaHoraria,
         valor= valor,
@@ -58,7 +58,7 @@ def criaEvento(
     retorno = controladorNovoEvento(dadosEvento, imagens)
 
     # Trata o retorno do controlador
-    if retorno != "201":
+    if retorno.get("status") != "201":
         raise HTTPException(
             status_code=int(retorno.get("status")), detail=retorno.get("mensagem")
         )

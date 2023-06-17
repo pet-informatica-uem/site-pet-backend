@@ -4,6 +4,7 @@ import time, os
 from PIL import Image
 
 
+# Aqui ele posiciona "IMAGES_PATH" em .../site-pet-backend/images
 IMAGES_PATH = os.path.join(
     os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "images"
 )
@@ -23,7 +24,7 @@ def validaImagem(imagem: str | bytes) -> bool:
 def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     """Armazena a imagem em "images/eventos/arte" usando um nome base para o arquivo.
 
-    Return: caminho para a imagem salva : str. None, se a imagem for inválida.
+    Return: caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
     path = os.path.join(IMAGES_PATH, "eventos", "arte")
     retorno = __armazenaImagem(path, nomeEvento, arquivo)
@@ -58,7 +59,7 @@ def procuraImagem(nomeImagem: str) -> list[str]:
 
 
 def deletaImagem(nomeImagem: str) -> dict:
-    """Deleta uma imagem. Caso seja encontrada mais de uma imagem 
+    """Deleta uma imagem. Caso seja encontrada mais de uma imagem
     com o termo de busca, todas serão deletadas.
 
     nomeImagem -- nome da imagem para ser removida
@@ -68,7 +69,7 @@ def deletaImagem(nomeImagem: str) -> dict:
     \n"status": "404" se não encontrou imagem com esse nome.
     """
     imagens = procuraImagem(nomeImagem)
-    if (imagens):
+    if imagens:
         for imagem in imagens:
             os.remove(imagem)
         return {"mensagem": "Imagem(s) deleta(s) com sucesso!", "status": "200"}
