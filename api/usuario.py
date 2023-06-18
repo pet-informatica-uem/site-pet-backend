@@ -1,14 +1,19 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Form, HTTPException, Request, Response, status
-from pydantic import EmailStr, SecretStr
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel, EmailStr, SecretStr
 
 from app.controllers.usuario import (
     ativaContaControlador,
+    autenticaUsuarioControlador,
     cadastraUsuarioControlador,
+    getUsuarioAutenticadoControlador,
+    getUsuarioControlador,
     recuperaContaControlador,
 )
+from app.model.usuario import Usuario, UsuarioSenha
 from core.ValidacaoCadastro import validaCpf, validaEmail, validaSenha
 
 roteador = APIRouter(
@@ -28,7 +33,7 @@ roteador = APIRouter(
     " - Deve ter ao menos um caractere não alfanumérico\n",
     status_code=status.HTTP_201_CREATED,
 )
-async def cadastrarUsuario(
+def cadastrarUsuario(
     nomeCompleto: Annotated[str, Form(max_length=200)],
     cpf: Annotated[str, Form(max_length=200)],
     email: Annotated[EmailStr, Form()],
@@ -58,7 +63,11 @@ async def cadastrarUsuario(
 
     # despacha para controlador
     resultado = cadastraUsuarioControlador(
-        nomeCompleto, cpf, email, senha.get_secret_value(), curso
+        nomeCompleto=nomeCompleto,
+        cpf=cpf,
+        email=email,
+        senha=senha.get_secret_value(),
+        curso=curso,
     )
     if resultado["status"] != "201":
         logging.info(
@@ -79,7 +88,7 @@ async def cadastrarUsuario(
     description="Confirma o email de uma conta através do token suprido.",
     status_code=status.HTTP_200_OK,
 )
-async def confirmaEmail(token: str):
+def confirmaEmail(token: str):
     resultado = ativaContaControlador(token)
     if resultado["status"] != "200":
         raise HTTPException(
@@ -112,3 +121,87 @@ def recuperaConta(
 
     response.status_code = int(resposta["status"])
     return {"mensagem": resposta.get("mensagem")}
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+@roteador.post(
+    "/token",
+    name="Autenticar",
+    description="""
+    Autentica o usuário através do email e senha fornecidos.
+    """,
+    status_code=status.HTTP_200_OK,
+    response_model=Token,
+)
+def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    exc = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Não autenticado",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+
+    # obtém dados
+    email = dados.username
+    senha = dados.password
+
+    # normaliza email
+    email = email.lower().strip()
+
+    # chama controlador
+    resp = autenticaUsuarioControlador(email, senha)
+    if resp["status"] != "200":
+        raise exc
+
+    return resp["mensagem"]
+
+
+tokenAcesso = OAuth2PasswordBearer(tokenUrl="/usuario/token")
+
+
+def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
+    resp = getUsuarioAutenticadoControlador(token)
+    if resp["status"] != "200":
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Não autenticado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    else:
+        return resp["mensagem"]
+
+
+@roteador.get(
+    "/id/eu",
+    name="Obter detalhes do usuário autenticado",
+    description="""
+    Retorna detalhes do usuário autenticado.
+    """,
+    status_code=status.HTTP_200_OK,
+    response_model=Usuario,
+)
+def getUsuarioEu(usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)]):
+    return usuario
+
+
+@roteador.get(
+    "/id/{id}",
+    name="Obter detalhes do usuário autenticado",
+    description="""
+    Retorna detalhes do usuário autenticado.
+    """,
+    status_code=status.HTTP_200_OK,
+    response_model=Usuario,
+)
+def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
+    resp = getUsuarioControlador(id)
+    if resp["status"] != "200":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Usuário não encontrado",
+        )
+    else:
+        return resp["mensagem"]
