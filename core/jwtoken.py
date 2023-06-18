@@ -6,7 +6,7 @@ from core.config import config
 
 # Gera um token que pode ser usado para confirmar um email
 def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
-    afirmacoes = {"sub": idUsuario, "email": email, "exp": datetime.now() + duracao}
+    afirmacoes = {"id": idUsuario, "email": email, "exp": datetime.now() + duracao}
 
     token = jwt.encode(afirmacoes, config.SEGREDO_JWT, algorithm="HS256")
     return token
@@ -23,7 +23,7 @@ def processaTokenAtivaConta(token: str) -> dict:
 
     # Recupera as informações do token
     email = token_info.get("email")
-    idUsuario = token_info.get("sub")
+    idUsuario = token_info.get("id")
 
     if not email or not idUsuario:
         return {"mensagem": "Token inválido.", "status": "400"}
