@@ -2,7 +2,7 @@ import logging
 from typing import Annotated
 
 from fastapi import APIRouter, Form, HTTPException, status
-from pydantic import EmailStr
+from pydantic import EmailStr, SecretStr
 
 from app.controllers.usuario import ativaContaControlador, cadastraUsuarioControlador
 from core.ValidacaoCadastro import validaCpf, validaEmail, validaSenha
@@ -28,14 +28,16 @@ async def cadastrarUsuario(
     nomeCompleto: Annotated[str, Form(max_length=200)],
     cpf: Annotated[str, Form(max_length=200)],
     email: Annotated[EmailStr, Form()],
-    senha: Annotated[str, Form(max_length=200)],
-    confirmacaoSenha: Annotated[str, Form(max_length=200)],
+    senha: Annotated[SecretStr, Form(max_length=200)],
+    confirmacaoSenha: Annotated[SecretStr, Form(max_length=200)],
     curso: Annotated[str | None, Form(max_length=200)] = None,
 ):
     # valida dados
     if (
         not validaCpf(cpf)
-        or not validaSenha(senha, confirmacaoSenha)
+        or not validaSenha(
+            senha.get_secret_value(), confirmacaoSenha.get_secret_value()
+        )
         or not validaEmail(email)
     ):
         logging.info(
@@ -51,7 +53,9 @@ async def cadastrarUsuario(
     cpf = "".join(c for c in cpf if c in "0123456789")
 
     # despacha para controlador
-    resultado = cadastraUsuarioControlador(nomeCompleto, cpf, email, senha, curso)
+    resultado = cadastraUsuarioControlador(
+        nomeCompleto, cpf, email, senha.get_secret_value(), curso
+    )
     if resultado["status"] != "201":
         logging.info(
             "Tentativa de cadastro de usuário falhou. Dados: "
