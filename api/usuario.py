@@ -1,19 +1,23 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Form, HTTPException, status
+from fastapi import APIRouter, Form, HTTPException, Request, Response, status
 from pydantic import EmailStr, SecretStr
 
-from app.controllers.usuario import ativaContaControlador, cadastraUsuarioControlador
+from app.controllers.usuario import (
+    ativaContaControlador,
+    cadastraUsuarioControlador,
+    recuperaContaControlador,
+)
 from core.ValidacaoCadastro import validaCpf, validaEmail, validaSenha
 
-usuario = APIRouter(
+roteador = APIRouter(
     prefix="/usuario",
     tags=["Usuário"],
 )
 
 
-@usuario.post(
+@roteador.post(
     "/cadastrar",
     name="Cadastrar usuário",
     description="Cadastra um novo usuário com os dados fornecidos.\n"
@@ -69,7 +73,7 @@ async def cadastrarUsuario(
     return resultado["mensagem"]
 
 
-@usuario.get(
+@roteador.get(
     "/confirmacaoEmail",
     name="Confirmação de email",
     description="Confirma o email de uma conta através do token suprido.",
@@ -81,3 +85,30 @@ async def confirmaEmail(token: str):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Token inválido."
         )
+
+
+@roteador.post(
+    "/recupera",
+    name="Recuperar conta",
+    description="""
+        Envia um email para a conta fornecida para trocar a senha.
+        Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
+    """,
+)
+def recuperaConta(
+    email: Annotated[EmailStr, Form()], request: Request, response: Response
+):
+    email = EmailStr(email.lower())
+
+    # Verifica se o email é válido
+    if not validaEmail(email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email inválido.",
+        )
+
+    # Passa o email para o controlador
+    resposta = recuperaContaControlador(email)
+
+    response.status_code = int(resposta["status"])
+    return {"mensagem": resposta.get("mensagem")}

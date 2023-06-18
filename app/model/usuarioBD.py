@@ -24,7 +24,7 @@ class UsuarioBD:
         else:
             return {"mensagem": self.__validarDados.errors, "status": "400"}
 
-    def deletarUsuario(self, idUsuario: str) -> str:
+    def deletarUsuario(self, idUsuario: str) -> dict:
         idUsuario = ObjectId(idUsuario)
         resultado = self.__colecao.delete_one({"_id": idUsuario})
         if resultado.deleted_count == 1:

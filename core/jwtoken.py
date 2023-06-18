@@ -7,7 +7,7 @@ from core.config import config
 
 def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
     """Gera e retorna um token JWT que pode ser usado para confirmar um email."""
-    afirmacoes = {"id": idUsuario, "email": email, "exp": datetime.now() + duracao}
+    afirmacoes = {"sub": idUsuario, "email": email, "exp": datetime.now() + duracao}
 
     token = jwt.encode(afirmacoes, config.SEGREDO_JWT, algorithm="HS256")
     return token
@@ -32,10 +32,23 @@ def processaTokenAtivaConta(token: str) -> dict:
 
     # Recupera as informações do token
     email = token_info.get("email")
-    idUsuario = token_info.get("id")
+    idUsuario = token_info.get("sub")
 
     if not email or not idUsuario:
         return {"mensagem": "Token inválido.", "status": "400"}
 
     # Retorna o email
     return {"mensagem": {"idUsuario": idUsuario, "email": email}, "status": "200"}
+
+# TODO unificar esquema de geração de tokens jwt
+# Gera um link para trocar a senha do usuário com o email fornecido
+def geraLink(email: str):
+    # Data de validade do token
+    validade = datetime.utcnow() + timedelta(minutes=15)
+    # Gera o token
+    token_info = {"email": email, "exp": validade}
+    token = jwt.encode(token_info, config.SEGREDO_JWT)
+
+    # Gera o link para a troca de senha
+    url = config.CAMINHO_BASE + "/usuarios/troca-senha/?token=" + token
+    return url

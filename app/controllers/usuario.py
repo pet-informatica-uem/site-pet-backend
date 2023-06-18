@@ -1,10 +1,11 @@
 from datetime import datetime, timedelta
 
-from app.controllers.operacoesEmail import verificarEmail
+from app.controllers.operacoesEmail import resetarSenha, verificarEmail
 from app.model.usuarioBD import UsuarioBD
+from core.autenticacao import hashSenha
 from core.config import config
-from core.jwtoken import geraTokenAtivaConta, processaTokenAtivaConta
-from core.usuario import ativaconta, hashSenha
+from core.jwtoken import geraLink, geraTokenAtivaConta, processaTokenAtivaConta
+from core.usuario import ativaconta, verificaSeUsuarioExiste
 
 
 def ativaContaControlador(token: str) -> dict:
@@ -94,3 +95,18 @@ def cadastraUsuarioControlador(
         pass
 
     return {"status": "201", "mensagem": id}
+
+
+# Envia um email para trocar de senha se o email estiver cadastrado no bd
+def recuperaContaControlador(email: str) -> dict:
+    # Verifica se o usuário está cadastrado no bd
+    retorno = verificaSeUsuarioExiste(email)
+    if retorno.get("status") != "200":
+        return retorno
+
+    # Gera o link e envia o email se o usuário estiver cadastrado
+    if retorno.get("existe"):
+        link = geraLink(email)
+        resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
+
+    return {"mensagem": "OK", "status": "200"}
