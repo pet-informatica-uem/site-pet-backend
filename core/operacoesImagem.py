@@ -10,17 +10,6 @@ IMAGES_PATH = os.path.join(
 )
 
 
-def validaImagem(imagem: str | bytes) -> bool:
-    "Retorna True se o arquivo for uma imagem válida. False, caso contrário."
-
-    try:
-        img = Image.open(imagem)
-        img.close()
-        return True
-    except IOError:
-        return False
-
-
 def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     """Armazena a imagem em "images/eventos/arte" usando um nome base para o arquivo.
 
@@ -35,7 +24,7 @@ def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str:
 def armazenaQrCodeEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     """Armazena a imagem em "images/eventos/qrcode" usando um nome base para o arquivo.
 
-    Return: caminho para a imagem salva : str. None, se a imagem for inválida.
+    Return: caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
     path = os.path.join(IMAGES_PATH, "eventos", "qrcode")
     retorno = __armazenaImagem(path, nomeEvento, arquivo)
@@ -59,14 +48,11 @@ def procuraImagem(nomeImagem: str) -> list[str]:
 
 
 def deletaImagem(nomeImagem: str) -> dict:
-    """Deleta uma imagem. Caso seja encontrada mais de uma imagem
-    com o termo de busca, todas serão deletadas.
+    """Deleta uma imagem. Caso seja encontrado mais de uma imagem com o termo de busca, todas serão deletadas.
 
-    nomeImagem -- nome da imagem para ser removida
+    :param nomeImagem -- nome da imagem para ser removida
 
-    Return:
-    \n"status": "200" se deu certo.
-    \n"status": "404" se não encontrou imagem com esse nome.
+    :return: "status": "200"(OK) | "status": "404" (Not Found).
     """
     imagens = procuraImagem(nomeImagem)
     if imagens:
@@ -83,12 +69,11 @@ def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str:
     """
 
     try:
-        img = Image.open(imagem)
-        extensao = img.format.lower()
-        nome = __geraNomeImagem(nomeBase, extensao=extensao)
-        pathDefinitivo = os.path.join(path, nome)
-        img.save(pathDefinitivo)
-        img.close()
+        with Image.open(imagem) as img:
+            extensao = img.format.lower()
+            nome = __geraNomeImagem(nomeBase, extensao=extensao)
+            pathDefinitivo = os.path.join(path, nome)
+            img.save(pathDefinitivo)
         return pathDefinitivo
     except IOError:
         return None

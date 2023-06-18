@@ -8,7 +8,7 @@ from app.controllers.evento import controladorNovoEvento
 
 
 # Especifica o formato das datas para serem convertidos
-formatoString = "%d/%m/%Y"
+formatoString = "%d/%m/%Y %H:%M"
 
 roteador = APIRouter(prefix="/evento", tags=["Eventos"])
 
@@ -32,7 +32,7 @@ def criaEvento(
     cargaHoraria: Annotated[int, Form()],
     valor: Annotated[int, Form()],
     imagemArte: UploadFile,
-    imagemQrCode: UploadFile | None,
+    imagemQrCode: UploadFile | None = None,
 ):
     dadosEvento = DadosEvento(
         nomeEvento= nomeEvento,
