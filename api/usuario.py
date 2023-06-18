@@ -1,16 +1,11 @@
-from datetime import datetime, timedelta
 import logging
 from typing import Annotated
+
 from fastapi import APIRouter, Form, HTTPException, status
 from pydantic import EmailStr
-from app.controllers.operacoesEmail import verificarEmail
-from app.controllers.usuario import ativaContaControlador, cadastraUsuarioControlador
-from app.model.usuarioBD import UsuarioBD
-from core import jwtoken
-from core.config import config
 
+from app.controllers.usuario import ativaContaControlador, cadastraUsuarioControlador
 from core.ValidacaoCadastro import validaCpf, validaEmail, validaSenha
-from core.usuario import hashSenha
 
 usuario = APIRouter(
     prefix="/usuario",
@@ -21,7 +16,12 @@ usuario = APIRouter(
 @usuario.post(
     "/cadastrar",
     name="Cadastrar usuário",
-    description="Cadastra um novo usuário com os dados fornecidos. Os dados fornecidos devem ser válidos.",
+    description="Cadastra um novo usuário com os dados fornecidos.\n"
+    "Os dados fornecidos devem ser válidos. Os requisitos de senha são:\n"
+    " - Deve possuir entre 8 e 64 caracteres\n"
+    " - Deve ter ao menos uma letra maiúscula\n"
+    " - Deve ter ao menos um dígito\n"
+    " - Deve ter ao menos um caractere não alfanumérico\n",
     status_code=status.HTTP_201_CREATED,
 )
 async def cadastrarUsuario(

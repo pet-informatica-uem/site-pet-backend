@@ -1,25 +1,33 @@
 from datetime import datetime, timedelta
-import logging
-from app.controllers.operacoesEmail import verificarEmail
 
+from app.controllers.operacoesEmail import verificarEmail
 from app.model.usuarioBD import UsuarioBD
-from core import jwtoken
 from core.config import config
-from core.jwtoken import processaTokenAtivaConta
+from core.jwtoken import geraTokenAtivaConta, processaTokenAtivaConta
 from core.usuario import ativaconta, hashSenha
 
 
 def ativaContaControlador(token: str) -> dict:
+    """
+    Recebe um token JWT de ativação de conta.
+
+    Caso o token seja válido, ativa a conta e retorna um dicionário
+    com campo "status" igual a "200".
+
+    Caso contrário, retorna um dicionário com campo "status" diferente
+    de "200" e um campo "mensagem" contendo uma mensagem de erro.
+    """
+
     # Verifica o token e recupera o email
     retorno = processaTokenAtivaConta(token)
     if retorno.get("status") != "200":
         return retorno
 
     # Ativa a conta no BD
-    id = retorno.get("idUsuario")
-    email = retorno.get("email")
-    assert id is not None
-    assert email is not None
+    msg = retorno.get("mensagem")
+    assert msg is not None  # tipagem
+    id = msg["idUsuario"]
+    email = msg["email"]
 
     retorno = ativaconta(id, email)
 
@@ -29,6 +37,26 @@ def ativaContaControlador(token: str) -> dict:
 def cadastraUsuarioControlador(
     nomeCompleto: str, cpf: str, email: str, senha: str, curso: str | None
 ) -> dict:
+    """
+    Cria uma conta com os dados fornecidos, e envia um email
+    de confirmação de criação de conta ao endereço fornecido.
+
+    Este controlador assume que o cpf e email já estão nas formas
+    normalizadas (cpf contendo 11 dígitos, email sem espaço em branco
+    prefixado ou sufixado e com todos os caracteres em caixa baixa).
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+
+    - Se a conta foi criada com sucesso, "status" == "201" e "mensagem" conterá
+    o _id da conta (str).
+    - Se a conta não foi criada com sucesso, "status" != "201" e "mensagem" conterá
+    uma mensagem de erro (str).
+
+    A criação da conta pode não suceder por erro na validação de dados,
+    por já haver uma conta cadastrada com tal CPF ou email ou por falha
+    de conexão com o banco de dados.
+    """
+
     # 3. verifico se o email já existe e crio o usuário
     bd = UsuarioBD()
     resultado = bd.criarUsuario(
@@ -50,7 +78,7 @@ def cadastraUsuarioControlador(
     id = str(resultado["mensagem"])
 
     # 4. gera token de ativação válido por 24h
-    token = jwtoken.geraTokenAtivaConta(id, email, timedelta(days=1))
+    token = geraTokenAtivaConta(id, email, timedelta(days=1))
 
     # 5. manda email de ativação
     # não é necessário fazer urlencode pois jwt é url-safe
