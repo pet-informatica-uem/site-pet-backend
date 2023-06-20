@@ -40,6 +40,7 @@ def processaTokenAtivaConta(token: str) -> dict:
     # Retorna o email
     return {"mensagem": {"idUsuario": idUsuario, "email": email}, "status": "200"}
 
+
 # TODO unificar esquema de geração de tokens jwt
 # Gera um link para trocar a senha do usuário com o email fornecido
 def geraLink(email: str):
