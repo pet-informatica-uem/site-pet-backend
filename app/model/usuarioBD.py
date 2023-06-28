@@ -58,13 +58,13 @@ class UsuarioBD:
 
     def getListaPetianos(self) -> dict:
         return {
-            "mensagem": list(self.__colecao.find({"petiano": "petiano"})),
+            "mensagem": list(self.__colecao.find({"tipo conta": "petiano"})),
             "status": "200",
         }
 
     def getListaPetianosEgressos(self) -> dict:
         return {
-            "mensagem": list(self.__colecao.find({"petiano": "petiano egresso"})),
+            "mensagem": list(self.__colecao.find({"tipo conta": "petiano egresso"})),
             "status": "200",
         }
 

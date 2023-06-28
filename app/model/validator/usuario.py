@@ -23,7 +23,7 @@ class ValidarUsuario:
                 "allowed": ["ativo", "inativo"],
             },
             "senha": {"type": "string", "required": True},
-            "tipo conta": {       
+            "tipo conta": {
                 "type": "string",
                 "required": True,
                 "allowed": ["petiano", "petiano egresso", "estudante"],
@@ -37,7 +37,7 @@ class ValidarUsuario:
                 },
             },
             "redes sociais": {
-                "type": "dict",      
+                "type": "dict",
                 "required": False,
                 "schema": {
                     "github": {"type": "string"},
@@ -46,7 +46,7 @@ class ValidarUsuario:
                     "twitter": {"type": "string"},
                 },
             },
-            "foto perfil": {'type': 'string', 'required': False},  
+            "foto perfil": {"type": "string", "required": False},
             "data criacao": {"type": "datetime"},
         }
 

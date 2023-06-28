@@ -2,7 +2,7 @@ import logging
 
 from fastapi import FastAPI
 
-from api import roteadorUsuario
+from api import roteadorUsuario, roteadorPetianos
 
 logging.basicConfig(
     handlers=[
@@ -16,5 +16,6 @@ logging.basicConfig(
 
 petBack = FastAPI()
 petBack.include_router(roteadorUsuario)
+petBack.include_router(roteadorPetianos)
 
 logging.info("Backend inicializado")
