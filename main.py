@@ -1,12 +1,16 @@
-from api import roteadorUsuario
-
 import logging
+
 from fastapi import FastAPI
 
+from api import roteadorUsuario
+
 logging.basicConfig(
-    filename="output.log",
+    handlers=[
+        logging.FileHandler("output.log", encoding="utf-8"),
+        logging.StreamHandler(),
+    ],
     encoding="utf-8",
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
