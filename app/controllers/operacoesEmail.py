@@ -33,7 +33,6 @@ def resetarSenha(emailPet: str, senhaPet: str, emailDestino: str, link: str) -> 
     mensagem["To"] = emailDestino
     mensagem["Subject"] = "PET-Info - Reset de senha"
     mensagem.set_content("Para resetar sua senha, acesse o link: " + link)
-
     return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
 
 
