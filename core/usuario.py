@@ -54,17 +54,20 @@ def verificaSeUsuarioExiste(email: str) -> dict:
 
     Retorno:
         dict:
-            \n- {"existe": True, "status": "200"}: Existe usuário associado. False, caso contrário.
-            \n- {"mensagem": "Erro interno", "status": "500"}: Problema no banco de dados.
+            - {"mensagem": True, "status": "200"}: Existe usuário associado.
+
+            - {"mensagem": False, "status": "400"}: Não existe usuário associado.
+
+            - {"mensagem": "Erro interno", "status": "500"}: Problema no banco de dados.
     """
 
     try:
         conexao = UsuarioBD()
 
         # Verifica se existe usuário com esse email
-        if conexao.getIdUsuario(email) == "Usuário não encontrado":
-            return {"existe": False, "status": "200"}
-        return {"existe": True, "status": "200"}
+        if conexao.getIdUsuario(email)["status"] == "404":
+            return {"mensagem": False, "status": "404"}
+        return {"mensagem": True, "status": "200"}
 
     except Exception as e:
         logging.warning("Erro no banco de dados: " + str(e))
