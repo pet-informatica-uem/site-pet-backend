@@ -12,6 +12,7 @@ from app.controllers.usuario import (
     getUsuarioAutenticadoControlador,
     getUsuarioControlador,
     recuperaContaControlador,
+    editaUsuarioControlador,
 )
 from app.model.usuario import Usuario, UsuarioSenha
 from core.ValidacaoCadastro import validaCpf, validaEmail, validaSenha
@@ -205,3 +206,40 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
         )
     else:
         return resp["mensagem"]
+
+
+@roteador.post(
+    "/id/eu/editar-dados",
+    name="Editar dados do usuário autenticado",
+    description="""O usuário é capaz de editar os dados""",
+)
+def editarDados(
+    nomeCompleto: Annotated[str, Form(max_length=200)],
+    curso: Annotated[str | None, Form(max_length=200)] = None,
+    github: Annotated[str | None, Form(max_length=200)] = None,
+    instagram: Annotated[str | None, Form(max_length=200)] = None,
+    linkedin: Annotated[str | None, Form(max_length=200)] = None,
+    twitter: Annotated[str | None, Form(max_length=200)] = None,
+    token: Annotated[str, Depends(tokenAcesso)] = ...,
+):
+    if getUsuarioAutenticadoControlador(token)["status"] == "200":
+        tokenAcesso = OAuth2PasswordBearer(tokenUrl="/usuario/token")
+
+        redesSociais = {
+            "github": github,
+            "linkedin": linkedin,
+            "instagram": instagram,
+            "twitter": twitter,
+        }
+
+        resultado = editaUsuarioControlador(
+            token=token,
+            nomeCompleto=nomeCompleto,
+            curso=curso,
+            redesSociais=redesSociais,
+        )
+
+        return resultado
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário não verificado"
+    )

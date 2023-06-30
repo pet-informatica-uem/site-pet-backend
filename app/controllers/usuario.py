@@ -183,7 +183,6 @@ def getUsuarioAutenticadoControlador(token: str) -> dict:
     ou for inválido.
 
     Retorna um dicionário com campos "status" e "mensagem".
-
     - "status" == "200" se e somente se os dados foram recuperados com sucesso.
     - "mensagem" contém uma instância da classe UsuarioSenha em caso de sucesso e uma
       mensagem de erro caso contrário.
@@ -230,4 +229,34 @@ def getUsuarioControlador(id: str) -> dict:
         return {"status": "200", "mensagem": usuario}
     except Exception as e:
         logging.error("Erro ao recuperar dados do usuário: " + str(e))
+        return {"status": "500", "mensagem": str(e)}
+
+
+def editaUsuarioControlador(
+    *, token: str, nomeCompleto: str, curso: str | None, redesSociais: dict | None
+) -> dict:
+    try:
+        bd = UsuarioBD()
+        chave = getUsuarioAutenticadoControlador(token=token)
+        if chave["status"] == "200":
+            user: dict = chave["mensagem"].paraBd()
+            user.update(
+                {
+                    "nome": nomeCompleto,
+                    "curso": curso,
+                    "redes sociais": redesSociais,
+                }
+            )
+            id = user.pop("_id")
+            print(id, user)
+            x = bd.atualizarUsuario(
+                id,
+                user,
+            )
+            print(x, repr(x))
+            return {"status": "200", "mensagem": user["_id"]}
+        return {"status": "400", "mensagem": "Usuário inválido"}
+    except Exception as e:
+        print(e, repr(e))
+        logging.error("Erro na atualização de usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}
