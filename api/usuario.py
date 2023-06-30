@@ -3,7 +3,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr, SecretStr
+from pydantic import BaseModel, EmailStr, HttpUrl, SecretStr
 
 from app.controllers.usuario import (
     ativaContaControlador,
@@ -216,10 +216,10 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
 def editarDados(
     nomeCompleto: Annotated[str, Form(max_length=200)],
     curso: Annotated[str | None, Form(max_length=200)] = None,
-    github: Annotated[str | None, Form(max_length=200)] = None,
-    instagram: Annotated[str | None, Form(max_length=200)] = None,
-    linkedin: Annotated[str | None, Form(max_length=200)] = None,
-    twitter: Annotated[str | None, Form(max_length=200)] = None,
+    github: Annotated[HttpUrl  | None, Form(max_length=200)] = None,
+    instagram: Annotated[HttpUrl | None, Form(max_length=200)] = None,
+    linkedin: Annotated[HttpUrl  | None, Form(max_length=200)] = None,
+    twitter: Annotated[HttpUrl  | None, Form(max_length=200)] = None,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
     if getUsuarioAutenticadoControlador(token)["status"] == "200":

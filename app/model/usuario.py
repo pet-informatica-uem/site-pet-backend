@@ -112,7 +112,7 @@ class Usuario(BaseModel):
 
         if not (self.foto):
             d.pop("foto perfil")
-        
+
         if not (self.github or self.linkedin or self.instagram or self.twitter):
             d.pop("redes sociais")
 

@@ -235,6 +235,20 @@ def getUsuarioControlador(id: str) -> dict:
 def editaUsuarioControlador(
     *, token: str, nomeCompleto: str, curso: str | None, redesSociais: dict | None
 ) -> dict:
+    """
+    Atualiza os dados básicos (nome, curso, redes sociais) da conta de um usuário existente.
+
+    Este controlador assume que as redes sociais estejam no formato de links ou None.
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+
+    - Se a conta foi atualizada, "status" == "200" e "mensagem" conterá
+    o _id da conta (str).
+    - Se a conta não foi criada com sucesso, "status" != "201" e "mensagem" conterá
+    uma mensagem de erro (str).
+
+    A atualização da conta pode não suceder por erro na validação de dados.
+    """
     try:
         bd = UsuarioBD()
         chave = getUsuarioAutenticadoControlador(token=token)
@@ -248,15 +262,14 @@ def editaUsuarioControlador(
                 }
             )
             id = user.pop("_id")
-            print(id, user)
-            x = bd.atualizarUsuario(
+            if bd.atualizarUsuario(
                 id,
                 user,
-            )
-            print(x, repr(x))
-            return {"status": "200", "mensagem": user["_id"]}
+            )["status"] == "200":
+                return {"status": "200", "mensagem": user["_id"]}
+            else:
+               return {"status": "400", "mensagem": "Erro na função de atualização de Usuário"} 
         return {"status": "400", "mensagem": "Usuário inválido"}
     except Exception as e:
-        print(e, repr(e))
         logging.error("Erro na atualização de usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}
