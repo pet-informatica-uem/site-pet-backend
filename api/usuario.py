@@ -223,7 +223,6 @@ def editarDados(
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
     if getUsuarioAutenticadoControlador(token)["status"] == "200":
-        tokenAcesso = OAuth2PasswordBearer(tokenUrl="/usuario/token")
 
         redesSociais = {
             "github": github,

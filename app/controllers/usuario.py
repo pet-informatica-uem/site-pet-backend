@@ -266,9 +266,11 @@ def editaUsuarioControlador(
                 id,
                 user,
             )["status"] == "200":
-                return {"status": "200", "mensagem": user["_id"]}
+                return {"status": "200", "mensagem": id}
             else:
-               return {"status": "400", "mensagem": "Erro na função de atualização de Usuário"} 
+                print('-' * 20)
+                print(id)
+                return {"status": "400", "mensagem": "Erro na função de atualização de Usuário"} 
         return {"status": "400", "mensagem": "Usuário inválido"}
     except Exception as e:
         logging.error("Erro na atualização de usuário: " + str(e))
