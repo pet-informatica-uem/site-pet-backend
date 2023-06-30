@@ -216,10 +216,10 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
 def editarDados(
     nomeCompleto: Annotated[str, Form(max_length=200)],
     curso: Annotated[str | None, Form(max_length=200)] = None,
-    github: Annotated[HttpUrl  | None, Form(max_length=200)] = None,
-    instagram: Annotated[HttpUrl | None, Form(max_length=200)] = None,
-    linkedin: Annotated[HttpUrl  | None, Form(max_length=200)] = None,
-    twitter: Annotated[HttpUrl  | None, Form(max_length=200)] = None,
+    github: Annotated[HttpUrl  | None, Form()] = None,
+    instagram: Annotated[HttpUrl | None, Form()] = None,
+    linkedin: Annotated[HttpUrl  | None, Form()] = None,
+    twitter: Annotated[HttpUrl  | None, Form()] = None,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
     if getUsuarioAutenticadoControlador(token)["status"] == "200":
