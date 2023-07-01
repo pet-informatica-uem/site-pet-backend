@@ -9,6 +9,16 @@ IMAGES_PATH = os.path.join(
     os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "images"
 )
 
+def validaImagem(imagem: bytes):
+    eh_valida = True
+    try:
+        with Image.open(imagem) as img:
+            if img.format not in ['PNG', 'JPEG']:
+                eh_valida = False
+    except IOError:
+        return False
+
+    return eh_valida
 
 def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     """Armazena a imagem em "images/eventos/arte" usando um nome base para o arquivo.
@@ -32,12 +42,16 @@ def armazenaQrCodeEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     return retorno
 
 
-def procuraImagem(nomeImagem: str) -> list[str]:
-    """ "Retorna uma lista com os caminhos para as imagens que
-    contenham "nomeImagem" em seu nome. Retorna uma lista vazia
+def procuraImagem(nomeImagem: str, searchPath: str = "") -> list[str]:
+    """Retorna uma lista com os caminhos para as imagens que
+    contenham 'nomeImagem' em seu nome. Retorna uma lista vazia
     caso não encontre nada."""
 
-    ls = os.walk(IMAGES_PATH)
+    path = IMAGES_PATH
+    if searchPath:
+        path = os.path.join(IMAGES_PATH, searchPath)
+
+    ls = os.walk(path)
     matches = []
     for grupo in ls:
         root, dirs, files = grupo
@@ -47,14 +61,14 @@ def procuraImagem(nomeImagem: str) -> list[str]:
     return matches
 
 
-def deletaImagem(nomeImagem: str) -> dict:
+def deletaImagem(nomeImagem: str, path: str = "") -> dict:
     """Deleta uma imagem. Caso seja encontrado mais de uma imagem com o termo de busca, todas serão deletadas.
 
     :param nomeImagem -- nome da imagem para ser removida
 
     :return: "status": "200"(OK) | "status": "404" (Not Found).
     """
-    imagens = procuraImagem(nomeImagem)
+    imagens = procuraImagem(nomeImagem, path)
     if imagens:
         for imagem in imagens:
             os.remove(imagem)

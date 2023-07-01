@@ -10,18 +10,12 @@ class DadosEvento(BaseModel):
     inicioInscricao: datetime
     fimInscricao: datetime
     local: str
-    vagasOfertadas: dict[str, int]
+    vagasComNote: int 
+    vagasSemNote: int
     cargaHoraria: int
     valor: int
     arteEvento: str
     arteQrcode: str = None
-
-    @validator("vagasOfertadas")
-    def validationVagasOfertadas(cls, v):
-        keys = v.keys()
-        if len(keys) == 2 and "comNote" in keys and "semNote" in keys:
-            return v
-        raise ValueError("Deve conter as chaves 'comNote' e 'semNote', apenas.")
 
     def dict(self):
         modelDict = {
@@ -33,8 +27,8 @@ class DadosEvento(BaseModel):
             "data fim inscrição": self.fimInscricao,
             "local": self.local,
             "vagas ofertadas": {
-                "vagas com notebook": self.vagasOfertadas["comNote"],
-                "vagas sem notebook": self.vagasOfertadas["semNote"],
+                "vagas com notebook": self.vagasComNote,
+                "vagas sem notebook": self.vagasSemNote,
             },
             "carga horária": self.cargaHoraria,
             "valor": self.valor,
@@ -42,6 +36,22 @@ class DadosEvento(BaseModel):
             "arte qrcode": self.arteQrcode,
         }
         return modelDict
+
+
+class DadosEventoOpcional(BaseModel):
+    nomeEvento: str = None
+    resumo: str = None
+    preRequisitos: str = None
+    dataHoraEvento: datetime = None
+    inicioInscricao: datetime = None
+    fimInscricao: datetime = None
+    local: str = None
+    vagasComNote: int = None
+    vagasSemNote: int = None
+    cargaHoraria: int = None
+    valor: int = None
+    arteEvento: str = None
+    arteQrcode: str = None
 
 
 # dEven = DadosEvento(
