@@ -95,5 +95,9 @@ Thumbs.db
 .LSOverride
 Icon
 ._*
+
+# logs
 *.log
+
+#pyenv
 .python-version

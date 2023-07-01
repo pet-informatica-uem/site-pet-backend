@@ -14,9 +14,13 @@ packages = [
 python = "^3.11"
 uvicorn = {extras = ["standard"], version = "^0.22.0"}
 fastapi = "^0.95.2"
-pymongo = "^4.3.3"
 cerberus = "^1.3.4"
 pillow = "^9.5.0"
+pymongo = "^4.3.3"
+pyjwt = "^2.7.0"
+passlib = "^1.7.4"
+email-validator = "^2.0.0.post2"
+python-multipart = "^0.0.6"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

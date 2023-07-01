@@ -4,8 +4,8 @@ from core.operacoesImagem import (
     deletaImagem,
     validaImagem,
 )
-from app.models import EventoBD
-from app.models.evento import DadosEvento
+from app.model import EventoBD
+from app.model.evento import DadosEvento
 
 from fastapi import UploadFile
 
@@ -24,6 +24,7 @@ def controladorNovoEvento(
 
     # Armazena as imagens
     caminhoArte = armazenaArteEvento(dadosEvento.nomeEvento, imagens.get("arte").file)
+    print(caminhoArte)
     dadosEvento.arteEvento = caminhoArte
 
     if imagens.get("qrcode"):
@@ -87,10 +88,10 @@ def controladorEditarEvento(evento, dadosEvento: DadosEvento, imagens: dict):
 
         # Caso alguma imagem tenha sido alterada, atualiza o evento novamente para adicionar o caminho para as imagens
         if dadosEvento.arteEvento or dadosEvento.arteQrcode:
-            atualizarEvento(dadosEvento.nomeEvento, dadosEvento.dict())
-        
+            conexao.atualizarEvento(dadosEvento.nomeEvento, dadosEvento.dict())
+
         return {"mensagem": "Evento atualizado com sucesso!", "status": "200"}
 
     except Exception as e:
         logging.warning("Problema para editar eventos.")
-        return {"mensagem": "Problema interno.", "status": "500"}
+        return {"mensagem": str(e), "status": "500"}

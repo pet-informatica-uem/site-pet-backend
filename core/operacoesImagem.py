@@ -9,16 +9,18 @@ IMAGES_PATH = os.path.join(
     os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "images"
 )
 
+
 def validaImagem(imagem: bytes):
     eh_valida = True
     try:
         with Image.open(imagem) as img:
-            if img.format not in ['PNG', 'JPEG']:
+            if img.format not in ["PNG", "JPEG"]:
                 eh_valida = False
     except IOError:
         return False
 
     return eh_valida
+
 
 def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     """Armazena a imagem em "images/eventos/arte" usando um nome base para o arquivo.
@@ -89,7 +91,8 @@ def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str:
             pathDefinitivo = os.path.join(path, nome)
             img.save(pathDefinitivo)
         return pathDefinitivo
-    except IOError:
+    except IOError as e:
+        print(str(e))
         return None
 
 
