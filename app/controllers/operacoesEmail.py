@@ -16,9 +16,7 @@ def emailGenerico(
 
 
 # Função para enviar verificação de email
-def verificarEmail(
-    emailPet: str, senhaPet: str, emailDestino: str, link: str
-) -> dict:
+def verificarEmail(emailPet: str, senhaPet: str, emailDestino: str, link: str) -> dict:
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
@@ -35,7 +33,6 @@ def resetarSenha(emailPet: str, senhaPet: str, emailDestino: str, link: str) -> 
     mensagem["To"] = emailDestino
     mensagem["Subject"] = "PET-Info - Reset de senha"
     mensagem.set_content("Para resetar sua senha, acesse o link: " + link)
-    
     return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
 
 
@@ -45,7 +42,7 @@ def emailConfirmacaoEvento(
     senhaPet: str,
     emailDestino: str,
     evento: dict,
-    ) -> dict:
+) -> dict:
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
@@ -65,9 +62,11 @@ def emailConfirmacaoEvento(
 
     return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
 
-    
-#Função que faz o envio de emails
-def enviarEmail(emailPet: str, senhaPet: str, emailDestino: str, mensagem: str) -> dict:
+
+# Função que faz o envio de emails
+def enviarEmail(
+    emailPet: str, senhaPet: str, emailDestino: str, mensagem: EmailMessage
+) -> dict:
     try:
         contexto: ssl.SSLContext = ssl.create_default_context()
 

@@ -19,8 +19,14 @@ class ValidarInscritosEvento:
                 "schema": {
                     "vagas com notebook": {"type": "integer", "required": True},
                     "vagas sem notebook": {"type": "integer", "required": True},
-                    "vagas preenchidas com notebook": {"type": "integer", "required": True},
-                    "vagas preenchidas sem notebook": {"type": "integer", "required": True},
+                    "vagas preenchidas com notebook": {
+                        "type": "integer",
+                        "required": True,
+                    },
+                    "vagas preenchidas sem notebook": {
+                        "type": "integer",
+                        "required": True,
+                    },
                 },
             },
             "inscritos": {
@@ -31,7 +37,7 @@ class ValidarInscritosEvento:
                     "schema": {
                         "idUsuario": {"type": "string"},
                         "data/hora": {"type": "datetime"},
-                        "pagamento": {"type": "boolean"}, 
+                        "pagamento": {"type": "boolean"},
                         "presente": {"type": "boolean"},
                         "nível conhecimento": {
                             "type": "string",

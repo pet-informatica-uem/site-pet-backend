@@ -1,43 +1,55 @@
-import jwt
 from datetime import datetime, timedelta
 
+from jose import JWTError, jwt
 
-# Palavra chave para assinar o token
-SECRET_KEY = "P#%w5R9h@#6eG&i@"
-# Tempo de validade para o token de troca de senha
-TOKEN_VALIDADE = timedelta(minutes=15)
+from core.config import config
 
 
-# Verifica a validade do token e retorno o email nele contido.
-# Falha, se o token for inválido (expirado ou corrompido).
-def processaTokenAtivaConta(token) -> dict:
+def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
+    """Gera e retorna um token JWT que pode ser usado para confirmar um email."""
+    afirmacoes = {"sub": idUsuario, "email": email, "exp": datetime.now() + duracao}
+
+    token = jwt.encode(afirmacoes, config.SEGREDO_JWT, algorithm="HS256")
+    return token
+
+
+def processaTokenAtivaConta(token: str) -> dict:
+    """
+    Verifica a validade do token e retorna o email e id de usuário nele contidos.
+    Falha, se o token for inválido (expirado ou corrompido).
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+    - "status" == "200" se e somente se o token for válido.
+    - "mensagem" é um dicionário contendo chaves "idUsuario" e "email"
+      caso o token seja válido, ou uma mensagem de erro caso contrário.
+    """
+
     # Tenta decodificar o token
     try:
-        token_info = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-    except jwt.exceptions.DecodeError:
+        token_info = jwt.decode(token, config.SEGREDO_JWT, algorithms=["HS256"])
+    except JWTError:
         return {"mensagem": "Token inválido.", "status": "400"}
 
     # Recupera as informações do token
     email = token_info.get("email")
-    validade = token_info.get("validade")
+    idUsuario = token_info.get("sub")
 
-    # Verifica a validade do token
-    validade = datetime.fromtimestamp(validade)
-    if validade > datetime.utcnow():
-        return {"mensagem": "Token expirou.", "status": "400"}
+    if not email or not idUsuario:
+        return {"mensagem": "Token inválido.", "status": "400"}
 
     # Retorna o email
-    return {"email": email, "status": "200"}
+    return {"mensagem": {"idUsuario": idUsuario, "email": email}, "status": "200"}
 
 
+# TODO unificar esquema de geração de tokens jwt
 # Gera um link para trocar a senha do usuário com o email fornecido
-def geraLink(email: str, url_base: str):
+def geraLink(email: str):
     # Data de validade do token
-    validade = datetime.utcnow() + TOKEN_VALIDADE
+    validade = datetime.utcnow() + timedelta(minutes=15)
     # Gera o token
-    token_info = {"email": email, "validade": validade.timestamp()}
-    token = jwt.encode(token_info, SECRET_KEY)
+    token_info = {"email": email, "exp": validade}
+    token = jwt.encode(token_info, config.SEGREDO_JWT)
 
     # Gera o link para a troca de senha
-    url = url_base + "/usuarios/troca-senha/?token=" + token
+    url = config.CAMINHO_BASE + "/usuarios/troca-senha/?token=" + token
     return url

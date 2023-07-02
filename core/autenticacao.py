@@ -1,11 +1,18 @@
 from passlib.context import CryptContext
 
-contextoSenha = CryptContext(schemes=["argon2"], deprecated=["auto"])
+pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
 
-def conferirHashSenha(senha: str, hash: str):
-    return contextoSenha.verify(senha, hash)
+def hashSenha(senha: str) -> str:
+    """
+    Recebe uma senha e retorna o seu hash seguro.
+    """
+    return pwd_context.hash(senha)
 
 
-def hashSenha(senha: str):
-    return contextoSenha.hash(senha)
+def conferirHashSenha(senha: str, hash: str) -> bool:
+    """
+    Recebe uma senha e seu hash.
+    Retorna um bool indicando se o hash corresponde à senha.
+    """
+    return pwd_context.verify(senha, hash)
