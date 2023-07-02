@@ -244,7 +244,7 @@ def editaUsuarioControlador(
 
     - Se a conta foi atualizada, "status" == "200" e "mensagem" conterá
     o _id da conta (str).
-    - Se a conta não foi criada com sucesso, "status" != "201" e "mensagem" conterá
+    - Se a conta não foi atualizada com sucesso, "status" != "201" e "mensagem" conterá
     uma mensagem de erro (str).
 
     A atualização da conta pode não suceder por erro na validação de dados.
@@ -262,16 +262,110 @@ def editaUsuarioControlador(
                 }
             )
             id = user.pop("_id")
-            if bd.atualizarUsuario(
-                id,
-                user,
-            )["status"] == "200":
+            if (
+                bd.atualizarUsuario(
+                    id,
+                    user,
+                )["status"]
+                == "200"
+            ):
                 return {"status": "200", "mensagem": id}
             else:
-                print('-' * 20)
-                print(id)
-                return {"status": "400", "mensagem": "Erro na função de atualização de Usuário"} 
+                return {
+                    "status": "400",
+                    "mensagem": "Erro na função de atualização de Usuário",
+                }
         return {"status": "400", "mensagem": "Usuário inválido"}
     except Exception as e:
         logging.error("Erro na atualização de usuário: " + str(e))
+        return {"status": "500", "mensagem": str(e)}
+
+
+def editaSenhaControlador(*, senhaAtual: str, novaSenha: str, token: str) -> dict:
+    """
+    Atualiza a senha de um usuário existente.
+
+    Para atualizar a senha, o usuário deve digitar sua senha atual.
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+
+    - Se a senha foi atualizada, "status" == "200" e "mensagem" conterá
+    o _id da conta (str).
+    - Se a senha não foi atualizada com sucesso, "status" != "200" e "mensagem" conterá
+    uma mensagem de erro (str).
+
+    A atualização da conta pode não suceder por erro na validação de dados.
+    """
+    try:
+        bd = UsuarioBD()
+        chave = getUsuarioAutenticadoControlador(token=token)
+        if chave["status"] == "200":
+            user: dict = chave["mensagem"].paraBd()
+            if conferirHashSenha(senhaAtual, user["senha"]):
+                user.update({"senha": hashSenha(novaSenha)})
+                id = user.pop("_id")
+                if (
+                    bd.atualizarUsuario(
+                        id,
+                        user,
+                    )["status"]
+                    == "200"
+                ):
+                    return {"status": "200", "mensagem": id}
+                else:
+                    return {
+                        "status": "400",
+                        "mensagem": "Erro na função de atualização de Usuário",
+                    }
+            else:
+                return {"status": "400", "mensagem": "Senha incorreta"}
+        return {"status": "400", "mensagem": "Usuário inválido"}
+    except Exception as e:
+        logging.error("Erro na atualização de senha do Usuário: " + str(e))
+        return {"status": "500", "mensagem": str(e)}
+
+
+def editaEmailControlador(*, senhaAtual: str, novoEmail: str, token: str) -> dict:
+    """
+    Atualiza o email de um usuário existente.
+
+    Para atualizar o email, o usuário deve digitar sua senha atual.
+
+    O usuário sempre é deslogado quando troca seu email, pois sua conta deve ser reativada.
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+
+    - Se o email foi atualizado, "status" == "200" e "mensagem" conterá
+    o _id da conta (str).
+    - Se o email não foi atualizado com sucesso, "status" != "200" e "mensagem" conterá
+    uma mensagem de erro (str).
+
+    A atualização da conta pode não suceder por erro na validação de dados.
+    """
+    try:
+        bd = UsuarioBD()
+        chave = getUsuarioAutenticadoControlador(token=token)
+        if chave["status"] == "200":
+            user: dict = chave["mensagem"].paraBd()
+            if conferirHashSenha(senhaAtual, user["senha"]):
+                user.update({"email": novoEmail, "estado da conta": "inativo"})
+                id = user.pop("_id")
+                if (
+                    bd.atualizarUsuario(
+                        id,
+                        user,
+                    )["status"]
+                    == "200"
+                ):
+                    return {"status": "200", "mensagem": id}
+                else:
+                    return {
+                        "status": "400",
+                        "mensagem": "Erro na função de atualização de Usuário",
+                    }
+            else:
+                return {"status": "400", "mensagem": "Senha incorreta"}
+        return {"status": "400", "mensagem": "Usuário inválido"}
+    except Exception as e:
+        logging.error("Erro na atualização de email do Usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}
