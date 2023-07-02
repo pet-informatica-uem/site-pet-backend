@@ -17,18 +17,37 @@ class ValidarUsuario:
             "email": {"type": "string", "required": True},
             "cpf": {"type": "string", "required": True},
             "curso": {"type": "string", "required": True},
-            "estado": {
+            "estado da conta": {
                 "type": "string",
                 "required": True,
                 "allowed": ["ativo", "inativo"],
             },
             "senha": {"type": "string", "required": True},
-            "petiano": {
+            "tipo conta": {
                 "type": "string",
                 "required": True,
-                "allowed": ["sim", "nao", "egresso"],
+                "allowed": ["petiano", "petiano egresso", "estudante"],
             },
-            "data_criacao": {"type": "datetime"},
+            "tempo de pet": {
+                "type": "dict",
+                "required": False,
+                "schema": {
+                    "data inicio": {"type": "datetime"},
+                    "data fim": {"type": "datetime"},
+                },
+            },
+            "redes sociais": {
+                "type": "dict",
+                "required": False,
+                "schema": {
+                    "github": {"type": "string"},
+                    "linkedin": {"type": "string"},
+                    "instagram": {"type": "string"},
+                    "twitter": {"type": "string"},
+                },
+            },
+            "foto perfil": {"type": "string", "required": False},
+            "data criacao": {"type": "datetime"},
         }
 
         validadorUsuarios = Validator(schemaUsuarios)
