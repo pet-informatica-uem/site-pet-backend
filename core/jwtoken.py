@@ -51,7 +51,7 @@ def geraLink(email: str) -> str:
     # Data de validade do token
     validade = datetime.utcnow() + timedelta(minutes=15)
     # Gera o token
-    token_info = {"email": email, "exp": validade}
+    token_info = {"email": email, "validade": validade.timestamp()}
     token = jwt.encode(token_info, config.SEGREDO_JWT, algorithm="HS256")
 
     # Gera o link para a troca de senha
@@ -71,8 +71,8 @@ def processaTokenTrocaSenha(token) -> dict:
     '''
     # Tenta decodificar o token
     try:
-        token_info = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-    except jwt.exceptions.DecodeError:
+        token_info = jwt.decode(token, config.SEGREDO_JWT, algorithms=["HS256"])
+    except JWTError:
         return {"mensagem": "Token inválido.", "status": "400"}
 
     # Recupera as informações do token
@@ -81,7 +81,7 @@ def processaTokenTrocaSenha(token) -> dict:
 
     # Verifica a validade do token
     validade = datetime.fromtimestamp(validade)
-    if validade > datetime.utcnow():
+    if validade < datetime.utcnow():
         return {"mensagem": "Token expirou.", "status": "400"}
 
     # Retorna o email
