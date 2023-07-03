@@ -363,21 +363,13 @@ def editaEmailControlador(*, senhaAtual: str, novoEmail: str, token: str) -> dic
                         + "/usuario/confirmacaoEmail?token="
                         + token24h
                     )
-                    if (
-                        verificarEmail(
-                            emailPet="pet@din.uem.br",
-                            senhaPet="xxxxxxxxx",
-                            emailDestino=novoEmail,
-                            link=linkConfirmacao,
-                        )["status"]
-                        == "200"
-                    ):
-                        return {"status": "200", "mensagem": id}
-                    else:
-                        return {
-                            "status": "400",
-                            "mensagem": "Erro: email de verificação de conta falhou ao ser enviado.",
-                        }
+                    verificarEmail(
+                        emailPet=config.EMAIL_SMTP,
+                        senhaPet=config.SENHA_SMTP,
+                        emailDestino=novoEmail,
+                        link=linkConfirmacao,
+                    )
+                    return {"status": "200", "mensagem": id}
                 else:
                     return {
                         "status": "400",
