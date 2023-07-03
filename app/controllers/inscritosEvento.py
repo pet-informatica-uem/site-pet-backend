@@ -1,5 +1,4 @@
 from app.model.inscritosEventoBD import InscritosEventoBD
-from app.model.usuarioBD import UsuarioBD
 
 
 class InscritosEventoController:
@@ -11,7 +10,5 @@ class InscritosEventoController:
 
         if inscritosEvento["status"] == "404":
             return inscritosEvento
-        
-        # UsuarioBD()
 
         return inscritosEvento
