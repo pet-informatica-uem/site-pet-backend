@@ -63,6 +63,7 @@ class InscritosEventoBD:
     def getListaInscritos(self, idEvento: str) -> dict:
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"idEvento": idEvento})
+
         if resultado:
             return {"mensagem": resultado["inscritos"], "status": "200"}
         else:
