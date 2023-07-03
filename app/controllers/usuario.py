@@ -357,7 +357,27 @@ def editaEmailControlador(*, senhaAtual: str, novoEmail: str, token: str) -> dic
                     )["status"]
                     == "200"
                 ):
-                    return {"status": "200", "mensagem": id}
+                    token24h = geraTokenAtivaConta(id, novoEmail, timedelta(days=1))
+                    linkConfirmacao = (
+                        config.CAMINHO_BASE
+                        + "/usuario/confirmacaoEmail?token="
+                        + token24h
+                    )
+                    if (
+                        verificarEmail(
+                            emailPet="pet@din.uem.br",
+                            senhaPet="xxxxxxxxx",
+                            emailDestino=novoEmail,
+                            link=linkConfirmacao,
+                        )["status"]
+                        == "200"
+                    ):
+                        return {"status": "200", "mensagem": id}
+                    else:
+                        return {
+                            "status": "400",
+                            "mensagem": "Erro: email de verificação de conta falhou ao ser enviado.",
+                        }
                 else:
                     return {
                         "status": "400",

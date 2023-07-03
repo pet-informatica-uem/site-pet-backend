@@ -314,7 +314,7 @@ def editarEmail(
         resultado = editaEmailControlador(
             senhaAtual=senhaAtual.get_secret_value(),
             novoEmail=novoEmail,
-            token=token,
+            token24h=token,
         )
 
         if not resultado["status"] != "200":
