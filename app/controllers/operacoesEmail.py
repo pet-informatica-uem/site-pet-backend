@@ -47,7 +47,7 @@ def emailConfirmacaoEvento(
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
     mensagem["Subject"] = (
-        "PET-Info: Você foi cadastrado no evento" + evento["nomeEvento"]
+        "PET-Info: Você foi cadastrado no evento" + evento["nome evento"]
     )
     mensagem.set_content(
         "Nome do evento: "
