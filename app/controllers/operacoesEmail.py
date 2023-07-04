@@ -51,13 +51,13 @@ def emailConfirmacaoEvento(
     )
     mensagem.set_content(
         "Nome do evento: "
-        + evento["nomeEvento"]
+        + evento["nome evento"]
         + "\nLocal do Evento: "
-        + evento["localEvento"]
+        + evento["local"]
         + "\nData do evento: "
-        + evento["dataEvento"]
+        + evento["data/hora evento"]
         + "Nesse evento você optou por: "
-        + evento["coindicoesEvento"]
+        + evento["pré-requisitos"]
     )
 
     return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
