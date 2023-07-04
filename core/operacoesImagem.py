@@ -92,7 +92,6 @@ def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str:
             img.save(pathDefinitivo)
         return pathDefinitivo
     except IOError as e:
-        print(str(e))
         return None
 
 

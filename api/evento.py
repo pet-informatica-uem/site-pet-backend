@@ -9,10 +9,14 @@ from fastapi import (
     HTTPException,
     Request,
     Response,
+    Depends,
 )
 
-from app.model.evento import DadosEvento 
+from api.usuario import tokenAcesso
+from app.model.evento import DadosEvento
+from app.controllers.usuario import getUsuarioAutenticadoControlador
 from app.controllers.evento import controladorNovoEvento, controladorEditarEvento
+from core.usuario import ehPetiano
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"
@@ -28,6 +32,7 @@ roteador = APIRouter(prefix="/evento", tags=["Eventos"])
 )
 def criaEvento(
     response: Response,
+    token: Annotated[str, Depends(tokenAcesso)],
     nomeEvento: Annotated[str, Form()],
     resumo: Annotated[str, Form()],
     preRequisitos: Annotated[str, Form()],
@@ -43,6 +48,18 @@ def criaEvento(
     imagemQrCode: UploadFile | None = None,
     evento: str = None,
 ):
+    # Recupera o ID do usuário
+    dados = getUsuarioAutenticadoControlador(token)
+    idUsuario = dict(dados["mensagem"])["id"]
+    # idUsuario = "64a1af3b35736f6df310526d"
+
+    # Verifica se o usuario é petiano
+    retorno = ehPetiano(idUsuario)
+    if retorno["status"] != "200":
+        raise HTTPException(
+            status_code=int(retorno["status"]), detail=retorno["mensagem"]
+        )
+
     dadosEvento = DadosEvento(
         nomeEvento=nomeEvento,
         resumo=resumo,
