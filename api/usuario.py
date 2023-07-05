@@ -1,7 +1,16 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status, UploadFile
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Request,
+    Response,
+    status,
+    UploadFile,
+)
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
 
@@ -206,19 +215,18 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
         )
     else:
         return resp["mensagem"]
-    
+
+
 @roteador.post(
     "/id/eu/editar-foto",
     name="Atualizar foto de perfil",
-    description="O usuário petiano é capaz de editar sua foto de perfil"
+    description="O usuário petiano é capaz de editar sua foto de perfil",
 )
-
 def editarFoto(
     foto: UploadFile | None,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
-)-> dict:
-    
-    resultado = {"status":"200","mensagem":foto}
+) -> dict:
+    resultado = {"status": "200", "mensagem": foto}
 
     editarFotoControlador(token=token, foto=resultado)
     return resultado

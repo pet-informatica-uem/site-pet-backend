@@ -97,7 +97,7 @@ def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str | Non
 
     try:
         with Image.open(imagem) as img:
-            extensao = img.format.lower() #type: ignore
+            extensao = img.format.lower()  # type: ignore
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
             pathDefinitivo = os.path.join(path, nome)
             img.save(pathDefinitivo)

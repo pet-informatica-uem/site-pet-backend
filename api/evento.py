@@ -11,7 +11,7 @@ from fastapi import (
     Response,
 )
 
-from app.model.evento import DadosEvento 
+from app.model.evento import DadosEvento
 from app.controllers.evento import controladorNovoEvento, controladorEditarEvento
 
 # Especifica o formato das datas para serem convertidos

@@ -237,6 +237,20 @@ def getUsuarioControlador(id: str) -> dict:
 
 
 def editarFotoControlador(*, token: str, foto: dict[str, UploadFile])->dict:
+    """
+    Atualiza a foto de perfil de um usuário existente.
+
+    Para atualizar a foto, o usuário deve inserir uma foto.
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+
+    - Se a foto for atualizada, "status" == "200" e "mensagem" conterá
+    o _id da conta (str).
+    - Se a foto não for atualizado com sucesso, "status" != "200" e "mensagem" conterá
+    uma mensagem de erro (str).
+
+    A atualização da conta pode não suceder por erro na validação de dados.
+    """
     try:
         bd = UsuarioBD()
         chave = getUsuarioAutenticadoControlador(token=token)
