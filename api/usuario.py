@@ -303,7 +303,7 @@ def editarEmail(
 ):
     if getUsuarioAutenticadoControlador(token)["status"] == "200":
         if not validaEmail(novoEmail):
-            logging.info("Erro. Novo email não foi validada com sucesso.")
+            logging.info("Erro. Novo email não foi validado com sucesso.")
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
             )
