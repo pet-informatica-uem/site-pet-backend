@@ -2,7 +2,7 @@ from app.model.eventoBD import EventoBD
 from datetime import datetime
 
 evento = {
-    "nome evento": "capacitação python8",
+    "nome evento": "capacitação python9",
     "resumo": "evento teste",
     "pré-requisitos": "nenhum",
     "data/hora evento": datetime.now(),

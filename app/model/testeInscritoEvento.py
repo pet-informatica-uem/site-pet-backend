@@ -3,8 +3,8 @@ from app.model.inscritosEventoBD import InscritosEventoBD
 
 
 inscrito = {
-    "idEvento": "648b6a0cef60aa7ee0da482d",
-    "idUsuario": "00000000010",
+    "idEvento": "64a578f52ed2d3673acbfc0a",
+    "idUsuario": "64a3087c318d769b8034f8e8",
     "nivelConhecimento": "Não conheço nada",
     "tipoInscricao": "com notebook",
     "pagamento": False,

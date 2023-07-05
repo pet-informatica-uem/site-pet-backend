@@ -76,7 +76,7 @@ class InscritosEventoBD:
             return {"mensagem": "Evento não encontrado!", "status": "404"}
 
     def setInscricao(self, dadosInscricao: dict) -> dict:
-        if self.__validarEvento.inscritos().validate(dadosInscricao):
+        if self.__validarEvento.inscricao().validate(dadosInscricao):
             return {
                 "mensagem": self.__validarEvento.inscritos().errors,
                 "status": "400",
