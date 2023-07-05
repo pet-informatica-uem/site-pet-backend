@@ -33,6 +33,17 @@ def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     return retorno
 
 
+def armazenaFotoUsuario(nomeUsuario: str, arquivo: str | bytes) -> str:
+    """Armazena a imagem em "images/usuario" usando um nome base para o arquivo.
+
+    Return: caminho para a imagem salva -> str. None, se a imagem for inválida.
+    """
+    path = os.path.join(IMAGES_PATH, "usuarios")
+    retorno = __armazenaImagem(path, nomeUsuario, arquivo)
+
+    return retorno
+
+
 def armazenaQrCodeEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     """Armazena a imagem em "images/eventos/qrcode" usando um nome base para o arquivo.
 

@@ -2,6 +2,8 @@ import logging
 import secrets
 from datetime import datetime, timedelta
 
+from fastapi import UploadFile
+
 from app.controllers.operacoesEmail import resetarSenha, verificarEmail
 from app.model.authTokenBD import AuthTokenBD
 from app.model.usuario import EstadoConta, TipoConta, UsuarioSenha
@@ -10,6 +12,7 @@ from core.autenticacao import conferirHashSenha, hashSenha
 from core.config import config
 from core.jwtoken import geraLink, geraTokenAtivaConta, processaTokenAtivaConta
 from core.usuario import ativaconta, verificaSeUsuarioExiste
+from core.operacoesImagem import *
 
 
 def ativaContaControlador(token: str) -> dict:
@@ -217,7 +220,7 @@ def getUsuarioControlador(id: str) -> dict:
 
     - "status" == "200" se e somente se os dados foram recuperados com sucesso.
     - "mensagem" contém uma instância da classe UsuarioSenha em caso de sucesso e uma
-      mensagem de erro caso contrário.
+    mensagem de erro caso contrário.
     """
     try:
         conexaoUsuario = UsuarioBD()
@@ -231,3 +234,29 @@ def getUsuarioControlador(id: str) -> dict:
     except Exception as e:
         logging.error("Erro ao recuperar dados do usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}
+
+
+def editarFotoControlador(*, token: str, foto: dict[str, UploadFile])->dict:
+    try:
+        bd = UsuarioBD()
+        chave = getUsuarioAutenticadoControlador(token=token)
+        if chave["status"] == "200":
+            user = chave["mensagem"].paraBD()
+            if not validaImagem(foto["mensagem"].file):
+                return {"mensagem": "Foto de perfil inválida.", "status": "400"}
+            
+            caminhoFotoPerfil = armazenaFotoUsuario(nomeUsuario=chave["nome"],foto["mensagem"])
+            user.update({
+                "foto perfil": caminhoFotoPerfil
+            })
+            id = user.pop("_id")
+            if bd.atualizarUsuario(id, user)["status"] == "200":
+                return {"status": "200", "mensagem": id}
+            else:
+                return {"status": "400", "mensagem": "Erro na atualização de Usuário"}
+        else:
+            return {"status": "400", "mensagem": "Erro na autenticação de Usuário"}
+    except Exception as e:
+        logging.error("Erro na atualização de foto de perfil do Usuário: " + str(e))
+        return {"status": "500", "mensagem": str(e)}
+
