@@ -41,7 +41,7 @@ def criaEvento(
     valor: Annotated[int, Form()],
     imagemArte: UploadFile,
     imagemQrCode: UploadFile | None = None,
-    evento: str = None,
+    evento: str | None = None,
 ):
     dadosEvento = DadosEvento(
         nomeEvento=nomeEvento,

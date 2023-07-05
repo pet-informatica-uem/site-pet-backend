@@ -22,7 +22,7 @@ def validaImagem(imagem: bytes):
     return eh_valida
 
 
-def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str:
+def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str | None:
     """Armazena a imagem em "images/eventos/arte" usando um nome base para o arquivo.
 
     Return: caminho para a imagem salva -> str. None, se a imagem for inválida.
@@ -33,7 +33,7 @@ def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     return retorno
 
 
-def armazenaFotoUsuario(nomeUsuario: str, arquivo: str | bytes) -> str:
+def armazenaFotoUsuario(nomeUsuario: str, arquivo: str | bytes) -> str | None:
     """Armazena a imagem em "images/usuario" usando um nome base para o arquivo.
 
     Return: caminho para a imagem salva -> str. None, se a imagem for inválida.
@@ -44,7 +44,7 @@ def armazenaFotoUsuario(nomeUsuario: str, arquivo: str | bytes) -> str:
     return retorno
 
 
-def armazenaQrCodeEvento(nomeEvento: str, arquivo: str | bytes) -> str:
+def armazenaQrCodeEvento(nomeEvento: str, arquivo: str | bytes) -> str | None:
     """Armazena a imagem em "images/eventos/qrcode" usando um nome base para o arquivo.
 
     Return: caminho para a imagem salva -> str. None, se a imagem for inválida.
@@ -89,7 +89,7 @@ def deletaImagem(nomeImagem: str, path: str = "") -> dict:
     return {"mensagem": "Nenhuma imagem encontrada.", "status": "404"}
 
 
-def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str:
+def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str | None:
     """Armazena a imagem no path fornecido usando um nome base.
 
     Return: caminho para a imagem salva : str. None, se a imagem for inválida.
@@ -97,7 +97,7 @@ def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str:
 
     try:
         with Image.open(imagem) as img:
-            extensao = img.format.lower()
+            extensao = img.format.lower() #type: ignore
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
             pathDefinitivo = os.path.join(path, nome)
             img.save(pathDefinitivo)

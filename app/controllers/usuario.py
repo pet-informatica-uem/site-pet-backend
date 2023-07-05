@@ -242,10 +242,10 @@ def editarFotoControlador(*, token: str, foto: dict[str, UploadFile])->dict:
         chave = getUsuarioAutenticadoControlador(token=token)
         if chave["status"] == "200":
             user = chave["mensagem"].paraBD()
-            if not validaImagem(foto["mensagem"].file):
+            if not validaImagem(foto["mensagem"].file): #type: ignore
                 return {"mensagem": "Foto de perfil inválida.", "status": "400"}
             
-            caminhoFotoPerfil = armazenaFotoUsuario(nomeUsuario=chave["nome"],foto["mensagem"])
+            caminhoFotoPerfil = armazenaFotoUsuario(nomeUsuario=chave["nome"],foto["mensagem"]) #type: ignore
             user.update({
                 "foto perfil": caminhoFotoPerfil
             })
