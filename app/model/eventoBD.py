@@ -4,6 +4,7 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from app.model.validator.dadosEvento import ValidarEvento
 from app.model.inscritosEventoBD import InscritosEventoBD
+from app.model.schema.inscricaoEventoSchema import VagasEvento
 
 
 class EventoBD:
@@ -25,10 +26,20 @@ class EventoBD:
             "inscritos": [],
         }
 
+        # dadosInscricao : VagasEvento = {
+        #     "idEvento": "",
+        #     "vagas com notebook": 0,
+        #     "vagas sem notebook": 0,
+        #     "vagas preenchidas com notebook": 0,
+        #     "vagas preenchidas sem notebook": 0,
+        # }
+
         if self.__validarEvento.validate(dadosEvento):
             try:
+                # criar documento com os dados do evento
                 resultado = self.__colecao.insert_one(dadosEvento)
                 dadosListaInscritos["idEvento"] = resultado.inserted_id
+                # criar documento com os inscritos do evento
                 self.__insctirosEvento.criarListaInscritos(dadosListaInscritos)
 
                 return {"mensagem": "Evento cadastrado com sucesso!", "status": "200"}
@@ -81,7 +92,7 @@ class EventoBD:
             return {"mensagem": self.__validarEvento.errors, "status": "400"}
 
     def listarEventos(self) -> dict:
-        return {"mensagem": list(self.__colecao.find({}, {"_id": 0})), "status": "200"}
+        return {"mensagem": list(self.__colecao.find()), "status": "200"}
 
     def getEvento(self, idEvento: str) -> dict:
         idEvento = ObjectId(idEvento)

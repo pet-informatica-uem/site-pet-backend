@@ -9,9 +9,15 @@ class InscritosEventoBD:
         cliente = MongoClient()
         db = cliente["petBD"]
         self.__colecao = db["inscritos eventos"]
-        self.__validarEvento = ValidarInscritosEvento().inscritos()
+        self.__validarEvento = ValidarInscritosEvento()
 
     def criarListaInscritos(self, dadosListaInscritos: dict) -> dict:
+        if self.__validarEvento.vagasEvento().validate(dadosListaInscritos):
+            return {
+                "mensagem": self.__validarEvento.vagasEvento().errors,
+                "status": "400",
+            }
+        
         if (
             self.__colecao.find_one({"idEvento": dadosListaInscritos["idEvento"]})
             != None
@@ -70,6 +76,12 @@ class InscritosEventoBD:
             return {"mensagem": "Evento não encontrado!", "status": "404"}
 
     def setInscricao(self, dadosInscricao: dict) -> dict:
+        if self.__validarEvento.inscritos().validate(dadosInscricao):
+            return {
+                "mensagem": self.__validarEvento.inscritos().errors,
+                "status": "400",
+            }
+        
         idEvento = ObjectId(dadosInscricao["idEvento"])
 
         usuariosInscritos = self.__colecao.find_one(
@@ -173,6 +185,7 @@ class InscritosEventoBD:
     def getVagas(self, idEvento: str) -> dict:
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"idEvento": idEvento})
+
         if resultado:
             return {"mensagem": resultado["vagas ofertadas"], "status": "200"}
         else:

@@ -1,4 +1,6 @@
 from app.model.inscritosEventoBD import InscritosEventoBD
+# from app.model.schema.inscricaoEventoSchema import Inscricao, VagasEvento
+
 
 inscrito = {
     "idEvento": "648b6a0cef60aa7ee0da482d",

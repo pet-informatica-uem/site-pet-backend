@@ -2,7 +2,7 @@ from app.model.eventoBD import EventoBD
 from datetime import datetime
 
 evento = {
-    "nome evento": "capacitação python5",
+    "nome evento": "capacitação python8",
     "resumo": "evento teste",
     "pré-requisitos": "nenhum",
     "data/hora evento": datetime.now(),
@@ -17,9 +17,9 @@ evento = {
 }
 
 eventoTeste = EventoBD()
-# print(eventoTeste.cadastrarEvento(evento))
+print(eventoTeste.cadastrarEvento(evento))
 # print(eventoTeste.removerEvento('capacitação python7'))
 # print(eventoTeste.listarEventos())
-print(eventoTeste.atualizarEvento("capacitação python5", evento))
+# print(eventoTeste.atualizarEvento("capacitação python5", evento))
 # print(eventoTeste.getEvento('capacitação python2'))
 # print(eventoTeste.getEventoId('capacitação python'))
