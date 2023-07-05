@@ -7,37 +7,32 @@ from core.operacoesImagem import (
 from app.model import EventoBD
 from app.model.evento import DadosEvento
 
-from fastapi import UploadFile
-
 import logging
 
 
-def controladorNovoEvento(
-    dadosEvento: DadosEvento, imagens: dict[str, UploadFile] | None
-) -> dict:
+def controladorNovoEvento(dadosEvento: DadosEvento, imagens: dict) -> dict:
     # Valida as imagens
-    if not validaImagem(imagens["arte"].file):
+    if not validaImagem(imagens["arteEvento"]):
         return {"mensagem": "Arte do evento inválida.", "status": "400"}
 
-    if imagens.get("qrCode") and not validaImagem(imagens["qrCode"].file):
+    if imagens["arteQrcode"] and not validaImagem(imagens["arteQrcode"]):
         return {"mensagem": "Imagem do qrCode inválida.", "status": "400"}
 
     # Armazena as imagens
-    caminhoArte = armazenaArteEvento(dadosEvento.nomeEvento, imagens.get("arte").file)
-    print(caminhoArte)
-    dadosEvento.arteEvento = caminhoArte
+    caminhoArte = armazenaArteEvento(dadosEvento.nomeEvento, imagens["arteEvento"])
+    dadosEvento.caminhoArteEvento = caminhoArte
 
-    if imagens.get("qrcode"):
+    if imagens["arteQrcode"]:
         caminhoQrCode = armazenaQrCodeEvento(
-            dadosEvento.nomeEvento, imagens.get("qrcode").file
+            dadosEvento.nomeEvento, imagens["arteQrcode"]
         )
-        dadosEvento.arteQrcode = caminhoQrCode
+        dadosEvento.caminhoArteQrcode = caminhoQrCode
 
     # Valida os dados e registra o evento no bd
     try:
         conexao = EventoBD()
-        retorno = conexao.cadastrarEvento(dadosEvento.dict())
-        if retorno.get("status") == "400":
+        retorno = conexao.cadastrarEvento(dadosEvento.paraBD())
+        if retorno["status"] != "200":
             deletaImagem(dadosEvento.nomeEvento)
             return retorno
         idEvento = conexao.getEventoID(dadosEvento.nomeEvento)
@@ -50,45 +45,52 @@ def controladorNovoEvento(
         return {"mensagem": "Problema interno.", "status": "400"}
 
 
-def controladorEditarEvento(evento, dadosEvento: DadosEvento, imagens: dict):
+def controladorEditarEvento(nomeEventoOld, dadosEvento: DadosEvento, imagens: dict):
     try:
         conexao = EventoBD()
 
         # Verfica se o evento existe e recupera os dados dele
-        eventoOld = conexao.getEvento(dadosEvento.nomeEvento)
+        eventoOld = conexao.getEvento(nomeEventoOld)
         if eventoOld["status"] == "404":
             return {"mensagem": "Evento não encontrado!", "status": "404"}
         dadosEventoOld = eventoOld["mensagem"]
 
         # Valida as imagens (se existirem)
-        if imagens.get("arte") and not validaImagem(imagens["arte"].file):
+        if imagens["arteEvento"] and not validaImagem(imagens["arteEvento"]):
             return {"mensagem": "Arte do evento inválida.", "status": "400"}
 
-        if imagens.get("qrCode") and not validaImagem(imagens["qrCode"].file):
+        if imagens["arteQrcode"] and not validaImagem(imagens["arteQrcode"]):
             return {"mensagem": "Imagem do qrCode inválida.", "status": "400"}
 
+        dadosEvento.caminhoArteEvento = dadosEventoOld["arte evento"]
+        dadosEvento.caminhoArteQrcode = dadosEventoOld["arte qrcode"]
+
         # Verifica os dados e atualiza o evento
-        retorno = conexao.atualizarEvento(evento, dadosEvento.dict())
+        retorno = conexao.atualizarEvento(nomeEventoOld, dadosEvento.paraBD())
 
         if retorno["status"] != "200":
             return {"mensagem": retorno["mensagem"], "status": retorno["status"]}
 
         # Deleta as imagens antigas e armazena as novas
-        if imagens.get("arte"):
-            deletaImagem(dadosEvento.nomeEvento, "evento/arte/")
-            dadosEvento.arteEvento = (dadosEvento.nomeEvento, imagens["arte"].file)
+        if imagens["arteEvento"]:
+            deletaImagem(nomeEventoOld, ["eventos", "arte"])
+            dadosEvento.caminhoArteEvento = armazenaArteEvento(
+                dadosEvento.nomeEvento, imagens["arteEvento"]
+            )
         else:
-            dadosEvento.arteEvento = dadosEventoOld["arte evento"]
+            dadosEvento.caminhoArteEvento = dadosEventoOld["arte evento"]
 
-        if imagens.get("qrCode"):
-            deletaImagem(dadosEvento.nomeEvento, "evento/qrCode/")
-            dadosEvento.arteQrcode = (dadosEvento.nomeEvento, imagens["qrCode"].file)
+        if imagens["arteQrcode"]:
+            deletaImagem(dadosEvento.nomeEvento, ["eventos", "qrcode"])
+            dadosEvento.caminhoArteQrcode = armazenaQrCodeEvento(
+                dadosEvento.nomeEvento, imagens["arteQrcode"]
+            )
         else:
-            dadosEvento.arteQrcode = dadosEventoOld["arte qrcode"]
+            dadosEvento.caminhoArteQrcode = dadosEventoOld["arte qrcode"]
 
         # Caso alguma imagem tenha sido alterada, atualiza o evento novamente para adicionar o caminho para as imagens
-        if dadosEvento.arteEvento or dadosEvento.arteQrcode:
-            conexao.atualizarEvento(dadosEvento.nomeEvento, dadosEvento.dict())
+        if imagens["arteEvento"] or imagens["arteQrcode"]:
+            conexao.atualizarEvento(dadosEvento.nomeEvento, dadosEvento.paraBD())
 
         return {"mensagem": "Evento atualizado com sucesso!", "status": "200"}
 

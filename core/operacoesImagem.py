@@ -44,14 +44,14 @@ def armazenaQrCodeEvento(nomeEvento: str, arquivo: str | bytes) -> str:
     return retorno
 
 
-def procuraImagem(nomeImagem: str, searchPath: str = "") -> list[str]:
+def procuraImagem(nomeImagem: str, searchPath: list[str] = []) -> list[str]:
     """Retorna uma lista com os caminhos para as imagens que
     contenham 'nomeImagem' em seu nome. Retorna uma lista vazia
     caso não encontre nada."""
 
     path = IMAGES_PATH
     if searchPath:
-        path = os.path.join(IMAGES_PATH, searchPath)
+        path = os.path.join(IMAGES_PATH, *searchPath)
 
     ls = os.walk(path)
     matches = []
@@ -63,7 +63,7 @@ def procuraImagem(nomeImagem: str, searchPath: str = "") -> list[str]:
     return matches
 
 
-def deletaImagem(nomeImagem: str, path: str = "") -> dict:
+def deletaImagem(nomeImagem: str, path: list[str] = []) -> dict:
     """Deleta uma imagem. Caso seja encontrado mais de uma imagem com o termo de busca, todas serão deletadas.
 
     :param nomeImagem -- nome da imagem para ser removida
