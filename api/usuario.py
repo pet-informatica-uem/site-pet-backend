@@ -1,9 +1,9 @@
 import logging
 from typing import Annotated
+from pydantic import BaseModel, EmailStr, SecretStr
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr, SecretStr
 
 from app.controllers.usuario import (
     ativaContaControlador,
@@ -12,9 +12,11 @@ from app.controllers.usuario import (
     getUsuarioAutenticadoControlador,
     getUsuarioControlador,
     recuperaContaControlador,
+    trocaSenhaControlador,
 )
 from app.model.usuario import Usuario, UsuarioSenha
 from core.ValidacaoCadastro import validaCpf, validaEmail, validaSenha
+
 
 roteador = APIRouter(
     prefix="/usuario",
@@ -121,6 +123,26 @@ def recuperaConta(
 
     response.status_code = int(resposta["status"])
     return {"mensagem": resposta.get("mensagem")}
+
+
+@roteador.post(
+    "/troca-senha",
+    name="Trocar senha",
+    description="""
+        Altera a senha do usuário. Falha, se a senha ou o link forem inválidos.
+    """,
+    status_code=status.HTTP_200_OK,
+)
+def trocaSenha(token, senha: Annotated[str, Form()], response: Response):
+    # Validacao basica da senha
+    if not validaSenha(senha, senha):
+        raise HTTPException(status_code=400, detail="Senha inválida.")
+
+    # Despacha o token para o controlador
+    retorno = trocaSenhaControlador(token, senha)
+
+    response.status_code = int(retorno.get("status"))
+    return {"mensagem": retorno.get("mensagem")}
 
 
 class Token(BaseModel):
