@@ -28,7 +28,9 @@ class DadosEvento(BaseModel):
             "resumo": self.resumo,
             "pré-requisitos": self.preRequisitos,
             "data/hora evento": datetime.strptime(self.dataHoraEvento, formatoString),
-            "data inicio inscrição": datetime.strptime(self.inicioInscricao, formatoString),
+            "data inicio inscrição": datetime.strptime(
+                self.inicioInscricao, formatoString
+            ),
             "data fim inscrição": datetime.strptime(self.fimInscricao, formatoString),
             "local": self.local,
             "vagas ofertadas": {
