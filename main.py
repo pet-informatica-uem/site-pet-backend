@@ -2,11 +2,7 @@ import logging
 
 from fastapi import FastAPI
 
-from api import roteadorEvento, roteadorPetianos, roteadorUsuario
-
-petBack = FastAPI()
-petBack.include_router(roteadorUsuario)
-
+from api import roteadorUsuario, roteadorPetianos, roteadorEvento
 
 logging.basicConfig(
     handlers=[

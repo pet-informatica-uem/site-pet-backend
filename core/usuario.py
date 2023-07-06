@@ -1,7 +1,8 @@
-import logging
-
 from app.model.usuarioBD import UsuarioBD
 from app.model.usuario import Usuario
+from core.autenticacao import hashSenha
+
+import logging
 
 
 def ativaconta(id: str, email: str) -> dict:
@@ -57,7 +58,7 @@ def verificaSeUsuarioExiste(email: str) -> dict:
         dict:
             - {"mensagem": True, "status": "200"}: Existe usuário associado.
 
-            - {"mensagem": False, "status": "400"}: Não existe usuário associado.
+            - {"mensagem": False, "status": "404"}: Não existe usuário associado.
 
             - {"mensagem": "Erro interno", "status": "500"}: Problema no banco de dados.
     """
@@ -98,4 +99,24 @@ def ehPetiano(idUsuario: str) -> dict:
 
     except Exception as e:
         logging.warning(str(e))
+        return {"mensagem": "Erro interno.", "status": "500"}
+
+
+def atualizaSenha(email: str, senha: str) -> dict:
+    try:
+        conexao = UsuarioBD()
+
+        # Recupera os dados do usuário a partir do email
+        idUsuario = conexao.getIdUsuario(email)["mensagem"]
+        dadosUsuario = conexao.getUsuario(idUsuario)["mensagem"]
+
+        # Atualiza a senha
+        dadosUsuario["senha"] = hashSenha(senha)
+        conexao.atualizarUsuario(idUsuario, dadosUsuario)
+
+        logging.info("Senha atualizada para o usuário com ID: " + str(id))
+        return {"mensagem": "Usuário atualizado.", "status": "200"}
+
+    except Exception as e:
+        logging.warning("Erro no banco de dados: " + str(e))
         return {"mensagem": "Erro interno.", "status": "500"}
