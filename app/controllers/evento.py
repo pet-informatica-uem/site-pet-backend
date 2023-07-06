@@ -4,6 +4,7 @@ from app.model.inscritosEventoBD import InscritosEventoBD
 from core.config import config
 from app.controllers.operacoesEmail import emailConfirmacaoEvento
 
+
 class EventoController:
     def __init__(self):
         self.__evento = EventoBD()
@@ -13,11 +14,12 @@ class EventoController:
 
         if eventos["status"] == "404":
             return eventos
-        
-        for evento in eventos['mensagem']:
+
+        for evento in eventos["mensagem"]:
             evento["_id"] = str(evento["_id"])
 
         return eventos
+
 
 def inscricaoEventoControlador(
     idUsuario: str,
@@ -26,20 +28,25 @@ def inscricaoEventoControlador(
     tipoDeInscricao: str,
     pagamento: bool | None,
 ) -> dict:
-
     if (tipoDeInscricao != "sem notebook") and (tipoDeInscricao != "com notebook"):
-        return {"mensagem": "Formato do tipo de inscricao em formato errado, deveria ser: com notebook ou sem notebook","status": "400",}
+        return {
+            "mensagem": "Formato do tipo de inscricao em formato errado, deveria ser: com notebook ou sem notebook",
+            "status": "400",
+        }
 
     usuarioBD = UsuarioBD()
-    situacaoUsuario = usuarioBD.getUsuario(idUsuario)   
+    situacaoUsuario = usuarioBD.getUsuario(idUsuario)
     if situacaoUsuario["status"] != "200":
-        return {"mensagem": "Usuario nao encontrado","status": "404",}
+        return {
+            "mensagem": "Usuario nao encontrado",
+            "status": "404",
+        }
 
-    eventoBD = EventoBD()  
+    eventoBD = EventoBD()
     situacaoEvento = eventoBD.getEvento(idEvento)
     if situacaoEvento["status"] != "200":
         return situacaoEvento
-    
+
     if (
         (nivelConhecimento != "1")
         and (nivelConhecimento != "2")
@@ -60,8 +67,9 @@ def inscricaoEventoControlador(
     }
 
     situacaoInscricao = inscritos.setInscricao(inscrito)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(situacaoInscricao)
     if situacaoInscricao["status"] == "200":
-
         dicionarioEnvioGmail = {
             "nome evento": situacaoEvento["mensagem"]["nome evento"],
             "local": situacaoEvento["mensagem"]["local"],
@@ -78,5 +86,5 @@ def inscricaoEventoControlador(
 
         if respostaEmail["status"] != "200":
             return respostaEmail
-        
+
     return situacaoInscricao

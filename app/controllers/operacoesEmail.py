@@ -46,21 +46,22 @@ def emailConfirmacaoEvento(
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
-    mensagem["Subject"] = "PET-Info: Você foi cadastrado no evento " + evento["nome evento"]
-    
+    mensagem["Subject"] = (
+        "PET-Info: Você foi cadastrado no evento " + evento["nome evento"]
+    )
+
     mensagem.set_content(
-        "Nome do evento: " +
-        evento["nome evento"] +
-        "\nLocal do Evento: " +
-        evento["local"] +
-        "\nData do evento: " +
-        evento["data/hora evento"].strftime('%a %d %b %Y, %H:%M') +
-        "\nNesse evento você optou por: " +
-        evento["pré-requisitos"]
+        "Nome do evento: "
+        + evento["nome evento"]
+        + "\nLocal do Evento: "
+        + evento["local"]
+        + "\nData do evento: "
+        + evento["data/hora evento"].strftime("%a %d %b %Y, %H:%M")
+        + "\nNesse evento você optou por: "
+        + evento["pré-requisitos"]
     )
 
     return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
-
 
 
 # Função que faz o envio de emails

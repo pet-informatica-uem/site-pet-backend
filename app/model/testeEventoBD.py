@@ -9,7 +9,7 @@ evento = {
     "data inicio inscrição": datetime.now(),
     "data fim inscrição": datetime.now(),
     "local": "sala 1",
-    "vagas ofertadas": {"vagas com notebook": 20, "vagas sem notebook": 50},
+    "vagas ofertadas": {"vagas com notebook": 0, "vagas sem notebook": 50},
     "carga horária": "7",
     "valor": 10,
     "arte evento": "images/arteEvento/evento.png",

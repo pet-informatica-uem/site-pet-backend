@@ -51,6 +51,7 @@ def getInscritosEvento(idEvento: str) -> dict:
 
     return {"mensagem": inscritos.get("mensagem")}
 
+
 @roteador.post(
     "/cadastroEmEvento",
     name="Obter dados da inscricao em eventos",
@@ -61,10 +62,11 @@ def getDadosInscricaoEvento(
     token: Annotated[str, Depends(tokenAcesso)],
     idEvento: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
-    pagamento: Annotated[bool | None, Form()] = None,  # deixa com possibilidade de NONE?
+    pagamento: Annotated[
+        bool | None, Form()
+    ] = None,  # deixa com possibilidade de NONE?
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
 ):
-
     conexaoAuthToken = AuthTokenBD()
 
     resp = conexaoAuthToken.getIdUsuarioDoToken(token)
@@ -91,6 +93,10 @@ def getDadosInscricaoEvento(
     if statusResposta == "406":
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=mensagemResposta
+        )
+    if statusResposta == "410":
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE, detail=mensagemResposta
         )
 
     resposta["status"] = "201"
