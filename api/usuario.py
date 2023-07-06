@@ -219,11 +219,11 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
 )
 def editarDados(
     nomeCompleto: Annotated[str, Form(max_length=200)],
-    curso: Annotated[str | None, Form(max_length=200)] = None,
-    github: Annotated[HttpUrl | None, Form()] = None,
-    instagram: Annotated[HttpUrl | None, Form()] = None,
-    linkedin: Annotated[HttpUrl | None, Form()] = None,
-    twitter: Annotated[HttpUrl | None, Form()] = None,
+    curso: Annotated[str, Form(max_length=200)],
+    github: Annotated[HttpUrl, Form()],
+    instagram: Annotated[HttpUrl, Form()],
+    linkedin: Annotated[HttpUrl, Form()],
+    twitter: Annotated[HttpUrl, Form()],
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
     if getUsuarioAutenticadoControlador(token)["status"] == "200":
@@ -234,6 +234,18 @@ def editarDados(
             "instagram": instagram,
             "twitter": twitter,
         }
+
+        # valida links
+        for chave in redesSociais:
+            link = str(redesSociais[chave])
+            if chave not in link:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="O link "
+                    + link
+                    + " não é válido com a rede social "
+                    + chave,
+                )
 
         resultado = editaUsuarioControlador(
             token=token,
