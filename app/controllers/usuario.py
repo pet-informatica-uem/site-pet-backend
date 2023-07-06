@@ -236,7 +236,7 @@ def getUsuarioControlador(id: str) -> dict:
         return {"status": "500", "mensagem": str(e)}
 
 
-def editarFotoControlador(*, token: str, foto: dict[str, UploadFile])->dict:
+def editarFotoControlador(*, token: str, foto: dict[str, UploadFile]) -> dict:
     """
     Atualiza a foto de perfil de um usuário existente.
 
@@ -255,21 +255,33 @@ def editarFotoControlador(*, token: str, foto: dict[str, UploadFile])->dict:
         bd = UsuarioBD()
         chave = getUsuarioAutenticadoControlador(token=token)
         if chave["status"] == "200":
-            user: UsuarioSenha = chave["mensagem"]
-            user = user.paraBd()
-            if not validaImagem(foto["mensagem"].file): #type: ignore
+            user: dict = chave["mensagem"].paraBd()
+
+            if not validaImagem(foto["mensagem"].file):  # type: ignore
                 return {"mensagem": "Foto de perfil inválida.", "status": "400"}
-            
-            caminhoFotoPerfil = armazenaFotoUsuario(user["nome"] , foto["mensagem"].file) #type: ignore
+
+            deletaImagem(user["nome"], "usuarios")
+            caminhoFotoPerfil = armazenaFotoUsuario(user["nome"], foto["mensagem"].file)  # type: ignore
             user["foto perfil"] = caminhoFotoPerfil
             id = user.pop("_id")
-            if bd.atualizarUsuario(id, user)["status"] == "200":
-                return {"status": "200", "mensagem": id}
+            atualizacao = bd.atualizarUsuario(id, user)
+            if atualizacao["status"] == "200":
+                logging.info("Dados do usuário atualizados, id: " + str(id))
+                return {
+                    "status": "200",
+                    "mensagem": "Usuário atualizado com sucesso.",
+                }
             else:
-                return {"status": "400", "mensagem": "Erro na atualização de Usuário"}
+                logging.error(
+                    "Erro no banco de dados ao fazer a atualização: "
+                    + str(atualizacao["mensagem"])
+                )
+                return {
+                    "status": atualizacao["status"],
+                    "mensagem": atualizacao["mensagem"],
+                }
         else:
             return {"status": "400", "mensagem": "Erro na autenticação de Usuário"}
     except Exception as e:
         logging.error("Erro na atualização de foto de perfil do Usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}
-
