@@ -45,12 +45,12 @@ def controladorNovoEvento(dadosEvento: DadosEvento, imagens: dict) -> dict:
         return {"mensagem": "Problema interno.", "status": "400"}
 
 
-def controladorEditarEvento(nomeEventoOld, dadosEvento: DadosEvento, imagens: dict):
+def controladorEditarEvento(idEvento, dadosEvento: DadosEvento, imagens: dict):
     try:
         conexao = EventoBD()
 
         # Verfica se o evento existe e recupera os dados dele
-        eventoOld = conexao.getEvento(nomeEventoOld)
+        eventoOld = conexao.getEvento(idEvento)
         if eventoOld["status"] == "404":
             return {"mensagem": "Evento não encontrado!", "status": "404"}
         dadosEventoOld = eventoOld["mensagem"]
@@ -66,14 +66,14 @@ def controladorEditarEvento(nomeEventoOld, dadosEvento: DadosEvento, imagens: di
         dadosEvento.caminhoArteQrcode = dadosEventoOld["arte qrcode"]
 
         # Verifica os dados e atualiza o evento
-        retorno = conexao.atualizarEvento(nomeEventoOld, dadosEvento.paraBD())
+        retorno = conexao.atualizarEvento(idEvento, dadosEvento.paraBD())
 
         if retorno["status"] != "200":
             return {"mensagem": retorno["mensagem"], "status": retorno["status"]}
 
         # Deleta as imagens antigas e armazena as novas
         if imagens["arteEvento"]:
-            deletaImagem(nomeEventoOld, ["eventos", "arte"])
+            deletaImagem(dadosEventoOld["nome evento"], ["eventos", "arte"])
             dadosEvento.caminhoArteEvento = armazenaArteEvento(
                 dadosEvento.nomeEvento, imagens["arteEvento"]
             )
@@ -81,7 +81,7 @@ def controladorEditarEvento(nomeEventoOld, dadosEvento: DadosEvento, imagens: di
             dadosEvento.caminhoArteEvento = dadosEventoOld["arte evento"]
 
         if imagens["arteQrcode"]:
-            deletaImagem(dadosEvento.nomeEvento, ["eventos", "qrcode"])
+            deletaImagem(dadosEventoOld["nome evento"], ["eventos", "qrcode"])
             dadosEvento.caminhoArteQrcode = armazenaQrCodeEvento(
                 dadosEvento.nomeEvento, imagens["arteQrcode"]
             )
@@ -90,7 +90,7 @@ def controladorEditarEvento(nomeEventoOld, dadosEvento: DadosEvento, imagens: di
 
         # Caso alguma imagem tenha sido alterada, atualiza o evento novamente para adicionar o caminho para as imagens
         if imagens["arteEvento"] or imagens["arteQrcode"]:
-            conexao.atualizarEvento(dadosEvento.nomeEvento, dadosEvento.paraBD())
+            conexao.atualizarEvento(idEvento, dadosEvento.paraBD())
 
         return {"mensagem": "Evento atualizado com sucesso!", "status": "200"}
 

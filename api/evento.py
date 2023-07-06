@@ -88,13 +88,13 @@ def criaEvento(
 
 
 @roteador.post(
-    "/editar/{nomeEventoOld}",
+    "/editar/{idEvento}",
     name="Editar evento",
     description="Valida as informações e edita um evento.",
     status_code=status.HTTP_200_OK,
 )
 def editaEvento(
-    nomeEventoOld: str,
+    idEvento: str,
     response: Response,
     token: Annotated[str, Depends(tokenAcesso)],
     formEvento: FormEvento = Depends(),
@@ -121,7 +121,7 @@ def editaEvento(
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
-    retorno = controladorEditarEvento(nomeEventoOld, dadosEvento, imagens)
+    retorno = controladorEditarEvento(idEvento, dadosEvento, imagens)
 
     # Trata o retorno do controlador
     if retorno["status"] != "200":
@@ -131,9 +131,6 @@ def editaEvento(
     else:
         response.status_code = int(retorno["status"])
         return {"mensagem": retorno["mensagem"]}
-
-
-roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
 
 @roteador.get(
