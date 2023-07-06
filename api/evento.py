@@ -1,6 +1,14 @@
 from fastapi import APIRouter, HTTPException
 from app.controllers.inscritosEvento import InscritosEventoController
 from app.controllers.evento import EventoController
+from typing import Annotated
+
+from app.controllers.evento import inscricaoEventoControlador
+from fastapi import APIRouter, Depends, Form, HTTPException, status
+from api.usuario import tokenAcesso
+
+from app.controllers.usuario import getUsuarioAutenticadoControlador
+from app.model.authTokenBD import AuthTokenBD
 
 roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
@@ -42,3 +50,49 @@ def getInscritosEvento(idEvento: str) -> dict:
         )
 
     return {"mensagem": inscritos.get("mensagem")}
+
+@roteador.post(
+    "/cadastroEmEvento",
+    name="Obter dados da inscricao em eventos",
+    description="Recebe o Nome do inscrito, ID do evento, nivel do conhecimento, tipode de inscricao e pagamento da inscricao em eventos do usuario autenticado.",
+    status_code=status.HTTP_201_CREATED,
+)
+def getDadosInscricaoEvento(
+    token: Annotated[str, Depends(tokenAcesso)],
+    idEvento: Annotated[str, Form(max_length=200)],
+    tipoDeInscricao: Annotated[str, Form(max_length=200)],
+    pagamento: Annotated[bool | None, Form()] = None,  # deixa com possibilidade de NONE?
+    nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
+):
+
+    conexaoAuthToken = AuthTokenBD()
+
+    resp = conexaoAuthToken.getIdUsuarioDoToken(token)
+    idUsuario = resp["mensagem"]
+
+    resposta = inscricaoEventoControlador(
+        idUsuario, idEvento, nivelConhecimento, tipoDeInscricao, pagamento
+    )
+
+    statusResposta = resposta["status"]
+    mensagemResposta = resposta["mensagem"]
+    if statusResposta == "400":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=mensagemResposta
+        )
+    if statusResposta == "404":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=mensagemResposta
+        )
+    if statusResposta == "409":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=mensagemResposta
+        )
+    if statusResposta == "406":
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=mensagemResposta
+        )
+
+    resposta["status"] = "201"
+    resposta["mensagem"] = "Usuario inscrito com sucesso!"
+    return resposta
