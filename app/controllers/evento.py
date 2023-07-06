@@ -1,4 +1,5 @@
 from app.model.eventoBD import EventoBD
+from app.model.usuarioBD import UsuarioBD
 from app.model.inscritosEventoBD import InscritosEventoBD
 from core.config import config
 from app.controllers.operacoesEmail import emailConfirmacaoEvento
@@ -29,6 +30,11 @@ def inscricaoEventoControlador(
     if (tipoDeInscricao != "sem notebook") and (tipoDeInscricao != "com notebook"):
         return {"mensagem": "Formato do tipo de inscricao em formato errado, deveria ser: com notebook ou sem notebook","status": "400",}
 
+    usuarioBD = UsuarioBD()
+    situacaoUsuario = usuarioBD.getUsuario(idUsuario)   
+    if situacaoUsuario["status"] != "200":
+        return {"mensagem": "Usuario nao encontrado","status": "404",}
+
     eventoBD = EventoBD()  
     situacaoEvento = eventoBD.getEvento(idEvento)
     if situacaoEvento["status"] != "200":
@@ -42,7 +48,7 @@ def inscricaoEventoControlador(
         and (nivelConhecimento != "5")
         and (nivelConhecimento != None)
     ):
-        return {"mensagem": "Nivel de conhecimento imvalido", "status": "400"}
+        return {"mensagem": "Nivel de conhecimento invalido", "status": "400"}
 
     inscritos = InscritosEventoBD()
     inscrito = {
@@ -54,7 +60,7 @@ def inscricaoEventoControlador(
     }
 
     situacaoInscricao = inscritos.setInscricao(inscrito)
-    if situacaoEvento["status"] == "200":
+    if situacaoInscricao["status"] == "200":
 
         dicionarioEnvioGmail = {
             "nome evento": situacaoEvento["mensagem"]["nome evento"],
@@ -66,10 +72,11 @@ def inscricaoEventoControlador(
         respostaEmail = emailConfirmacaoEvento(
             emailPet=config.EMAIL_SMTP,
             senhaPet=config.SENHA_SMTP,
-            emailDestino="ra124459@uem.br",
+            emailDestino=situacaoUsuario["mensagem"]["email"],
             evento=dicionarioEnvioGmail,
         )
 
         if respostaEmail["status"] != "200":
             return respostaEmail
+        
     return situacaoInscricao
