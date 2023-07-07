@@ -11,16 +11,15 @@ from fastapi import (
     status,
 )
 
-from api.usuario import tokenAcesso
+from api.usuario import getPetianoAutenticado
 from app.controllers.evento import (
     EventoController,
     controladorEditarEvento,
     controladorNovoEvento,
 )
 from app.controllers.inscritosEvento import InscritosEventoController
-from app.controllers.usuario import getUsuarioAutenticadoControlador
 from app.model.evento import DadosEvento
-from core.usuario import ehPetiano
+from app.model.usuario import UsuarioSenha
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"
@@ -52,7 +51,7 @@ class FormEvento:
 )
 def criaEvento(
     response: Response,
-    token: Annotated[str, Depends(tokenAcesso)],
+    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
     arteEvento: UploadFile,
     arteQrcode: UploadFile = None,
     formEvento: FormEvento = Depends(),
@@ -61,17 +60,6 @@ def criaEvento(
     imagens = {"arteEvento": arteEvento.file, "arteQrcode": None}
     if arteQrcode:
         imagens.update(arteQrcode=arteQrcode.file)
-
-    # Recupera o ID do usuário
-    dados = getUsuarioAutenticadoControlador(token)
-    idUsuario = dict(dados["mensagem"])["id"]
-
-    # Verifica se o usuario é petiano
-    retorno = ehPetiano(idUsuario)
-    if retorno["status"] != "200":
-        raise HTTPException(
-            status_code=int(retorno["status"]), detail=retorno["mensagem"]
-        )
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
@@ -96,7 +84,7 @@ def criaEvento(
 def editaEvento(
     idEvento: str,
     response: Response,
-    token: Annotated[str, Depends(tokenAcesso)],
+    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
     formEvento: FormEvento = Depends(),
     arteEvento: UploadFile = None,
     arteQrcode: UploadFile = None,
@@ -107,17 +95,6 @@ def editaEvento(
         imagens.update(arteEvento=arteEvento.file)
     if arteQrcode:
         imagens.update(arteQrcode=arteQrcode.file)
-
-    # Recupera o ID do usuário
-    dados = getUsuarioAutenticadoControlador(token)
-    idUsuario = dict(dados["mensagem"])["id"]
-
-    # Verifica se o usuario é petiano
-    retorno = ehPetiano(idUsuario)
-    if retorno["status"] != "200":
-        raise HTTPException(
-            status_code=int(retorno["status"]), detail=retorno["mensagem"]
-        )
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))

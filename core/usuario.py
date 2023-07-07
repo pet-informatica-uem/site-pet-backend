@@ -1,5 +1,4 @@
 from app.model.usuarioBD import UsuarioBD
-from app.model.usuario import Usuario
 from core.autenticacao import hashSenha
 
 import logging
@@ -73,32 +72,6 @@ def verificaSeUsuarioExiste(email: str) -> dict:
 
     except Exception as e:
         logging.warning("Erro no banco de dados: " + str(e))
-        return {"mensagem": "Erro interno.", "status": "500"}
-
-
-def ehPetiano(idUsuario: str) -> dict:
-    """
-    Verifica se o usuário associado ao idUsuario é petiano.
-
-    Retorna um dicionário com as chaves "status" e "mensagem".
-
-    - "status" == "200" se e somente se o usuário é petiano.
-
-    - "mensagem" == "OK" se for petiano, caso contrário retorna
-    uma mensagem de erro.
-    """
-
-    try:
-        conexao = UsuarioBD()
-
-        usuario = Usuario.deBd(conexao.getUsuario(idUsuario)["mensagem"])
-        if usuario.tipoConta == "petiano":
-            return {"mensagem": "OK", "status": "200"}
-
-        return {"mensagem": "Acesso negado.", "status": "401"}
-
-    except Exception as e:
-        logging.warning(str(e))
         return {"mensagem": "Erro interno.", "status": "500"}
 
 

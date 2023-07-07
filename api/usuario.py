@@ -196,6 +196,14 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
         return resp["mensagem"]
 
 
+def getPetianoAutenticado(
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)]
+):
+    if usuario.tipoConta == "petiano":
+        return usuario
+    raise HTTPException(status_code=401, detail="Acesso negado.")
+
+
 @roteador.get(
     "/id/eu",
     name="Obter detalhes do usuário autenticado",
