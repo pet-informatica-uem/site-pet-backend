@@ -14,7 +14,7 @@ from core.jwtoken import (
     processaTokenAtivaConta,
     processaTokenTrocaSenha,
 )
-from core.usuario import ativaconta, verificaSeUsuarioExiste, atualizaSenha
+from core.usuario import ativaconta, atualizaSenha, verificaSeUsuarioExiste
 
 
 def ativaContaControlador(token: str) -> dict:
@@ -118,7 +118,7 @@ def recuperaContaControlador(email: str) -> dict:
     retorno = verificaSeUsuarioExiste(email)
     if retorno.get("status") == "500":
         return retorno
-    
+
     # Gera o link e envia o email se o usuário estiver cadastrado
     if retorno.get("status") == "200":
         link = geraLink(email)

@@ -1,8 +1,9 @@
-from passlib.context import CryptContext
-from app.model.usuarioBD import UsuarioBD
-from app.model.usuario import Usuario, TipoConta
-
 import logging
+
+from passlib.context import CryptContext
+
+from app.model.usuario import TipoConta, Usuario
+from app.model.usuarioBD import UsuarioBD
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 

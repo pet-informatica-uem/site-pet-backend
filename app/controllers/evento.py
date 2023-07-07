@@ -1,13 +1,13 @@
+import logging
+
+from app.model import EventoBD
+from app.model.evento import DadosEvento
 from core.operacoesImagem import (
     armazenaArteEvento,
     armazenaQrCodeEvento,
     deletaImagem,
     validaImagem,
 )
-from app.model import EventoBD
-from app.model.evento import DadosEvento
-
-import logging
 
 
 def controladorNovoEvento(dadosEvento: DadosEvento, imagens: dict) -> dict:

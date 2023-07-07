@@ -2,6 +2,7 @@ from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Self
+
 from pydantic import BaseModel, EmailStr, HttpUrl
 
 

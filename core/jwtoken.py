@@ -42,12 +42,12 @@ def processaTokenAtivaConta(token: str) -> dict:
 
 
 def geraLink(email: str) -> str:
-    '''
-    Gera um link contendo o email do usuário, na forma de um token, (com 
+    """
+    Gera um link contendo o email do usuário, na forma de um token, (com
     prazo de validade) para a troca de senha.
 
     Retorna o link na forma str.
-    '''
+    """
     # Data de validade do token
     validade = datetime.utcnow() + timedelta(minutes=15)
     # Gera o token
@@ -60,15 +60,15 @@ def geraLink(email: str) -> str:
 
 
 def processaTokenTrocaSenha(token) -> dict:
-    '''
+    """
     Verifica a validade do token e resgata o email nele contido.
     Falha, se o token for inválido (expirado ou corrompido).
 
     Retorna um dicionário contendo os campos "status" e "mensagem".
     - "status" == "200" se e somente se o token for válido.
-    - "mensagem" contém o email do usuário, ou uma mensagem de 
+    - "mensagem" contém o email do usuário, ou uma mensagem de
     erro caso o token não seja válido.
-    '''
+    """
     # Tenta decodificar o token
     try:
         token_info = jwt.decode(token, config.SEGREDO_JWT, algorithms=["HS256"])

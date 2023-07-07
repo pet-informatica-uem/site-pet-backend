@@ -1,9 +1,9 @@
 import logging
 from typing import Annotated
-from pydantic import BaseModel, EmailStr, SecretStr
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from pydantic import BaseModel, EmailStr, SecretStr
 
 from app.controllers.usuario import (
     ativaContaControlador,
@@ -16,7 +16,6 @@ from app.controllers.usuario import (
 )
 from app.model.usuario import Usuario, UsuarioSenha
 from core.ValidacaoCadastro import validaCpf, validaEmail, validaSenha
-
 
 roteador = APIRouter(
     prefix="/usuario",

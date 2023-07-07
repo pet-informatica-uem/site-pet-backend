@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from usuarioBD import UsuarioBD
 
 """dadosUsuario = {

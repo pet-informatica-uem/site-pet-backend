@@ -1,7 +1,9 @@
 from datetime import datetime
+
+from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from bson.objectid import ObjectId
+
 from app.model.usuarioBD import UsuarioBD
 from app.model.validator.authToken import ValidarAuthToken
 from app.model.validator.usuario import ValidarUsuario

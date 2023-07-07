@@ -1,7 +1,7 @@
-from pydantic import BaseModel, ValidationError, validator
 from datetime import datetime
 from typing import Callable
 
+from pydantic import BaseModel, ValidationError, validator
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"

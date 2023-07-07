@@ -1,8 +1,8 @@
 import fnmatch
-import time, os
+import os
+import time
 
 from PIL import Image
-
 
 # Aqui ele posiciona "IMAGES_PATH" em .../site-pet-backend/images
 IMAGES_PATH = os.path.join(
