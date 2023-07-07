@@ -16,7 +16,7 @@ from app.controllers.evento import (
     EventoController,
     controladorEditarEvento,
     controladorNovoEvento,
-    controladorDeletaEvento
+    controladorDeletaEvento,
 )
 from app.controllers.inscritosEvento import InscritosEventoController
 from app.model.evento import DadosEvento
@@ -119,19 +119,15 @@ def editaEvento(
 )
 def deletaEvento(
     idEvento: str,
-    token: Annotated[str, Depends(tokenAcesso)],
+    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
 ):
-    # Verifica se o usuário é petiano
-    ehPetiano(token)
-
     # Despacha para o controlador
     retorno: dict = controladorDeletaEvento(idEvento)
 
     # Trata o retorno
     if retorno["status"] != "200":
         raise HTTPException(
-            status_code= int(retorno["status"]),
-            detail= retorno["mensagem"]
+            status_code=int(retorno["status"]), detail=retorno["mensagem"]
         )
     return retorno
 
