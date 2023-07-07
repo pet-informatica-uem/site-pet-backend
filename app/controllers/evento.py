@@ -99,6 +99,22 @@ def controladorEditarEvento(idEvento, dadosEvento: DadosEvento, imagens: dict):
         return {"mensagem": str(e), "status": "500"}
 
 
+def controladorDeletaEvento(idEvento: str):
+    # Verifica se o evento existe
+
+    conexao: EventoBD = EventoBD()
+    evento: dict = conexao.getEvento(idEvento)
+
+    if evento["status"] == "400":
+        return {"status": "400", "mensagem": "Evento não encontrado."}
+
+    if conexao.removerEvento(idEvento)["status"] != "200":
+        return {"status": "500", "mensagem": "Problema para remover o evento"}
+
+    deletaImagem(evento["mensagem"]["nome evento"])
+    return {"status": "200", "mensagem": "Evento removido com sucesso."}
+
+
 class EventoController:
     def __init__(self):
         self.__evento = EventoBD()

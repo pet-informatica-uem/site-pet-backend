@@ -16,6 +16,7 @@ from app.controllers.evento import (
     EventoController,
     controladorEditarEvento,
     controladorNovoEvento,
+    controladorDeletaEvento
 )
 from app.controllers.inscritosEvento import InscritosEventoController
 from app.model.evento import DadosEvento
@@ -108,6 +109,31 @@ def editaEvento(
     else:
         response.status_code = int(retorno["status"])
         return {"mensagem": retorno["mensagem"]}
+
+
+@roteador.delete(
+    "/deletar/{idEvento}",
+    name="Deletar evento",
+    description="Um usuário petiano pode deletar um evento.",
+    status_code=status.HTTP_200_OK,
+)
+def deletaEvento(
+    idEvento: str,
+    token: Annotated[str, Depends(tokenAcesso)],
+):
+    # Verifica se o usuário é petiano
+    ehPetiano(token)
+
+    # Despacha para o controlador
+    retorno: dict = controladorDeletaEvento(idEvento)
+
+    # Trata o retorno
+    if retorno["status"] != "200":
+        raise HTTPException(
+            status_code= int(retorno["status"]),
+            detail= retorno["mensagem"]
+        )
+    return retorno
 
 
 @roteador.get(
