@@ -25,10 +25,9 @@ class InscritosEventoController:
         usuarios = list(usuarios)
 
         # concatena os dicionarios dos inscritos no evento com o dicionario do usuário, o qual contem nome, email e curso
-        [
+        for inscrito, usuario in zip(inscritosEvento["mensagem"], usuarios):
+            inscrito['idUsuario'] = str(inscrito['idUsuario'])
             inscrito.update(usuario)
-            for inscrito, usuario in zip(inscritosEvento["mensagem"], usuarios)
-        ]
 
         return inscritosEvento
 

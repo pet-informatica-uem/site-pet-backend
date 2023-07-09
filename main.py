@@ -13,7 +13,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-locale.setlocale(locale.LC_ALL, 'pt_BR.utf8')
+locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
 
 petBack = FastAPI()
 petBack.include_router(roteadorUsuario)

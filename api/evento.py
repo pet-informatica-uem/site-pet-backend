@@ -62,22 +62,20 @@ def getDadosInscricaoEvento(
     token: Annotated[str, Depends(tokenAcesso)],
     idEvento: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
-    pagamento: Annotated[
-        bool | None, Form()
-    ] = None,  # deixa com possibilidade de NONE?
+    pagamento: Annotated[bool | None, Form()] = None,  # deixa com possibilidade de NONE?
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
 ):
     conexaoAuthToken = AuthTokenBD()
 
-    resp = conexaoAuthToken.getIdUsuarioDoToken(token)
-    idUsuario = resp["mensagem"]
+    resp : dict = conexaoAuthToken.getIdUsuarioDoToken(token)
+    idUsuario : str = resp["mensagem"]
 
-    resposta = inscricaoEventoControlador(
+    resposta : dict = inscricaoEventoControlador(
         idUsuario, idEvento, nivelConhecimento, tipoDeInscricao, pagamento
     )
 
-    statusResposta = resposta["status"]
-    mensagemResposta = resposta["mensagem"]
+    statusResposta : str = resposta["status"]
+    mensagemResposta : str = resposta["mensagem"]
     if statusResposta == "400":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail=mensagemResposta

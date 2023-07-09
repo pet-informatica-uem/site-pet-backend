@@ -28,32 +28,27 @@ def inscricaoEventoControlador(
     tipoDeInscricao: str,
     pagamento: bool | None,
 ) -> dict:
-    if tipoDeInscricao not in ["sem notebook", "com notebook"]
+    if tipoDeInscricao not in ["sem notebook", "com notebook"]:
         return {
             "mensagem": "Formato do tipo de inscricao em formato errado, deveria ser: com notebook ou sem notebook",
             "status": "400",
         }
 
     usuarioBD = UsuarioBD()
-    situacaoUsuario = usuarioBD.getUsuario(idUsuario)
+    situacaoUsuario : dict = usuarioBD.getUsuario(idUsuario)
     if situacaoUsuario["status"] != "200":
-        return {
-            "mensagem": "Usuario nao encontrado",
-            "status": "404",
-        }
+        return {"mensagem": "Usuario nao encontrado", "status": "404",}
 
     eventoBD = EventoBD()
-    situacaoEvento = eventoBD.getEvento(idEvento)
+    situacaoEvento : dict = eventoBD.getEvento(idEvento)
     if situacaoEvento["status"] != "200":
         return situacaoEvento
 
-    if (
-       nivelConhecimento not in ["1", "2", "3", "4", "5", None]
-    ):
+    if nivelConhecimento not in ["1", "2", "3", "4", "5", None]:
         return {"mensagem": "Nivel de conhecimento invalido", "status": "400"}
 
     inscritos = InscritosEventoBD()
-    inscrito = {
+    inscrito : dict = {
         "idEvento": idEvento,
         "idUsuario": idUsuario,
         "nivelConhecimento": nivelConhecimento,
@@ -61,18 +56,16 @@ def inscricaoEventoControlador(
         "pagamento": pagamento,
     }
 
-    situacaoInscricao = inscritos.setInscricao(inscrito)
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
-    print(situacaoInscricao)
+    situacaoInscricao : dict = inscritos.setInscricao(inscrito)
     if situacaoInscricao["status"] == "200":
-        dicionarioEnvioGmail = {
+        dicionarioEnvioGmail : dict = {
             "nome evento": situacaoEvento["mensagem"]["nome evento"],
             "local": situacaoEvento["mensagem"]["local"],
             "data/hora evento": situacaoEvento["mensagem"]["data/hora evento"],
             "pré-requisitos": situacaoEvento["mensagem"]["pré-requisitos"],
         }
 
-        respostaEmail = emailConfirmacaoEvento(
+        respostaEmail : dict = emailConfirmacaoEvento(
             emailPet=config.EMAIL_SMTP,
             senhaPet=config.SENHA_SMTP,
             emailDestino=situacaoUsuario["mensagem"]["email"],
