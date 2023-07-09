@@ -1,24 +1,20 @@
 from datetime import datetime
-from typing import Callable
 
-from pydantic import BaseModel, ValidationError, validator
-
-# Especifica o formato das datas para serem convertidos
-formatoString = "%d/%m/%Y %H:%M"
+from pydantic import BaseModel
 
 
 class DadosEvento(BaseModel):
     nomeEvento: str
     resumo: str
     preRequisitos: str
-    dataHoraEvento: str
-    inicioInscricao: str
-    fimInscricao: str
+    dataHoraEvento: datetime
+    inicioInscricao: datetime
+    fimInscricao: datetime
     local: str
     vagasComNote: int
     vagasSemNote: int
     cargaHoraria: int
-    valor: int
+    valor: float
     caminhoArteEvento: str = ""
     caminhoArteQrcode: str = ""
 
@@ -27,11 +23,9 @@ class DadosEvento(BaseModel):
             "nome evento": self.nomeEvento,
             "resumo": self.resumo,
             "pré-requisitos": self.preRequisitos,
-            "data/hora evento": datetime.strptime(self.dataHoraEvento, formatoString),
-            "data inicio inscrição": datetime.strptime(
-                self.inicioInscricao, formatoString
-            ),
-            "data fim inscrição": datetime.strptime(self.fimInscricao, formatoString),
+            "data/hora evento": self.dataHoraEvento,
+            "data inicio inscrição": self.inicioInscricao,
+            "data fim inscrição": self.fimInscricao,
             "local": self.local,
             "vagas ofertadas": {
                 "vagas com notebook": self.vagasComNote,

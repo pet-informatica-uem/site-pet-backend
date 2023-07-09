@@ -1,16 +1,14 @@
 import fnmatch
 import os
 import time
+from typing import BinaryIO
 
 from PIL import Image
 
-# Aqui ele posiciona "IMAGES_PATH" em .../site-pet-backend/images
-IMAGES_PATH = os.path.join(
-    os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "images"
-)
+from core.config import config
 
 
-def validaImagem(imagem: bytes):
+def validaImagem(imagem: bytes | BinaryIO):
     eh_valida = True
     try:
         with Image.open(imagem) as img:
@@ -22,23 +20,23 @@ def validaImagem(imagem: bytes):
     return eh_valida
 
 
-def armazenaArteEvento(nomeEvento: str, arquivo: str | bytes) -> str:
+def armazenaArteEvento(nomeEvento: str, arquivo: bytes | BinaryIO) -> str | None:
     """Armazena a imagem em "images/eventos/arte" usando um nome base para o arquivo.
 
     Return: caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
-    path = os.path.join(IMAGES_PATH, "eventos", "arte")
+    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", "arte")
     retorno = __armazenaImagem(path, nomeEvento, arquivo)
 
     return retorno
 
 
-def armazenaQrCodeEvento(nomeEvento: str, arquivo: str | bytes) -> str:
+def armazenaQrCodeEvento(nomeEvento: str, arquivo: bytes | BinaryIO) -> str | None:
     """Armazena a imagem em "images/eventos/qrcode" usando um nome base para o arquivo.
 
     Return: caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
-    path = os.path.join(IMAGES_PATH, "eventos", "qrcode")
+    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", "qrcode")
     retorno = __armazenaImagem(path, nomeEvento, arquivo)
 
     return retorno
@@ -49,9 +47,9 @@ def procuraImagem(nomeImagem: str, searchPath: list[str] = []) -> list[str]:
     contenham 'nomeImagem' em seu nome. Retorna uma lista vazia
     caso não encontre nada."""
 
-    path = IMAGES_PATH
+    path = config.CAMINHO_IMAGEM
     if searchPath:
-        path = os.path.join(IMAGES_PATH, *searchPath)
+        path = os.path.join(config.CAMINHO_IMAGEM, *searchPath)
 
     ls = os.walk(path)
     matches = []
@@ -78,14 +76,14 @@ def deletaImagem(nomeImagem: str, path: list[str] = []) -> dict:
     return {"mensagem": "Nenhuma imagem encontrada.", "status": "404"}
 
 
-def __armazenaImagem(path: str, nomeBase: str, imagem: str | bytes) -> str:
+def __armazenaImagem(path: str, nomeBase: str, imagem: bytes | BinaryIO) -> str | None:
     """Armazena a imagem no path fornecido usando um nome base.
 
     Return: caminho para a imagem salva : str. None, se a imagem for inválida.
     """
 
     try:
-        with Image.open(imagem) as img:
+        with Image.open(imagem, formats=["PNG", "JPEG"]) as img:
             extensao = img.format.lower()
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
             pathDefinitivo = os.path.join(path, nome)

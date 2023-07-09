@@ -1,4 +1,5 @@
 import logging
+from typing import BinaryIO
 
 from app.model import EventoBD
 from app.model.evento import DadosEvento
@@ -10,7 +11,9 @@ from core.operacoesImagem import (
 )
 
 
-def controladorNovoEvento(dadosEvento: DadosEvento, imagens: dict) -> dict:
+def controladorNovoEvento(
+    dadosEvento: DadosEvento, imagens: dict[str, BinaryIO | None]
+) -> dict:
     # Valida as imagens
     if not validaImagem(imagens["arteEvento"]):
         return {"mensagem": "Arte do evento inválida.", "status": "400"}

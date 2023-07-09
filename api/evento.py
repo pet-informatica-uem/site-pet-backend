@@ -1,5 +1,6 @@
 from dataclasses import asdict, dataclass
-from typing import Annotated
+from datetime import datetime
+from typing import Annotated, BinaryIO
 
 from fastapi import (
     APIRouter,
@@ -21,9 +22,6 @@ from app.controllers.inscritosEvento import InscritosEventoController
 from app.model.evento import DadosEvento
 from app.model.usuario import UsuarioSenha
 
-# Especifica o formato das datas para serem convertidos
-formatoString = "%d/%m/%Y %H:%M"
-
 roteador = APIRouter(prefix="/evento", tags=["Eventos"])
 
 
@@ -33,14 +31,14 @@ class FormEvento:
     nomeEvento: str = Form(...)
     resumo: str = Form(...)
     preRequisitos: str = Form(...)
-    dataHoraEvento: str = Form(...)
-    inicioInscricao: str = Form(...)
-    fimInscricao: str = Form(...)
+    dataHoraEvento: datetime = Form(...)
+    inicioInscricao: datetime = Form(...)
+    fimInscricao: datetime = Form(...)
     local: str = Form(...)
     vagasComNote: int = Form(...)
     vagasSemNote: int = Form(...)
     cargaHoraria: int = Form(...)
-    valor: int = Form(...)
+    valor: float = Form(...)
 
 
 @roteador.post(
@@ -53,13 +51,16 @@ def criaEvento(
     response: Response,
     usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
     arteEvento: UploadFile,
-    arteQrcode: UploadFile = None,
+    arteQrcode: UploadFile | None = None,
     formEvento: FormEvento = Depends(),
 ):
     # Cria um dicionário para as imagens
-    imagens = {"arteEvento": arteEvento.file, "arteQrcode": None}
+    imagens: dict[str, BinaryIO | None] = {
+        "arteEvento": arteEvento.file,
+        "arteQrcode": None,
+    }
     if arteQrcode:
-        imagens.update(arteQrcode=arteQrcode.file)
+        imagens["arteQrcode"] = arteQrcode.file
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
@@ -72,7 +73,7 @@ def criaEvento(
         )
     else:
         response.status_code = int(retorno["status"])
-        return {"mensagem": retorno["mensagem"]}
+        return {retorno["mensagem"]}
 
 
 @roteador.post(
@@ -86,15 +87,15 @@ def editaEvento(
     response: Response,
     usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
     formEvento: FormEvento = Depends(),
-    arteEvento: UploadFile = None,
-    arteQrcode: UploadFile = None,
+    arteEvento: UploadFile | None = None,
+    arteQrcode: UploadFile | None = None,
 ):
     # Cria um dicionário para as imagens
-    imagens = {"arteEvento": None, "arteQrcode": None}
+    imagens: dict[str, BinaryIO | None] = {"arteEvento": None, "arteQrcode": None}
     if arteEvento:
-        imagens.update(arteEvento=arteEvento.file)
+        imagens["arteEvento"] = arteEvento.file
     if arteQrcode:
-        imagens.update(arteQrcode=arteQrcode.file)
+        imagens["arteQrcode"] = arteQrcode.file
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
@@ -107,7 +108,7 @@ def editaEvento(
         )
     else:
         response.status_code = int(retorno["status"])
-        return {"mensagem": retorno["mensagem"]}
+        return {retorno["mensagem"]}
 
 
 @roteador.get(
@@ -123,7 +124,7 @@ def listarEventos() -> dict:
     eventos = eventoController.listarEventos()
     if eventos.get("status") != "200":
         raise HTTPException(
-            status_code=eventos.get("status"), detail=eventos.get("mensagem")
+            status_code=int(eventos["status"]), detail=eventos["mensagem"]
         )
 
     return {"mensagem": eventos.get("mensagem")}
@@ -143,7 +144,7 @@ def getInscritosEvento(idEvento: str) -> dict:
     inscritos = inscritosController.getInscritosEvento(idEvento)
     if inscritos.get("status") != "200":
         raise HTTPException(
-            status_code=inscritos.get("status"), detail=inscritos.get("mensagem")
+            status_code=int(inscritos["status"]), detail=inscritos["mensagem"]
         )
 
     return {"mensagem": inscritos.get("mensagem")}
