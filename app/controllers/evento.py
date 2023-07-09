@@ -28,7 +28,7 @@ def inscricaoEventoControlador(
     tipoDeInscricao: str,
     pagamento: bool | None,
 ) -> dict:
-    if (tipoDeInscricao != "sem notebook") and (tipoDeInscricao != "com notebook"):
+    if tipoDeInscricao not in ["sem notebook", "com notebook"]
         return {
             "mensagem": "Formato do tipo de inscricao em formato errado, deveria ser: com notebook ou sem notebook",
             "status": "400",
