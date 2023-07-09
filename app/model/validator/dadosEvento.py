@@ -1,5 +1,5 @@
-from pymongo import MongoClient
 from cerberus import Validator
+from pymongo import MongoClient
 
 
 class ValidarEvento:
@@ -20,8 +20,8 @@ class ValidarEvento:
             "data inicio inscrição": {"type": "datetime", "required": True},
             "data fim inscrição": {"type": "datetime", "required": True},
             "local": {"type": "string", "required": True},
-            "carga horária": {"type": "string", "required": True},
-            "valor": {"type": "integer", "required": True},
+            "carga horária": {"type": "integer", "required": True},
+            "valor": {"type": "float", "required": True},
             "arte evento": {"type": "string", "required": True},
             "arte qrcode": {"type": "string", "required": False},
         }

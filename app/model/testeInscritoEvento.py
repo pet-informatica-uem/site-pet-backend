@@ -1,4 +1,5 @@
 from app.model.inscritosEventoBD import InscritosEventoBD
+
 # from app.model.schema.inscricaoEventoSchema import Inscricao, VagasEvento
 
 

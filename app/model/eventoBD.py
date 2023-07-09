@@ -1,10 +1,12 @@
+from datetime import datetime
+
+from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from datetime import datetime
-from bson.objectid import ObjectId
-from app.model.validator.dadosEvento import ValidarEvento
+
 from app.model.inscritosEventoBD import InscritosEventoBD
 from app.model.schema.inscricaoEventoSchema import VagasEvento
+from app.model.validator.dadosEvento import ValidarEvento
 
 
 class EventoBD:

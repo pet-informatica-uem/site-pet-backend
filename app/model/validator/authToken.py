@@ -1,5 +1,5 @@
-from pymongo import MongoClient
 from cerberus import Validator
+from pymongo import MongoClient
 
 
 class ValidarAuthToken:

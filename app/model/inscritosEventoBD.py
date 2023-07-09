@@ -1,6 +1,8 @@
-from pymongo import MongoClient
 from datetime import datetime
+
 from bson.objectid import ObjectId
+from pymongo import MongoClient
+
 from app.model.validator.inscritosEvento import ValidarInscritosEvento
 
 
@@ -17,7 +19,7 @@ class InscritosEventoBD:
                 "mensagem": self.__validarEvento.vagasEvento().errors,
                 "status": "400",
             }
-        
+
         if (
             self.__colecao.find_one({"idEvento": dadosListaInscritos["idEvento"]})
             != None
@@ -81,7 +83,7 @@ class InscritosEventoBD:
                 "mensagem": self.__validarEvento.inscritos().errors,
                 "status": "400",
             }
-        
+
         idEvento = ObjectId(dadosInscricao["idEvento"])
 
         usuariosInscritos = self.__colecao.find_one(

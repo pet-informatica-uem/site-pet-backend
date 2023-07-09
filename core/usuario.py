@@ -1,7 +1,7 @@
+import logging
+
 from app.model.usuarioBD import UsuarioBD
 from core.autenticacao import hashSenha
-
-import logging
 
 
 def ativaconta(id: str, email: str) -> dict:
@@ -92,4 +92,4 @@ def atualizaSenha(email: str, senha: str) -> dict:
 
     except Exception as e:
         logging.warning("Erro no banco de dados: " + str(e))
-        return {"mensagem": "Erro interno." ,"status": "500"}
+        return {"mensagem": "Erro interno.", "status": "500"}

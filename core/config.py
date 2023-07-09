@@ -1,3 +1,5 @@
+import os
+
 from pydantic import BaseSettings
 
 
@@ -31,6 +33,13 @@ class Configuracoes(BaseSettings):
     """
     URL base da aplicação na web. Utilizado na geração de links
     para serem exibidos e enviados aos usuários.
+    """
+
+    CAMINHO_IMAGEM: str = os.path.join(
+        os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "images"
+    )
+    """
+    Caminho onde serão armazenadas as imagens (.../images/). 
     """
 
     class Config:

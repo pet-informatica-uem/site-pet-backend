@@ -1,5 +1,6 @@
-from app.model.eventoBD import EventoBD
 from datetime import datetime
+
+from app.model.eventoBD import EventoBD
 
 evento = {
     "nome evento": "capacitação python9",
