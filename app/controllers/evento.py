@@ -48,12 +48,7 @@ def inscricaoEventoControlador(
         return situacaoEvento
 
     if (
-        (nivelConhecimento != "1")
-        and (nivelConhecimento != "2")
-        and (nivelConhecimento != "3")
-        and (nivelConhecimento != "4")
-        and (nivelConhecimento != "5")
-        and (nivelConhecimento != None)
+       nivelConhecimento not in ["1", "2", "3", "4", "5", None]
     ):
         return {"mensagem": "Nivel de conhecimento invalido", "status": "400"}
 
