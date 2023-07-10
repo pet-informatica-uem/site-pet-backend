@@ -1,4 +1,5 @@
-import ssl, smtplib
+import smtplib
+import ssl
 from email.message import EmailMessage
 
 
@@ -47,17 +48,17 @@ def emailConfirmacaoEvento(
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
     mensagem["Subject"] = (
-        "PET-Info: Você foi cadastrado no evento" + evento["nomeEvento"]
+        "PET-Info: Você foi cadastrado no evento" + evento["nome evento"]
     )
     mensagem.set_content(
         "Nome do evento: "
-        + evento["nomeEvento"]
+        + evento["nome evento"]
         + "\nLocal do Evento: "
-        + evento["localEvento"]
+        + evento["local"]
         + "\nData do evento: "
-        + evento["dataEvento"]
+        + evento["data/hora evento"]
         + "Nesse evento você optou por: "
-        + evento["coindicoesEvento"]
+        + evento["pré-requisitos"]
     )
 
     return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)

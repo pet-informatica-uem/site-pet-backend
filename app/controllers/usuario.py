@@ -8,8 +8,13 @@ from app.model.usuario import EstadoConta, TipoConta, UsuarioSenha
 from app.model.usuarioBD import UsuarioBD
 from core.autenticacao import conferirHashSenha, hashSenha
 from core.config import config
-from core.jwtoken import geraLink, geraTokenAtivaConta, processaTokenAtivaConta
-from core.usuario import ativaconta, verificaSeUsuarioExiste
+from core.jwtoken import (
+    geraLink,
+    geraTokenAtivaConta,
+    processaTokenAtivaConta,
+    processaTokenTrocaSenha,
+)
+from core.usuario import ativaconta, atualizaSenha, verificaSeUsuarioExiste
 
 
 def ativaContaControlador(token: str) -> dict:
@@ -111,15 +116,28 @@ def cadastraUsuarioControlador(
 def recuperaContaControlador(email: str) -> dict:
     # Verifica se o usuário está cadastrado no bd
     retorno = verificaSeUsuarioExiste(email)
-    if retorno.get("status") != "200":
+    if retorno.get("status") == "500":
         return retorno
 
     # Gera o link e envia o email se o usuário estiver cadastrado
-    if retorno.get("existe"):
+    if retorno.get("status") == "200":
         link = geraLink(email)
         resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
 
     return {"mensagem": "OK", "status": "200"}
+
+
+def trocaSenhaControlador(token, senha: str) -> dict:
+    # Verifica o token e recupera o email
+    retorno = processaTokenTrocaSenha(token)
+    if retorno.get("status") != "200":
+        return retorno
+
+    # Atualiza a senha no bd
+    email = retorno.get("email")
+    retorno = atualizaSenha(email, senha)
+
+    return retorno
 
 
 def autenticaUsuarioControlador(email: str, senha: str) -> dict:

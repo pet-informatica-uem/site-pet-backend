@@ -1,5 +1,5 @@
-from pymongo import MongoClient
 from cerberus import Validator
+from pymongo import MongoClient
 
 
 class ValidarInscritosEvento:
@@ -8,7 +8,7 @@ class ValidarInscritosEvento:
         db = cliente["petBD"]
         self.__colecao = db["inscritos eventos"]
 
-    def inscritos(self) -> Validator:
+    def vagasEvento(self) -> Validator:
         self.__colecao.create_index("idEvento", unique=True)
 
         schemaEvento = {
@@ -29,6 +29,13 @@ class ValidarInscritosEvento:
                     },
                 },
             },
+        }
+
+        validadorEvento = Validator(schemaEvento)
+        return validadorEvento
+
+    def inscricao(self) -> Validator:
+        schemaInscricao = {
             "inscritos": {
                 "type": "list",
                 "required": False,
@@ -43,22 +50,22 @@ class ValidarInscritosEvento:
                             "type": "string",
                             "required": False,
                             "allowed": [
-                                "Não conheço nada",
-                                "Tenho uma noção da lógica",
-                                "Programo o básico",
-                                "Programo normalmente",
-                                "Tenho conhecimento avançado",
+                                "1",
+                                "2",
+                                "3",
+                                "4",
+                                "5",
                             ],
                         },
                         "tipo inscrição": {
                             "type": "string",
                             "required": False,
-                            "allowed": ["vaga com notebook", "vaga sem notebook"],
+                            "allowed": ["com notebook", "sem notebook"],
                         },
                     },
                 },
             },
         }
 
-        validadorEvento = Validator(schemaEvento)
-        return validadorEvento
+        validadorInscricao = Validator(schemaInscricao)
+        return validadorInscricao

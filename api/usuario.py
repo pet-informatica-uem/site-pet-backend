@@ -15,6 +15,7 @@ from app.controllers.usuario import (
     getUsuarioControlador,
     recuperaContaControlador,
     editaUsuarioControlador,
+    trocaSenhaControlador,
 )
 from app.model.usuario import Usuario, UsuarioSenha
 from app.model.authTokenBD import AuthTokenBD
@@ -128,6 +129,26 @@ def recuperaConta(
     return {"mensagem": resposta.get("mensagem")}
 
 
+@roteador.post(
+    "/troca-senha",
+    name="Trocar senha",
+    description="""
+        Altera a senha do usuário. Falha, se a senha ou o link forem inválidos.
+    """,
+    status_code=status.HTTP_200_OK,
+)
+def trocaSenha(token, senha: Annotated[str, Form()], response: Response):
+    # Validacao basica da senha
+    if not validaSenha(senha, senha):
+        raise HTTPException(status_code=400, detail="Senha inválida.")
+
+    # Despacha o token para o controlador
+    retorno = trocaSenhaControlador(token, senha)
+
+    response.status_code = int(retorno.get("status"))
+    return {"mensagem": retorno.get("mensagem")}
+
+
 class Token(BaseModel):
     access_token: str
     token_type: str
@@ -177,6 +198,14 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
         )
     else:
         return resp["mensagem"]
+
+
+def getPetianoAutenticado(
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)]
+):
+    if usuario.tipoConta == "petiano":
+        return usuario
+    raise HTTPException(status_code=401, detail="Acesso negado.")
 
 
 @roteador.get(
