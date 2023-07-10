@@ -12,15 +12,20 @@ from fastapi import (
     status,
 )
 
-from api.usuario import getPetianoAutenticado
+from api.usuario import getPetianoAutenticado, tokenAcesso
+  
 from app.controllers.evento import (
     EventoController,
     controladorEditarEvento,
     controladorNovoEvento,
     controladorDeletaEvento,
+    inscricaoEventoControlador,
+    DadosEvento
 )
+  
 from app.controllers.inscritosEvento import InscritosEventoController
-from app.model.evento import DadosEvento
+from app.controllers.usuario import getUsuarioAutenticadoControlador
+from app.model.authTokenBD import AuthTokenBD
 from app.model.usuario import UsuarioSenha
 
 # Especifica o formato das datas para serem convertidos
@@ -173,3 +178,53 @@ def getInscritosEvento(idEvento: str) -> dict:
         )
 
     return {"mensagem": inscritos.get("mensagem")}
+
+
+@roteador.post(
+    "/cadastroEmEvento",
+    name="Recebe dados da inscrição e realiza a inscrição no evento.",
+    description="Recebe o id do inscrito, o id do evento, o nivel do conhecimento do inscrito, o tipo de de inscrição e a situação de pagamento da inscricao em eventos do usuario autenticado.",
+    status_code=status.HTTP_201_CREATED,
+)
+def getDadosInscricaoEvento(
+    token: Annotated[str, Depends(tokenAcesso)],
+    idEvento: Annotated[str, Form(max_length=200)],
+    tipoDeInscricao: Annotated[str, Form(max_length=200)],
+    pagamento: Annotated[bool, Form()],
+    nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
+):
+    conexaoAuthToken = AuthTokenBD()
+
+    resp : dict = conexaoAuthToken.getIdUsuarioDoToken(token)
+    idUsuario : str = resp["mensagem"]
+
+    resposta : dict = inscricaoEventoControlador(
+        idUsuario, idEvento, nivelConhecimento, tipoDeInscricao, pagamento
+    )
+
+    statusResposta : str = resposta["status"]
+    mensagemResposta : str = resposta["mensagem"]
+    if statusResposta == "400":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail=mensagemResposta
+        )
+    if statusResposta == "404":
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=mensagemResposta
+        )
+    if statusResposta == "409":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=mensagemResposta
+        )
+    if statusResposta == "406":
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=mensagemResposta
+        )
+    if statusResposta == "410":
+        raise HTTPException(
+            status_code=status.HTTP_410_GONE, detail=mensagemResposta
+        )
+
+    resposta["status"] = "201"
+    resposta["mensagem"] = "Usuario inscrito com sucesso!"
+    return resposta
