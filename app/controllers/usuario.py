@@ -233,7 +233,7 @@ def getUsuarioControlador(id: str) -> dict:
 
 
 def editaUsuarioControlador(
-    *, token: str, nomeCompleto: str, curso: str | None, redesSociais: dict
+    *, usuario: UsuarioSenha, nomeCompleto: str, curso: str | None, redesSociais: dict
 ) -> dict:
     """
     Atualiza os dados básicos (nome, curso, redes sociais) da conta de um usuário existente.
@@ -251,38 +251,35 @@ def editaUsuarioControlador(
     """
     try:
         bd = UsuarioBD()
-        dados = getUsuarioAutenticadoControlador(token=token)
-        if dados["status"] == "200":
-            user: dict = dados["mensagem"].paraBd()
+        usuarioDados: dict = usuario.paraBd()
 
-            user.update(
-                {
-                    "nome": nomeCompleto,
-                    "curso": curso,
-                    "redes sociais": redesSociais,
-                }
+        usuarioDados.update(
+            {
+                "nome": nomeCompleto,
+                "curso": curso,
+                "redes sociais": redesSociais,
+            }
+        )
+        id = usuarioDados.pop("_id")
+        atualizacao = bd.atualizarUsuario(id, usuarioDados)
+        if atualizacao["status"] == "200":
+            logging.info("Dados do usuário atualizados, id: " + str(id))
+            return {"status": "200", "mensagem": "Usuário atualizado com sucesso."}
+        else:
+            logging.error(
+                "Erro no banco de dados ao fazer a atualização: "
+                + str(atualizacao["mensagem"])
             )
-            id = user.pop("_id")
-            atualizacao = bd.atualizarUsuario(id, user)
-            if atualizacao["status"] == "200":
-                logging.info("Dados do usuário atualizados, id: " + str(id))
-                return {"status": "200", "mensagem": "Usuário atualizado com sucesso."}
-            else:
-                logging.error(
-                    "Erro no banco de dados ao fazer a atualização: "
-                    + str(atualizacao["mensagem"])
-                )
-                return {
-                    "status": atualizacao["status"],
-                    "mensagem": atualizacao["mensagem"],
-                }
-        return {"status": "400", "mensagem": "Usuário inválido"}
+            return {
+                "status": atualizacao["status"],
+                "mensagem": atualizacao["mensagem"],
+            }
     except Exception as e:
         logging.error("Erro na atualização de usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}
 
 
-def editaSenhaControlador(*, senhaAtual: str, novaSenha: str, token: str) -> dict:
+def editaSenhaControlador(*, senhaAtual: str, novaSenha: str, usuario: UsuarioSenha) -> dict:
     """
     Atualiza a senha de um usuário existente.
 
@@ -299,37 +296,34 @@ def editaSenhaControlador(*, senhaAtual: str, novaSenha: str, token: str) -> dic
     """
     try:
         bd = UsuarioBD()
-        chave = getUsuarioAutenticadoControlador(token=token)
-        if chave["status"] == "200":
-            user: dict = chave["mensagem"].paraBd()
-            if conferirHashSenha(senhaAtual, user["senha"]):
-                user.update({"senha": hashSenha(novaSenha)})
-                id = user.pop("_id")
-                atualizacao = bd.atualizarUsuario(id, user)
-                if atualizacao["status"] == "200":
-                    logging.info("Dados do usuário atualizados, id: " + str(id))
-                    return {
-                        "status": "200",
-                        "mensagem": "Usuário atualizado com sucesso.",
-                    }
-                else:
-                    logging.error(
-                        "Erro no banco de dados ao fazer a atualização: "
-                        + str(atualizacao["mensagem"])
-                    )
-                    return {
-                        "status": atualizacao["status"],
-                        "mensagem": atualizacao["mensagem"],
-                    }
+        usuarioDados: dict = usuario.paraBd()
+        if conferirHashSenha(senhaAtual, usuarioDados["senha"]):
+            usuarioDados.update({"senha": hashSenha(novaSenha)})
+            id = usuarioDados.pop("_id")
+            atualizacao = bd.atualizarUsuario(id, usuarioDados)
+            if atualizacao["status"] == "200":
+                logging.info("Dados do usuário atualizados, id: " + str(id))
+                return {
+                    "status": "200",
+                    "mensagem": "Usuário atualizado com sucesso.",
+                }
             else:
-                return {"status": "400", "mensagem": "Senha incorreta"}
-        return {"status": "400", "mensagem": "Usuário inválido"}
+                logging.error(
+                    "Erro no banco de dados ao fazer a atualização: "
+                    + str(atualizacao["mensagem"])
+                )
+                return {
+                    "status": atualizacao["status"],
+                    "mensagem": atualizacao["mensagem"],
+                }
+        else:
+            return {"status": "400", "mensagem": "Senha incorreta"}
     except Exception as e:
         logging.error("Erro na atualização de senha do Usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}
 
 
-def editaEmailControlador(*, senhaAtual: str, novoEmail: str, token: str) -> dict:
+def editaEmailControlador(*, senhaAtual: str, novoEmail: str, usuario: UsuarioSenha) -> dict:
     """
     Atualiza o email de um usuário existente.
 
@@ -348,43 +342,40 @@ def editaEmailControlador(*, senhaAtual: str, novoEmail: str, token: str) -> dic
     """
     try:
         bd = UsuarioBD()
-        chave = getUsuarioAutenticadoControlador(token=token)
-        if chave["status"] == "200":
-            user: dict = chave["mensagem"].paraBd()
-            if conferirHashSenha(senhaAtual, user["senha"]):
-                user.update({"email": novoEmail, "estado da conta": "inativo"})
-                id = user.pop("_id")
-                atualizacao = bd.atualizarUsuario(id, user)
-                if atualizacao["status"] == "200":
-                    token24h = geraTokenAtivaConta(id, novoEmail, timedelta(days=1))
-                    linkConfirmacao = (
-                        config.CAMINHO_BASE
-                        + "/usuario/confirmacaoEmail?token="
-                        + token24h
-                    )
-                    verificarEmail(
-                        emailPet=config.EMAIL_SMTP,
-                        senhaPet=config.SENHA_SMTP,
-                        emailDestino=novoEmail,
-                        link=linkConfirmacao,
-                    )
-                    logging.info("Dados do usuário atualizados, id: " + str(id))
-                    return {
-                        "status": "200",
-                        "mensagem": "Usuário atualizado com sucesso.",
-                    }
-                else:
-                    logging.error(
-                        "Erro no banco de dados ao fazer a atualização: "
-                        + str(atualizacao["mensagem"])
-                    )
-                    return {
-                        "status": atualizacao["status"],
-                        "mensagem": atualizacao["mensagem"],
-                    }
+        usuarioDados: dict = usuario.paraBd()
+        if conferirHashSenha(senhaAtual, usuarioDados["senha"]):
+            usuarioDados.update({"email": novoEmail, "estado da conta": "inativo"})
+            id = usuarioDados.pop("_id")
+            atualizacao = bd.atualizarUsuario(id, usuarioDados)
+            if atualizacao["status"] == "200":
+                token24h = geraTokenAtivaConta(id, novoEmail, timedelta(days=1))
+                linkConfirmacao = (
+                    config.CAMINHO_BASE
+                    + "/usuario/confirmacaoEmail?token="
+                    + token24h
+                )
+                verificarEmail(
+                    emailPet=config.EMAIL_SMTP,
+                    senhaPet=config.SENHA_SMTP,
+                    emailDestino=novoEmail,
+                    link=linkConfirmacao,
+                )
+                logging.info("Dados do usuário atualizados, id: " + str(id))
+                return {
+                    "status": "200",
+                    "mensagem": "Usuário atualizado com sucesso.",
+                }
             else:
-                return {"status": "400", "mensagem": "Senha incorreta"}
-        return {"status": "400", "mensagem": "Usuário inválido"}
+                logging.error(
+                    "Erro no banco de dados ao fazer a atualização: "
+                    + str(atualizacao["mensagem"])
+                )
+                return {
+                    "status": atualizacao["status"],
+                    "mensagem": atualizacao["mensagem"],
+                }
+        else:
+            return {"status": "400", "mensagem": "Senha incorreta"}
     except Exception as e:
         logging.error("Erro na atualização de email do Usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}

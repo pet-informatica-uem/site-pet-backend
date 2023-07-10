@@ -224,40 +224,37 @@ def editarDados(
     instagram: Annotated[HttpUrl, Form()],
     linkedin: Annotated[HttpUrl, Form()],
     twitter: Annotated[HttpUrl, Form()],
-    token: Annotated[str, Depends(tokenAcesso)] = ...,
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
 ):
-    if getUsuarioAutenticadoControlador(token)["status"] == "200":
-        # agrupa redes sociais
-        redesSociais = {
-            "github": github,
-            "linkedin": linkedin,
-            "instagram": instagram,
-            "twitter": twitter,
-        }
+    
+    # agrupa redes sociais
+    redesSociais = {
+        "github": github,
+        "linkedin": linkedin,
+        "instagram": instagram,
+        "twitter": twitter,
+    }
 
-        # valida links
-        for chave in redesSociais:
-            link = str(redesSociais[chave])
-            if chave not in link:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="O link "
-                    + link
-                    + " não é válido com a rede social "
-                    + chave,
-                )
+    # valida links
+    for chave in redesSociais:
+        link = str(redesSociais[chave])
+        if chave not in link:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="O link "
+                + link
+                + " não é válido com a rede social "
+                + chave,
+            )
 
-        resultado = editaUsuarioControlador(
-            token=token,
-            nomeCompleto=nomeCompleto,
-            curso=curso,
-            redesSociais=redesSociais,
-        )
-
-        return resultado
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário não verificado"
+    resultado = editaUsuarioControlador(
+        usuario=usuario,
+        nomeCompleto=nomeCompleto,
+        curso=curso,
+        redesSociais=redesSociais,
     )
+
+    return resultado
 
 
 @roteador.post(
@@ -271,36 +268,34 @@ def editarSenha(
     novaSenha: Annotated[SecretStr, Form(max_length=200)],
     confirmacaoSenha: Annotated[SecretStr, Form(max_length=200)],
     deslogarAoTrocarSenha: Annotated[bool, Form()],
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
-    if getUsuarioAutenticadoControlador(token)["status"] == "200":
-        # verifica nova senha
-        if not validaSenha(
-            novaSenha.get_secret_value(), confirmacaoSenha.get_secret_value()
-        ):
-            logging.info("Erro. Nova senha não foi validada com sucesso.")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
-            )
-
-        # efetua troca de senha
-        resultado = editaSenhaControlador(
-            senhaAtual=senhaAtual.get_secret_value(),
-            novaSenha=novaSenha.get_secret_value(),
-            token=token,
+    
+    # verifica nova senha
+    if not validaSenha(
+        novaSenha.get_secret_value(), confirmacaoSenha.get_secret_value()
+    ):
+        logging.info("Erro. Nova senha não foi validada com sucesso.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
         )
 
-        # efetua logout de todas as sessões, caso o usuário desejar
-        if deslogarAoTrocarSenha and not resultado["status"] != "200":
-            gerenciarTokens = AuthTokenBD()
-            gerenciarTokens.deletarTokensUsuario(
-                gerenciarTokens.getIdUsuarioDoToken(token)["mensagem"]
-            )
-
-        return resultado
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário não verificado"
+    # efetua troca de senha
+    resultado = editaSenhaControlador(
+        senhaAtual=senhaAtual.get_secret_value(),
+        novaSenha=novaSenha.get_secret_value(),
+        usuario=usuario,
     )
+
+    # efetua logout de todas as sessões, caso o usuário desejar
+    if deslogarAoTrocarSenha and resultado["status"] == "200":
+        gerenciarTokens = AuthTokenBD()
+        gerenciarTokens.deletarTokensUsuario(
+            gerenciarTokens.getIdUsuarioDoToken(token=token)["mensagem"]
+        )
+
+    return resultado
 
 
 @roteador.post(
@@ -311,31 +306,29 @@ def editarSenha(
 def editarEmail(
     senhaAtual: Annotated[SecretStr, Form(max_length=200)],
     novoEmail: Annotated[EmailStr, Form()],
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
-    if getUsuarioAutenticadoControlador(token)["status"] == "200":
-        if not validaEmail(novoEmail):
-            logging.info("Erro. Novo email não foi validado com sucesso.")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
-            )
-
-        # normaliza dados
-        novoEmail = EmailStr(novoEmail.lower().strip())
-
-        resultado = editaEmailControlador(
-            senhaAtual=senhaAtual.get_secret_value(),
-            novoEmail=novoEmail,
-            token=token,
+    
+    if not validaEmail(novoEmail):
+        logging.info("Erro. Novo email não foi validado com sucesso.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
         )
 
-        if not resultado["status"] != "200":
-            gerenciarTokens = AuthTokenBD()
-            gerenciarTokens.deletarTokensUsuario(
-                gerenciarTokens.getIdUsuarioDoToken(token)["mensagem"]
-            )
+    # normaliza dados
+    novoEmail = EmailStr(novoEmail.lower().strip())
 
-        return resultado
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED, detail="Usuário não verificado"
+    resultado = editaEmailControlador(
+        senhaAtual=senhaAtual.get_secret_value(),
+        novoEmail=novoEmail,
+        usuario=usuario,
     )
+
+    if resultado["status"] == "200":
+        gerenciarTokens = AuthTokenBD()
+        gerenciarTokens.deletarTokensUsuario(
+            gerenciarTokens.getIdUsuarioDoToken(token=token)["mensagem"]
+        )
+
+    return resultado
