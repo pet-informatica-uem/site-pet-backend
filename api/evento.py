@@ -54,15 +54,15 @@ def getInscritosEvento(idEvento: str) -> dict:
 
 @roteador.post(
     "/cadastroEmEvento",
-    name="Obter dados da inscricao em eventos",
-    description="Recebe o Nome do inscrito, ID do evento, nivel do conhecimento, tipode de inscricao e pagamento da inscricao em eventos do usuario autenticado.",
+    name="Recebe dados da inscrição e realiza a inscrição no evento.",
+    description="Recebe o id do inscrito, o id do evento, o nivel do conhecimento do inscrito, o tipo de de inscrição e a situação de pagamento da inscricao em eventos do usuario autenticado.",
     status_code=status.HTTP_201_CREATED,
 )
 def getDadosInscricaoEvento(
     token: Annotated[str, Depends(tokenAcesso)],
     idEvento: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
-    pagamento: Annotated[bool | None, Form()] = None,  # deixa com possibilidade de NONE?
+    pagamento: Annotated[bool, Form()],
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
 ):
     conexaoAuthToken = AuthTokenBD()
