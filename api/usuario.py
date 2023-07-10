@@ -1,7 +1,16 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Request,
+    Response,
+    status,
+    UploadFile,
+)
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, HttpUrl, SecretStr
 
@@ -9,6 +18,7 @@ from app.controllers.usuario import (
     ativaContaControlador,
     autenticaUsuarioControlador,
     cadastraUsuarioControlador,
+    editarFotoControlador,
     editaEmailControlador,
     editaSenhaControlador,
     getUsuarioAutenticadoControlador,
@@ -242,6 +252,22 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
 
 
 @roteador.post(
+    "/id/eu/editar-foto",
+    name="Atualizar foto de perfil",
+    description="O usuário petiano é capaz de editar sua foto de perfil",
+)
+def editarFoto(
+    foto: UploadFile | None,
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
+) -> dict:
+    resultado = {"status": "200", "mensagem": foto}
+
+    editarFotoControlador(usuario=usuario, foto=resultado)
+    
+    return resultado
+  
+  
+@roteador.post(
     "/id/eu/editar-dados",
     name="Editar dados do usuário autenticado",
     description="""O usuário é capaz de editar os dados""",
@@ -359,5 +385,5 @@ def editarEmail(
         gerenciarTokens.deletarTokensUsuario(
             gerenciarTokens.getIdUsuarioDoToken(token=token)["mensagem"]
         )
-
+    
     return resultado

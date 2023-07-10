@@ -1,6 +1,7 @@
 import logging
 import secrets
 from datetime import datetime, timedelta
+from fastapi import UploadFile
 
 from app.controllers.operacoesEmail import resetarSenha, verificarEmail
 from app.model.authTokenBD import AuthTokenBD
@@ -15,6 +16,7 @@ from core.jwtoken import (
     processaTokenTrocaSenha,
 )
 from core.usuario import ativaconta, atualizaSenha, verificaSeUsuarioExiste
+from core.operacoesImagem import *
 
 
 def ativaContaControlador(token: str) -> dict:
@@ -396,4 +398,51 @@ def editaEmailControlador(*, senhaAtual: str, novoEmail: str, usuario: UsuarioSe
             return {"status": "400", "mensagem": "Senha incorreta"}
     except Exception as e:
         logging.error("Erro na atualização de email do Usuário: " + str(e))
+        return {"status": "500", "mensagem": str(e)}
+      
+
+def editarFotoControlador(*, usuario: UsuarioSenha, foto: dict[str, UploadFile]) -> dict:
+    """
+    Atualiza a foto de perfil de um usuário existente.
+
+    Para atualizar a foto, o usuário deve inserir uma foto.
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+
+    - Se a foto for atualizada, "status" == "200" e "mensagem" conterá
+    o _id da conta (str).
+    - Se a foto não for atualizado com sucesso, "status" != "200" e "mensagem" conterá
+    uma mensagem de erro (str).
+
+    A atualização da conta pode não suceder por erro na validação de dados.
+    """
+    try:
+        bd = UsuarioBD()
+        usuarioDados: dict = usuario.paraBd()
+
+        if not validaImagem(foto["mensagem"].file):  # type: ignore
+            return {"mensagem": "Foto de perfil inválida.", "status": "400"}
+
+        deletaImagem(usuarioDados["nome"], "usuarios")
+        caminhoFotoPerfil = armazenaFotoUsuario(usuarioDados["nome"], foto["mensagem"].file)  # type: ignore
+        usuarioDados["foto perfil"] = caminhoFotoPerfil
+        id = usuarioDados.pop("_id")
+        atualizacao = bd.atualizarUsuario(id, usuarioDados)
+        if atualizacao["status"] == "200":
+            logging.info("Dados do usuário atualizados, id: " + str(id))
+            return {
+                "status": "200",
+                "mensagem": "Usuário atualizado com sucesso.",
+            }
+        else:
+            logging.error(
+                "Erro no banco de dados ao fazer a atualização: "
+                + str(atualizacao["mensagem"])
+            )
+            return {
+                "status": atualizacao["status"],
+                "mensagem": atualizacao["mensagem"],
+            }
+    except Exception as e:
+        logging.error("Erro na atualização de foto de perfil do Usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}

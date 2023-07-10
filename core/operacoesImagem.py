@@ -20,6 +20,7 @@ def validaImagem(imagem: bytes | BinaryIO):
     return eh_valida
 
 
+
 def armazenaArteEvento(nomeEvento: str, arquivo: bytes | BinaryIO) -> str | None:
     """Armazena a imagem em "images/eventos/arte" usando um nome base para o arquivo.
 
@@ -27,6 +28,18 @@ def armazenaArteEvento(nomeEvento: str, arquivo: bytes | BinaryIO) -> str | None
     """
     path = os.path.join(config.CAMINHO_IMAGEM, "eventos", "arte")
     retorno = __armazenaImagem(path, nomeEvento, arquivo)
+
+    return retorno
+
+
+
+def armazenaFotoUsuario(nomeUsuario: str, arquivo: str | bytes) -> str | None:
+    """Armazena a imagem em "images/usuario" usando um nome base para o arquivo.
+
+    Return: caminho para a imagem salva -> str. None, se a imagem for inválida.
+    """
+    path = os.path.join(IMAGES_PATH, "usuarios")
+    retorno = __armazenaImagem(path, nomeUsuario, arquivo)
 
     return retorno
 
@@ -74,6 +87,7 @@ def deletaImagem(nomeImagem: str, path: list[str] = []) -> dict:
             os.remove(imagem)
         return {"mensagem": "Imagem(s) deleta(s) com sucesso!", "status": "200"}
     return {"mensagem": "Nenhuma imagem encontrada.", "status": "404"}
+
 
 
 def __armazenaImagem(path: str, nomeBase: str, imagem: bytes | BinaryIO) -> str | None:

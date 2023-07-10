@@ -23,6 +23,9 @@ from app.controllers.inscritosEvento import InscritosEventoController
 from app.model.evento import DadosEvento
 from app.model.usuario import UsuarioSenha
 
+# Especifica o formato das datas para serem convertidos
+formatoString = "%d/%m/%Y %H:%M"
+
 roteador = APIRouter(prefix="/evento", tags=["Eventos"])
 
 
