@@ -2,7 +2,7 @@ import logging, locale
 
 from fastapi import FastAPI
 
-from api import roteadorUsuario, roteadorPetianos, roteadorEvento
+from api import roteadorEvento, roteadorPetianos, roteadorUsuario
 
 logging.basicConfig(
     handlers=[

@@ -1,6 +1,7 @@
 import logging
 import secrets
 from datetime import datetime, timedelta
+from fastapi import UploadFile
 
 from app.controllers.operacoesEmail import resetarSenha, verificarEmail
 from app.model.authTokenBD import AuthTokenBD
@@ -14,7 +15,8 @@ from core.jwtoken import (
     processaTokenAtivaConta,
     processaTokenTrocaSenha,
 )
-from core.usuario import ativaconta, verificaSeUsuarioExiste, atualizaSenha
+from core.usuario import ativaconta, atualizaSenha, verificaSeUsuarioExiste
+from core.operacoesImagem import *
 
 
 def ativaContaControlador(token: str) -> dict:
@@ -201,7 +203,6 @@ def getUsuarioAutenticadoControlador(token: str) -> dict:
     ou for inválido.
 
     Retorna um dicionário com campos "status" e "mensagem".
-
     - "status" == "200" se e somente se os dados foram recuperados com sucesso.
     - "mensagem" contém uma instância da classe UsuarioSenha em caso de sucesso e uma
       mensagem de erro caso contrário.
@@ -248,4 +249,200 @@ def getUsuarioControlador(id: str) -> dict:
         return {"status": "200", "mensagem": usuario}
     except Exception as e:
         logging.error("Erro ao recuperar dados do usuário: " + str(e))
+        return {"status": "500", "mensagem": str(e)}
+
+
+def editaUsuarioControlador(
+    *, usuario: UsuarioSenha, nomeCompleto: str, curso: str | None, redesSociais: dict
+) -> dict:
+    """
+    Atualiza os dados básicos (nome, curso, redes sociais) da conta de um usuário existente.
+
+    Este controlador assume que as redes sociais estejam no formato de links ou None.
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+
+    - Se a conta foi atualizada, "status" == "200" e "mensagem" conterá
+    o _id da conta (str).
+    - Se a conta não foi atualizada com sucesso, "status" != "200" e "mensagem" conterá
+    uma mensagem de erro (str).
+
+    A atualização da conta pode não suceder por erro na validação de dados.
+    """
+    try:
+        bd = UsuarioBD()
+        usuarioDados: dict = usuario.paraBd()
+
+        usuarioDados.update(
+            {
+                "nome": nomeCompleto,
+                "curso": curso,
+                "redes sociais": redesSociais,
+            }
+        )
+        id = usuarioDados.pop("_id")
+        atualizacao = bd.atualizarUsuario(id, usuarioDados)
+        if atualizacao["status"] == "200":
+            logging.info("Dados do usuário atualizados, id: " + str(id))
+            return {"status": "200", "mensagem": "Usuário atualizado com sucesso."}
+        else:
+            logging.error(
+                "Erro no banco de dados ao fazer a atualização: "
+                + str(atualizacao["mensagem"])
+            )
+            return {
+                "status": atualizacao["status"],
+                "mensagem": atualizacao["mensagem"],
+            }
+    except Exception as e:
+        logging.error("Erro na atualização de usuário: " + str(e))
+        return {"status": "500", "mensagem": str(e)}
+
+
+def editaSenhaControlador(*, senhaAtual: str, novaSenha: str, usuario: UsuarioSenha) -> dict:
+    """
+    Atualiza a senha de um usuário existente.
+
+    Para atualizar a senha, o usuário deve digitar sua senha atual.
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+
+    - Se a senha foi atualizada, "status" == "200" e "mensagem" conterá
+    o _id da conta (str).
+    - Se a senha não foi atualizada com sucesso, "status" != "200" e "mensagem" conterá
+    uma mensagem de erro (str).
+
+    A atualização da conta pode não suceder por erro na validação de dados.
+    """
+    try:
+        bd = UsuarioBD()
+        usuarioDados: dict = usuario.paraBd()
+        if conferirHashSenha(senhaAtual, usuarioDados["senha"]):
+            usuarioDados.update({"senha": hashSenha(novaSenha)})
+            id = usuarioDados.pop("_id")
+            atualizacao = bd.atualizarUsuario(id, usuarioDados)
+            if atualizacao["status"] == "200":
+                logging.info("Dados do usuário atualizados, id: " + str(id))
+                return {
+                    "status": "200",
+                    "mensagem": "Usuário atualizado com sucesso.",
+                }
+            else:
+                logging.error(
+                    "Erro no banco de dados ao fazer a atualização: "
+                    + str(atualizacao["mensagem"])
+                )
+                return {
+                    "status": atualizacao["status"],
+                    "mensagem": atualizacao["mensagem"],
+                }
+        else:
+            return {"status": "400", "mensagem": "Senha incorreta"}
+    except Exception as e:
+        logging.error("Erro na atualização de senha do Usuário: " + str(e))
+        return {"status": "500", "mensagem": str(e)}
+
+
+def editaEmailControlador(*, senhaAtual: str, novoEmail: str, usuario: UsuarioSenha) -> dict:
+    """
+    Atualiza o email de um usuário existente.
+
+    Para atualizar o email, o usuário deve digitar sua senha atual.
+
+    O usuário sempre é deslogado quando troca seu email, pois sua conta deve ser reativada.
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+
+    - Se o email foi atualizado, "status" == "200" e "mensagem" conterá
+    o _id da conta (str).
+    - Se o email não foi atualizado com sucesso, "status" != "200" e "mensagem" conterá
+    uma mensagem de erro (str).
+
+    A atualização da conta pode não suceder por erro na validação de dados.
+    """
+    try:
+        bd = UsuarioBD()
+        usuarioDados: dict = usuario.paraBd()
+        if conferirHashSenha(senhaAtual, usuarioDados["senha"]):
+            usuarioDados.update({"email": novoEmail, "estado da conta": "inativo"})
+            id = usuarioDados.pop("_id")
+            atualizacao = bd.atualizarUsuario(id, usuarioDados)
+            if atualizacao["status"] == "200":
+                token24h = geraTokenAtivaConta(id, novoEmail, timedelta(days=1))
+                linkConfirmacao = (
+                    config.CAMINHO_BASE
+                    + "/usuario/confirmacaoEmail?token="
+                    + token24h
+                )
+                verificarEmail(
+                    emailPet=config.EMAIL_SMTP,
+                    senhaPet=config.SENHA_SMTP,
+                    emailDestino=novoEmail,
+                    link=linkConfirmacao,
+                )
+                logging.info("Dados do usuário atualizados, id: " + str(id))
+                return {
+                    "status": "200",
+                    "mensagem": "Usuário atualizado com sucesso.",
+                }
+            else:
+                logging.error(
+                    "Erro no banco de dados ao fazer a atualização: "
+                    + str(atualizacao["mensagem"])
+                )
+                return {
+                    "status": atualizacao["status"],
+                    "mensagem": atualizacao["mensagem"],
+                }
+        else:
+            return {"status": "400", "mensagem": "Senha incorreta"}
+    except Exception as e:
+        logging.error("Erro na atualização de email do Usuário: " + str(e))
+        return {"status": "500", "mensagem": str(e)}
+      
+
+def editarFotoControlador(*, usuario: UsuarioSenha, foto: dict[str, UploadFile]) -> dict:
+    """
+    Atualiza a foto de perfil de um usuário existente.
+
+    Para atualizar a foto, o usuário deve inserir uma foto.
+
+    Retorna um dicionário contendo campos "status" e "mensagem".
+
+    - Se a foto for atualizada, "status" == "200" e "mensagem" conterá
+    o _id da conta (str).
+    - Se a foto não for atualizado com sucesso, "status" != "200" e "mensagem" conterá
+    uma mensagem de erro (str).
+
+    A atualização da conta pode não suceder por erro na validação de dados.
+    """
+    try:
+        bd = UsuarioBD()
+        usuarioDados: dict = usuario.paraBd()
+
+        if not validaImagem(foto["mensagem"].file):  # type: ignore
+            return {"mensagem": "Foto de perfil inválida.", "status": "400"}
+
+        deletaImagem(usuarioDados["nome"], "usuarios")
+        caminhoFotoPerfil = armazenaFotoUsuario(usuarioDados["nome"], foto["mensagem"].file)  # type: ignore
+        usuarioDados["foto perfil"] = caminhoFotoPerfil
+        id = usuarioDados.pop("_id")
+        atualizacao = bd.atualizarUsuario(id, usuarioDados)
+        if atualizacao["status"] == "200":
+            logging.info("Dados do usuário atualizados, id: " + str(id))
+            return {
+                "status": "200",
+                "mensagem": "Usuário atualizado com sucesso.",
+            }
+        else:
+            logging.error(
+                "Erro no banco de dados ao fazer a atualização: "
+                + str(atualizacao["mensagem"])
+            )
+            return {
+                "status": atualizacao["status"],
+                "mensagem": atualizacao["mensagem"],
+            }
+    except Exception as e:
+        logging.error("Erro na atualização de foto de perfil do Usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}

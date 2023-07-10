@@ -1,6 +1,8 @@
-from pymongo import MongoClient
 from datetime import datetime
+
 from bson.objectid import ObjectId
+from pymongo import MongoClient
+
 from app.model.validator.inscritosEvento import ValidarInscritosEvento
 
 

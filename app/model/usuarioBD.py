@@ -1,6 +1,7 @@
+from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from bson.objectid import ObjectId
+
 from app.model.validator.usuario import ValidarUsuario
 
 

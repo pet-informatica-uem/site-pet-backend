@@ -1,7 +1,7 @@
+import logging
+
 from app.model.usuarioBD import UsuarioBD
 from core.autenticacao import hashSenha
-
-import logging
 
 
 def ativaconta(id: str, email: str) -> dict:
