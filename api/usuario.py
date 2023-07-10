@@ -224,9 +224,9 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
 )
 def editarFoto(
     foto: UploadFile | None,
-    token: Annotated[str, Depends(tokenAcesso)] = ...,
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
 ) -> dict:
     resultado = {"status": "200", "mensagem": foto}
 
-    editarFotoControlador(token=token, foto=resultado)
+    editarFotoControlador(usuario=usuario, foto=resultado)
     return resultado

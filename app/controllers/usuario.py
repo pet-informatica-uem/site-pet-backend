@@ -236,7 +236,7 @@ def getUsuarioControlador(id: str) -> dict:
         return {"status": "500", "mensagem": str(e)}
 
 
-def editarFotoControlador(*, token: str, foto: dict[str, UploadFile]) -> dict:
+def editarFotoControlador(*, usuario: UsuarioSenha, foto: dict[str, UploadFile]) -> dict:
     """
     Atualiza a foto de perfil de um usuário existente.
 
@@ -253,35 +253,31 @@ def editarFotoControlador(*, token: str, foto: dict[str, UploadFile]) -> dict:
     """
     try:
         bd = UsuarioBD()
-        chave = getUsuarioAutenticadoControlador(token=token)
-        if chave["status"] == "200":
-            user: dict = chave["mensagem"].paraBd()
+        usuarioDados: dict = usuario.paraBd()
 
-            if not validaImagem(foto["mensagem"].file):  # type: ignore
-                return {"mensagem": "Foto de perfil inválida.", "status": "400"}
+        if not validaImagem(foto["mensagem"].file):  # type: ignore
+            return {"mensagem": "Foto de perfil inválida.", "status": "400"}
 
-            deletaImagem(user["nome"], "usuarios")
-            caminhoFotoPerfil = armazenaFotoUsuario(user["nome"], foto["mensagem"].file)  # type: ignore
-            user["foto perfil"] = caminhoFotoPerfil
-            id = user.pop("_id")
-            atualizacao = bd.atualizarUsuario(id, user)
-            if atualizacao["status"] == "200":
-                logging.info("Dados do usuário atualizados, id: " + str(id))
-                return {
-                    "status": "200",
-                    "mensagem": "Usuário atualizado com sucesso.",
-                }
-            else:
-                logging.error(
-                    "Erro no banco de dados ao fazer a atualização: "
-                    + str(atualizacao["mensagem"])
-                )
-                return {
-                    "status": atualizacao["status"],
-                    "mensagem": atualizacao["mensagem"],
-                }
+        deletaImagem(usuarioDados["nome"], "usuarios")
+        caminhoFotoPerfil = armazenaFotoUsuario(usuarioDados["nome"], foto["mensagem"].file)  # type: ignore
+        usuarioDados["foto perfil"] = caminhoFotoPerfil
+        id = usuarioDados.pop("_id")
+        atualizacao = bd.atualizarUsuario(id, usuarioDados)
+        if atualizacao["status"] == "200":
+            logging.info("Dados do usuário atualizados, id: " + str(id))
+            return {
+                "status": "200",
+                "mensagem": "Usuário atualizado com sucesso.",
+            }
         else:
-            return {"status": "400", "mensagem": "Erro na autenticação de Usuário"}
+            logging.error(
+                "Erro no banco de dados ao fazer a atualização: "
+                + str(atualizacao["mensagem"])
+            )
+            return {
+                "status": atualizacao["status"],
+                "mensagem": atualizacao["mensagem"],
+            }
     except Exception as e:
         logging.error("Erro na atualização de foto de perfil do Usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}
