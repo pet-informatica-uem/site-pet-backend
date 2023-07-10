@@ -3,19 +3,24 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
-from pydantic import BaseModel, EmailStr, SecretStr
+from pydantic import BaseModel, EmailStr, HttpUrl, SecretStr
 
 from app.controllers.usuario import (
     ativaContaControlador,
     autenticaUsuarioControlador,
     cadastraUsuarioControlador,
+    editaEmailControlador,
+    editaSenhaControlador,
     getUsuarioAutenticadoControlador,
     getUsuarioControlador,
     recuperaContaControlador,
+    editaUsuarioControlador,
     trocaSenhaControlador,
 )
 from app.model.usuario import Usuario, UsuarioSenha
+from app.model.authTokenBD import AuthTokenBD
 from core.ValidacaoCadastro import validaCpf, validaEmail, validaSenha
+
 
 roteador = APIRouter(
     prefix="/usuario",
@@ -234,3 +239,125 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
         )
     else:
         return resp["mensagem"]
+
+
+@roteador.post(
+    "/id/eu/editar-dados",
+    name="Editar dados do usuário autenticado",
+    description="""O usuário é capaz de editar os dados""",
+)
+def editarDados(
+    nomeCompleto: Annotated[str, Form(max_length=200)],
+    curso: Annotated[str, Form(max_length=200)],
+    github: Annotated[HttpUrl, Form()],
+    instagram: Annotated[HttpUrl, Form()],
+    linkedin: Annotated[HttpUrl, Form()],
+    twitter: Annotated[HttpUrl, Form()],
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
+):
+    
+    # agrupa redes sociais
+    redesSociais = {
+        "github": github,
+        "linkedin": linkedin,
+        "instagram": instagram,
+        "twitter": twitter,
+    }
+
+    # valida links
+    for chave in redesSociais:
+        link = str(redesSociais[chave])
+        if chave not in link:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="O link "
+                + link
+                + " não é válido com a rede social "
+                + chave,
+            )
+
+    resultado = editaUsuarioControlador(
+        usuario=usuario,
+        nomeCompleto=nomeCompleto,
+        curso=curso,
+        redesSociais=redesSociais,
+    )
+
+    return resultado
+
+
+@roteador.post(
+    "/id/eu/alterar-senha",
+    name="Editar senha do usuário autenticado",
+    description="""O usuário é capaz de editar sua senha\n
+    Caso a opção deslogarAoTrocarSenha for ativada, todos as sessões serão deslogadas ao trocar a senha.""",
+)
+def editarSenha(
+    senhaAtual: Annotated[SecretStr, Form(max_length=200)],
+    novaSenha: Annotated[SecretStr, Form(max_length=200)],
+    confirmacaoSenha: Annotated[SecretStr, Form(max_length=200)],
+    deslogarAoTrocarSenha: Annotated[bool, Form()],
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
+    token: Annotated[str, Depends(tokenAcesso)] = ...,
+):
+    
+    # verifica nova senha
+    if not validaSenha(
+        novaSenha.get_secret_value(), confirmacaoSenha.get_secret_value()
+    ):
+        logging.info("Erro. Nova senha não foi validada com sucesso.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
+        )
+
+    # efetua troca de senha
+    resultado = editaSenhaControlador(
+        senhaAtual=senhaAtual.get_secret_value(),
+        novaSenha=novaSenha.get_secret_value(),
+        usuario=usuario,
+    )
+
+    # efetua logout de todas as sessões, caso o usuário desejar
+    if deslogarAoTrocarSenha and resultado["status"] == "200":
+        gerenciarTokens = AuthTokenBD()
+        gerenciarTokens.deletarTokensUsuario(
+            gerenciarTokens.getIdUsuarioDoToken(token=token)["mensagem"]
+        )
+
+    return resultado
+
+
+@roteador.post(
+    "/id/eu/alterar-email",
+    name="Editar email do usuário autenticado",
+    description="""O usuário é capaz de editar seu email""",
+)
+def editarEmail(
+    senhaAtual: Annotated[SecretStr, Form(max_length=200)],
+    novoEmail: Annotated[EmailStr, Form()],
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
+    token: Annotated[str, Depends(tokenAcesso)] = ...,
+):
+    
+    if not validaEmail(novoEmail):
+        logging.info("Erro. Novo email não foi validado com sucesso.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
+        )
+
+    # normaliza dados
+    novoEmail = EmailStr(novoEmail.lower().strip())
+
+    resultado = editaEmailControlador(
+        senhaAtual=senhaAtual.get_secret_value(),
+        novoEmail=novoEmail,
+        usuario=usuario,
+    )
+
+    if resultado["status"] == "200":
+        gerenciarTokens = AuthTokenBD()
+        gerenciarTokens.deletarTokensUsuario(
+            gerenciarTokens.getIdUsuarioDoToken(token=token)["mensagem"]
+        )
+
+    return resultado

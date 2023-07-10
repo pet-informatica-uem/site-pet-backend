@@ -48,3 +48,10 @@ class AuthTokenBD:
             }
         else:
             return {"mensagem": "Token não encontrado", "status": "404"}
+
+    def deletarTokensUsuario(self, idUsuario: str) -> dict:
+        resultado = self.__colecao.delete_many({"idUsuario": idUsuario})
+        if resultado.deleted_count > 0:
+            return {"status": "200", "mensagem": "Os tokens do usuário foram deletados"}
+        else:
+            return {"status": "404", "mensagem": "Usuário não encontrado"}
