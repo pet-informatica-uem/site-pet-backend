@@ -1,5 +1,6 @@
-from pydantic import BaseModel, ValidationError, validator
 from datetime import datetime
+
+from pydantic import BaseModel
 
 
 class DadosEvento(BaseModel):
@@ -13,12 +14,12 @@ class DadosEvento(BaseModel):
     vagasComNote: int
     vagasSemNote: int
     cargaHoraria: int
-    valor: int
-    arteEvento: str
-    arteQrcode: str = None
+    valor: float
+    caminhoArteEvento: str = ""
+    caminhoArteQrcode: str = ""
 
-    def dict(self):
-        modelDict = {
+    def paraBD(self):
+        modelBD = {
             "nome evento": self.nomeEvento,
             "resumo": self.resumo,
             "pré-requisitos": self.preRequisitos,
@@ -32,10 +33,10 @@ class DadosEvento(BaseModel):
             },
             "carga horária": self.cargaHoraria,
             "valor": self.valor,
-            "arte evento": self.arteEvento,
-            "arte qrcode": self.arteQrcode,
+            "arte evento": self.caminhoArteEvento,
+            "arte qrcode": self.caminhoArteQrcode,
         }
-        return modelDict
+        return modelBD
 
 
 # dEven = DadosEvento(

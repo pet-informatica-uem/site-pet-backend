@@ -4,10 +4,6 @@ from fastapi import FastAPI
 
 from api import roteadorEvento, roteadorPetianos, roteadorUsuario
 
-petBack = FastAPI()
-petBack.include_router(roteadorUsuario)
-
-
 logging.basicConfig(
     handlers=[
         logging.FileHandler("output.log", encoding="utf-8"),

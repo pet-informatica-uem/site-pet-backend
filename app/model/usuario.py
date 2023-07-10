@@ -2,6 +2,7 @@ from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Self
+
 from pydantic import BaseModel, EmailStr, HttpUrl
 
 
@@ -90,7 +91,7 @@ class Usuario(BaseModel):
             "nome": self.nome,
             "email": self.email,
             "cpf": self.cpf,
-            "curso": self.curso,
+            "curso": self.curso or "",
             "estado da conta": self.estadoConta,
             "tipo conta": self.tipoConta,
             "data criacao": self.criado,
@@ -106,6 +107,15 @@ class Usuario(BaseModel):
             },
             "foto perfil": self.foto,
         }
+
+        if not (self.inicioPet or self.fimPet):
+            d.pop("tempo de pet")
+
+        if not (self.foto):
+            d.pop("foto perfil")
+
+        if not (self.github or self.linkedin or self.instagram or self.twitter):
+            d.pop("redes sociais")
 
         return d
 

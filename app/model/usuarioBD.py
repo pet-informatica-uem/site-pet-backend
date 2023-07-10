@@ -1,6 +1,7 @@
+from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from bson.objectid import ObjectId
+
 from app.model.validator.usuario import ValidarUsuario
 
 
@@ -53,7 +54,18 @@ class UsuarioBD:
         else:
             return {"mensagem": "Usuário não encontrado", "status": "404"}
 
-    def getListaUsuarios(self) -> dict:
+    # recebe uma lista de IDs de usuários
+    def getListaUsuarios(self, listaIdUsuarios: list) -> dict:
+        listaIdUsuarios = [ObjectId(usuario) for usuario in listaIdUsuarios]
+        if resultado := self.__colecao.find({"_id": {"$in": listaIdUsuarios}}):
+            return {
+                "mensagem": list(resultado),
+                "status": "200",
+            }
+        else:
+            return {"mensagem": "Algum usuário não foi encontrado", "status": "404"}
+
+    def getTodosUsuarios(self) -> dict:
         return {"mensagem": list(self.__colecao.find()), "status": "200"}
 
     def getListaPetianos(self) -> dict:

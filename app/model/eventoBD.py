@@ -1,8 +1,12 @@
+from datetime import datetime
+
+from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from datetime import datetime
-from app.model.validator.dadosEvento import ValidarEvento
+
 from app.model.inscritosEventoBD import InscritosEventoBD
+from app.model.schema.inscricaoEventoSchema import VagasEvento
+from app.model.validator.dadosEvento import ValidarEvento
 
 
 class EventoBD:
@@ -24,10 +28,20 @@ class EventoBD:
             "inscritos": [],
         }
 
+        # dadosInscricao : VagasEvento = {
+        #     "idEvento": "",
+        #     "vagas com notebook": 0,
+        #     "vagas sem notebook": 0,
+        #     "vagas preenchidas com notebook": 0,
+        #     "vagas preenchidas sem notebook": 0,
+        # }
+
         if self.__validarEvento.validate(dadosEvento):
             try:
+                # criar documento com os dados do evento
                 resultado = self.__colecao.insert_one(dadosEvento)
                 dadosListaInscritos["idEvento"] = resultado.inserted_id
+                # criar documento com os inscritos do evento
                 self.__insctirosEvento.criarListaInscritos(dadosListaInscritos)
 
                 return {"mensagem": "Evento cadastrado com sucesso!", "status": "200"}
@@ -36,30 +50,32 @@ class EventoBD:
         else:
             return {"mensagem": self.__validarEvento.errors, "status": "400"}
 
-    def removerEvento(self, nomeEvento: str) -> dict:
-        resultado = self.__colecao.find_one({"nome evento": nomeEvento})
+    def removerEvento(self, idEvento: str) -> dict:
+        idEvento = ObjectId(idEvento)
+        resultado = self.__colecao.find_one({"_id": idEvento})
         if resultado:
             self.__insctirosEvento.deletarListaInscritos(resultado["_id"])
-            self.__colecao.delete_one({"nome evento": nomeEvento})
+            self.__colecao.delete_one({"_id": idEvento})
             return {"mensagem": "Evento removido com sucesso!", "status": "200"}
         else:
             return {"mensagem": "Evento não encontrado!", "status": "404"}
 
-    def atualizarEvento(self, nomeEvento: str, dadosEvento: object) -> dict:
-        if self.getEvento(nomeEvento)["status"] == "404":
+    def atualizarEvento(self, idEvento: str, dadosEvento: object) -> dict:
+        idEvento = ObjectId(idEvento)
+        if self.getEvento(idEvento)["status"] == "404":
             return {"mensagem": "Evento não encontrado!", "status": "404"}
 
         dadosVagasOfertadas = {
             "vagas ofertadas": dadosEvento.pop("vagas ofertadas"),
         }
 
-        evento = self.__colecao.find_one({"nome evento": nomeEvento})
+        evento = self.__colecao.find_one({"_id": idEvento})
         dadosEvento["data criação"] = evento["data criação"]
 
         if self.__validarEvento.validate(dadosEvento):
             try:
                 resultado = self.__colecao.update_one(
-                    {"nome evento": nomeEvento}, {"$set": dadosEvento}
+                    {"_id": idEvento}, {"$set": dadosEvento}
                 )
 
                 resultado = self.__insctirosEvento.atualizarVagasOfertadas(
@@ -78,10 +94,11 @@ class EventoBD:
             return {"mensagem": self.__validarEvento.errors, "status": "400"}
 
     def listarEventos(self) -> dict:
-        return {"mensagem": list(self.__colecao.find({}, {"_id": 0})), "status": "200"}
+        return {"mensagem": list(self.__colecao.find()), "status": "200"}
 
-    def getEvento(self, nomeEvento: str) -> dict:
-        resultado = self.__colecao.find_one({"nome evento": nomeEvento})
+    def getEvento(self, idEvento: str) -> dict:
+        idEvento = ObjectId(idEvento)
+        resultado = self.__colecao.find_one({"_id": idEvento})
         if resultado:
             return {"mensagem": resultado, "status": "200"}
         else:
