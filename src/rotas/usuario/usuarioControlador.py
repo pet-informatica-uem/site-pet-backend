@@ -1,17 +1,27 @@
 import logging
 import secrets
 from datetime import datetime, timedelta
-from fastapi import UploadFile
-from autenticacao.autenticacao import conferirHashSenha, hashSenha
 
-from autenticacao.jwtoken import geraLink, geraTokenAtivaConta, processaTokenAtivaConta, processaTokenTrocaSenha
-from email.operacoesEmail import resetarSenha, verificarEmail
-from img.operacoesImagem import deletaImagem
-from modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
-from modelos.usuario.usuario import EstadoConta, TipoConta, UsuarioSenha
-from modelos.usuario.usuarioBD import UsuarioBD
-from rotas.usuario.usuarioUtil import ativaconta, atualizaSenha, verificaSeUsuarioExiste
+from fastapi import UploadFile
+
+from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
+from src.autenticacao.jwtoken import (
+    geraLink,
+    geraTokenAtivaConta,
+    processaTokenAtivaConta,
+    processaTokenTrocaSenha,
+)
 from src.config import config
+from src.email.operacoesEmail import resetarSenha, verificarEmail
+from src.img.operacoesImagem import deletaImagem
+from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
+from src.modelos.usuario.usuario import EstadoConta, TipoConta, UsuarioSenha
+from src.modelos.usuario.usuarioBD import UsuarioBD
+from src.rotas.usuario.usuarioUtil import (
+    ativaconta,
+    atualizaSenha,
+    verificaSeUsuarioExiste,
+)
 
 
 def ativaContaControlador(token: str) -> dict:
@@ -294,7 +304,9 @@ def editaUsuarioControlador(
         return {"status": "500", "mensagem": str(e)}
 
 
-def editaSenhaControlador(*, senhaAtual: str, novaSenha: str, usuario: UsuarioSenha) -> dict:
+def editaSenhaControlador(
+    *, senhaAtual: str, novaSenha: str, usuario: UsuarioSenha
+) -> dict:
     """
     Atualiza a senha de um usuário existente.
 
@@ -338,7 +350,9 @@ def editaSenhaControlador(*, senhaAtual: str, novaSenha: str, usuario: UsuarioSe
         return {"status": "500", "mensagem": str(e)}
 
 
-def editaEmailControlador(*, senhaAtual: str, novoEmail: str, usuario: UsuarioSenha) -> dict:
+def editaEmailControlador(
+    *, senhaAtual: str, novoEmail: str, usuario: UsuarioSenha
+) -> dict:
     """
     Atualiza o email de um usuário existente.
 
@@ -365,9 +379,7 @@ def editaEmailControlador(*, senhaAtual: str, novoEmail: str, usuario: UsuarioSe
             if atualizacao["status"] == "200":
                 token24h = geraTokenAtivaConta(id, novoEmail, timedelta(days=1))
                 linkConfirmacao = (
-                    config.CAMINHO_BASE
-                    + "/usuario/confirmacaoEmail?token="
-                    + token24h
+                    config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token24h
                 )
                 verificarEmail(
                     emailPet=config.EMAIL_SMTP,
@@ -394,9 +406,11 @@ def editaEmailControlador(*, senhaAtual: str, novoEmail: str, usuario: UsuarioSe
     except Exception as e:
         logging.error("Erro na atualização de email do Usuário: " + str(e))
         return {"status": "500", "mensagem": str(e)}
-      
 
-def editarFotoControlador(*, usuario: UsuarioSenha, foto: dict[str, UploadFile]) -> dict:
+
+def editarFotoControlador(
+    *, usuario: UsuarioSenha, foto: dict[str, UploadFile]
+) -> dict:
     """
     Atualiza a foto de perfil de um usuário existente.
 

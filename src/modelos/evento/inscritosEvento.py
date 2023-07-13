@@ -31,7 +31,7 @@ class ValidarInscritosEvento:
             },
         }
 
-        validadorEvento = Validator(schemaEvento) # type: ignore
+        validadorEvento = Validator(schemaEvento)  # type: ignore
         return validadorEvento
 
     def inscricao(self) -> Validator:
@@ -67,5 +67,5 @@ class ValidarInscritosEvento:
             },
         }
 
-        validadorInscricao = Validator(schemaInscricao) # type: ignore
+        validadorInscricao = Validator(schemaInscricao)  # type: ignore
         return validadorInscricao

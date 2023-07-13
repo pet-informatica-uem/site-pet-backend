@@ -1,8 +1,12 @@
-import logging, locale
+import locale
+import logging
+
 from fastapi import FastAPI
 
-from img.criaPastas import criaPastas
-
+from src.img.criaPastas import criaPastas
+from src.rotas.evento.eventoRotas import roteador as roteadorEvento
+from src.rotas.petiano.petianoRotas import roteador as roteadorPetianos
+from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
 
 logging.basicConfig(
     handlers=[
@@ -13,7 +17,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
-locale.setlocale(locale.LC_ALL, 'pt_BR.UTF-8')
+locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 
 # Caso não existam, cria as pastas para armazenar imagens.
 criaPastas()

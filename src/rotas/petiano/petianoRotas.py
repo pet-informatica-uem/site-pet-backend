@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from rotas.petiano.petianoControlador import infoPetianos
+from src.rotas.petiano.petianoControlador import infoPetianos
 
 roteador = APIRouter(tags=["Petianos"])
 

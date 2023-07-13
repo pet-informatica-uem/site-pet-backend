@@ -1,7 +1,4 @@
-
-
-
-from modelos.usuario.usuarioBD import UsuarioBD
+from src.modelos.usuario.usuarioBD import UsuarioBD
 
 
 def infoPetianos() -> list:

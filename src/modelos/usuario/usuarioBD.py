@@ -2,7 +2,7 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 
-from modelos.usuario.usuarioValidator import ValidarUsuario
+from src.modelos.usuario.usuarioValidator import ValidarUsuario
 
 
 class UsuarioBD:

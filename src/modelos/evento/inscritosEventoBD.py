@@ -1,8 +1,9 @@
 from datetime import datetime
+
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 
-from modelos.evento.inscritosEvento import ValidarInscritosEvento
+from src.modelos.evento.inscritosEvento import ValidarInscritosEvento
 
 
 class InscritosEventoBD:
@@ -79,7 +80,7 @@ class InscritosEventoBD:
     def setInscricao(self, dadosInscricao: dict) -> dict:
         if self.__validarEvento.inscricao().validate(dadosInscricao):
             return {
-                "mensagem": self.__validarEvento.inscritos().errors, # type: ignore
+                "mensagem": self.__validarEvento.inscritos().errors,  # type: ignore
                 "status": "400",
             }
 

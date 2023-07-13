@@ -1,33 +1,39 @@
 import logging
+from src.email.operacoesEmail import emailConfirmacaoEvento
 from typing import BinaryIO
-from email.operacoesEmail import emailConfirmacaoEvento
-from img.operacoesImagem import armazenaArteEvento, armazenaQrCodeEvento, deletaImagem, validaImagem
 
-from modelos.evento.evento import DadosEvento
-from modelos.evento.eventoBD import EventoBD
-from modelos.evento.inscritosEventoBD import InscritosEventoBD
-from modelos.usuario.usuarioBD import UsuarioBD
+from src.img.operacoesImagem import (
+    armazenaArteEvento,
+    armazenaQrCodeEvento,
+    deletaImagem,
+    validaImagem,
+)
 from src.config import config
+from src.modelos.evento.evento import DadosEvento
+from src.modelos.evento.eventoBD import EventoBD
+from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
+from src.modelos.usuario.usuarioBD import UsuarioBD
+
 
 def controladorNovoEvento(
     dadosEvento: DadosEvento, imagens: dict[str, BinaryIO | None]
 ) -> dict:
     # Valida as imagens
-    if not validaImagem(imagens["arteEvento"]): # type: ignore
+    if not validaImagem(imagens["arteEvento"]):  # type: ignore
         return {"mensagem": "Arte do evento inválida.", "status": "400"}
 
     if imagens["arteQrcode"] and not validaImagem(imagens["arteQrcode"]):
         return {"mensagem": "Imagem do qrCode inválida.", "status": "400"}
 
     # Armazena as imagens
-    caminhoArte = armazenaArteEvento(dadosEvento.nomeEvento, imagens["arteEvento"]) # type: ignore
-    dadosEvento.caminhoArteEvento = caminhoArte # type: ignore
+    caminhoArte = armazenaArteEvento(dadosEvento.nomeEvento, imagens["arteEvento"])  # type: ignore
+    dadosEvento.caminhoArteEvento = caminhoArte  # type: ignore
 
     if imagens["arteQrcode"]:
         caminhoQrCode = armazenaQrCodeEvento(
             dadosEvento.nomeEvento, imagens["arteQrcode"]
         )
-        dadosEvento.caminhoArteQrcode = caminhoQrCode # type: ignore
+        dadosEvento.caminhoArteQrcode = caminhoQrCode  # type: ignore
 
     # Valida os dados e registra o evento no bd
     try:
@@ -77,7 +83,7 @@ def controladorEditarEvento(idEvento, dadosEvento: DadosEvento, imagens: dict):
             deletaImagem(dadosEventoOld["nome evento"], ["eventos", "arte"])
             dadosEvento.caminhoArteEvento = armazenaArteEvento(
                 dadosEvento.nomeEvento, imagens["arteEvento"]
-            ) # type: ignore
+            )  # type: ignore
         else:
             dadosEvento.caminhoArteEvento = dadosEventoOld["arte evento"]
 
@@ -85,7 +91,7 @@ def controladorEditarEvento(idEvento, dadosEvento: DadosEvento, imagens: dict):
             deletaImagem(dadosEventoOld["nome evento"], ["eventos", "qrcode"])
             dadosEvento.caminhoArteQrcode = armazenaQrCodeEvento(
                 dadosEvento.nomeEvento, imagens["arteQrcode"]
-            ) # type: ignore
+            )  # type: ignore
         else:
             dadosEvento.caminhoArteQrcode = dadosEventoOld["arte qrcode"]
 
@@ -146,12 +152,15 @@ def inscricaoEventoControlador(
         }
 
     usuarioBD = UsuarioBD()
-    situacaoUsuario : dict = usuarioBD.getUsuario(idUsuario)
+    situacaoUsuario: dict = usuarioBD.getUsuario(idUsuario)
     if situacaoUsuario["status"] != "200":
-        return {"mensagem": "Usuario nao encontrado", "status": "404",}
+        return {
+            "mensagem": "Usuario nao encontrado",
+            "status": "404",
+        }
 
     eventoBD = EventoBD()
-    situacaoEvento : dict = eventoBD.getEvento(idEvento)
+    situacaoEvento: dict = eventoBD.getEvento(idEvento)
     if situacaoEvento["status"] != "200":
         return situacaoEvento
 
@@ -159,7 +168,7 @@ def inscricaoEventoControlador(
         return {"mensagem": "Nivel de conhecimento invalido", "status": "400"}
 
     inscritos = InscritosEventoBD()
-    inscrito : dict = {
+    inscrito: dict = {
         "idEvento": idEvento,
         "idUsuario": idUsuario,
         "nivelConhecimento": nivelConhecimento,
@@ -167,16 +176,16 @@ def inscricaoEventoControlador(
         "pagamento": pagamento,
     }
 
-    situacaoInscricao : dict = inscritos.setInscricao(inscrito)
+    situacaoInscricao: dict = inscritos.setInscricao(inscrito)
     if situacaoInscricao["status"] == "200":
-        dicionarioEnvioGmail : dict = {
+        dicionarioEnvioGmail: dict = {
             "nome evento": situacaoEvento["mensagem"]["nome evento"],
             "local": situacaoEvento["mensagem"]["local"],
             "data/hora evento": situacaoEvento["mensagem"]["data/hora evento"],
             "pré-requisitos": situacaoEvento["mensagem"]["pré-requisitos"],
         }
 
-        respostaEmail : dict = emailConfirmacaoEvento(
+        respostaEmail: dict = emailConfirmacaoEvento(
             emailPet=config.EMAIL_SMTP,
             senhaPet=config.SENHA_SMTP,
             emailDestino=situacaoUsuario["mensagem"]["email"],

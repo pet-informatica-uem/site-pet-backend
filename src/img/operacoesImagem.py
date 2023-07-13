@@ -20,7 +20,6 @@ def validaImagem(imagem: bytes | BinaryIO):
     return eh_valida
 
 
-
 def armazenaArteEvento(nomeEvento: str, arquivo: bytes | BinaryIO) -> str | None:
     """Armazena a imagem em "images/eventos/arte" usando um nome base para o arquivo.
 
@@ -32,14 +31,13 @@ def armazenaArteEvento(nomeEvento: str, arquivo: bytes | BinaryIO) -> str | None
     return retorno
 
 
-
 def armazenaFotoUsuario(nomeUsuario: str, arquivo: str | bytes) -> str | None:
     """Armazena a imagem em "images/usuario" usando um nome base para o arquivo.
 
     Return: caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
     path = os.path.join(config.CAMINHO_IMAGEM, "usuarios")
-    retorno = __armazenaImagem(path, nomeUsuario, arquivo) # type: ignore
+    retorno = __armazenaImagem(path, nomeUsuario, arquivo)  # type: ignore
 
     return retorno
 
@@ -89,7 +87,6 @@ def deletaImagem(nomeImagem: str, path: list[str] = []) -> dict:
     return {"mensagem": "Nenhuma imagem encontrada.", "status": "404"}
 
 
-
 def __armazenaImagem(path: str, nomeBase: str, imagem: bytes | BinaryIO) -> str | None:
     """Armazena a imagem no path fornecido usando um nome base.
 
@@ -98,7 +95,7 @@ def __armazenaImagem(path: str, nomeBase: str, imagem: bytes | BinaryIO) -> str 
 
     try:
         with Image.open(imagem, formats=["PNG", "JPEG"]) as img:
-            extensao = img.format.lower() #type: ignore
+            extensao = img.format.lower()  # type: ignore
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
             pathDefinitivo = os.path.join(path, nome)
             img.save(pathDefinitivo)

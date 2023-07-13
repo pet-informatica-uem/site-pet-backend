@@ -4,8 +4,7 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 
-from modelos.autenticacao.authToken import ValidarAuthToken
-
+from src.modelos.autenticacao.authToken import ValidarAuthToken
 
 
 class AuthTokenBD:
@@ -16,7 +15,7 @@ class AuthTokenBD:
         self.__validarDados = ValidarAuthToken().authToken()
 
     def criarToken(self, dadoToken: dict) -> dict:
-        if self.__validarDados.validate(dadoToken): # type: ignore
+        if self.__validarDados.validate(dadoToken):  # type: ignore
             try:
                 dadoToken.update({"idUsuario": ObjectId(dadoToken["idUsuario"])})
                 resultado = self.__colecao.insert_one(dadoToken)
@@ -27,7 +26,7 @@ class AuthTokenBD:
             except DuplicateKeyError:
                 return {"mensagem": "Token já existe", "status": "409"}
         else:
-            return {"mensagem": self.__validarDados.errors, "status": "400"} # type: ignore
+            return {"mensagem": self.__validarDados.errors, "status": "400"}  # type: ignore
 
     def deletarToken(self, token: str) -> dict:
         resultado = self.__colecao.delete_one({"_id": token})

@@ -15,5 +15,5 @@ class ValidarAuthToken:
             "validade": {"type": "datetime", "required": True},
         }
 
-        validadorAuthToken = Validator(schemaAuthToken) # type: ignore
+        validadorAuthToken = Validator(schemaAuthToken)  # type: ignore
         return validadorAuthToken

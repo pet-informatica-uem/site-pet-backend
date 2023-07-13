@@ -4,8 +4,8 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 
-from modelos.evento.dadosEvento import ValidarEvento
-from modelos.evento.inscritosEventoBD import InscritosEventoBD
+from src.modelos.evento.dadosEvento import ValidarEvento
+from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
 
 
 class EventoBD:
@@ -35,7 +35,7 @@ class EventoBD:
         #     "vagas preenchidas sem notebook": 0,
         # }
 
-        if self.__validarEvento.validate(dadosEvento): # type: ignore
+        if self.__validarEvento.validate(dadosEvento):  # type: ignore
             try:
                 # criar documento com os dados do evento
                 resultado = self.__colecao.insert_one(dadosEvento)
@@ -47,7 +47,7 @@ class EventoBD:
             except DuplicateKeyError:
                 return {"mensagem": "Evento já cadastrado!", "status": "409"}
         else:
-            return {"mensagem": self.__validarEvento.errors, "status": "400"} # type: ignore
+            return {"mensagem": self.__validarEvento.errors, "status": "400"}  # type: ignore
 
     def removerEvento(self, idEvento: str) -> dict:
         idEvento = ObjectId(idEvento)
@@ -65,13 +65,13 @@ class EventoBD:
             return {"mensagem": "Evento não encontrado!", "status": "404"}
 
         dadosVagasOfertadas = {
-            "vagas ofertadas": dadosEvento.pop("vagas ofertadas"), # type: ignore
+            "vagas ofertadas": dadosEvento.pop("vagas ofertadas"),  # type: ignore
         }
 
         evento = self.__colecao.find_one({"_id": idEvento})
-        dadosEvento["data criação"] = evento["data criação"] # type: ignore
+        dadosEvento["data criação"] = evento["data criação"]  # type: ignore
 
-        if self.__validarEvento.validate(dadosEvento): # type: ignore
+        if self.__validarEvento.validate(dadosEvento):  # type: ignore
             try:
                 resultado = self.__colecao.update_one(
                     {"_id": idEvento}, {"$set": dadosEvento}
@@ -90,7 +90,7 @@ class EventoBD:
             except DuplicateKeyError:
                 return {"mensagem": "Evento já cadastrado!", "status": "409"}
         else:
-            return {"mensagem": self.__validarEvento.errors, "status": "400"} # type: ignore
+            return {"mensagem": self.__validarEvento.errors, "status": "400"}  # type: ignore
 
     def listarEventos(self) -> dict:
         return {"mensagem": list(self.__colecao.find()), "status": "200"}

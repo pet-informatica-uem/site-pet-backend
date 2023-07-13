@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta
+
 from jose import JWTError, jwt
 
 from src.config import config
+
 
 def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
     """Gera e retorna um token JWT que pode ser usado para confirmar um email."""
@@ -78,7 +80,7 @@ def processaTokenTrocaSenha(token) -> dict:
     validade = token_info.get("validade")
 
     # Verifica a validade do token
-    validade = datetime.fromtimestamp(validade) # type: ignore
+    validade = datetime.fromtimestamp(validade)  # type: ignore
     if validade < datetime.utcnow():
         return {"mensagem": "Token expirou.", "status": "400"}
 

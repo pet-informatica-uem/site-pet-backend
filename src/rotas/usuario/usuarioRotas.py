@@ -8,17 +8,28 @@ from fastapi import (
     HTTPException,
     Request,
     Response,
-    status,
     UploadFile,
+    status,
 )
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, HttpUrl, SecretStr
-from modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
-from modelos.usuario.usuario import Usuario, UsuarioSenha
 
-from modelos.usuario.validacaoCadastro import validaCpf, validaEmail, validaSenha
-from rotas.usuario.usuarioControlador import ativaContaControlador, autenticaUsuarioControlador, cadastraUsuarioControlador, editaEmailControlador, editaSenhaControlador, editaUsuarioControlador, editarFotoControlador, getUsuarioAutenticadoControlador, getUsuarioControlador, recuperaContaControlador, trocaSenhaControlador
-
+from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
+from src.modelos.usuario.usuario import Usuario, UsuarioSenha
+from src.modelos.usuario.validacaoCadastro import validaCpf, validaEmail, validaSenha
+from src.rotas.usuario.usuarioControlador import (
+    ativaContaControlador,
+    autenticaUsuarioControlador,
+    cadastraUsuarioControlador,
+    editaEmailControlador,
+    editarFotoControlador,
+    editaSenhaControlador,
+    editaUsuarioControlador,
+    getUsuarioAutenticadoControlador,
+    getUsuarioControlador,
+    recuperaContaControlador,
+    trocaSenhaControlador,
+)
 
 roteador = APIRouter(
     prefix="/usuario",
@@ -240,7 +251,7 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
 
 
 @roteador.post(
-    "/id/eu/editar-foto",
+    "/editar-foto",
     name="Atualizar foto de perfil",
     description="O usuário petiano é capaz de editar sua foto de perfil",
 )
@@ -251,12 +262,12 @@ def editarFoto(
     resultado = {"status": "200", "mensagem": foto}
 
     editarFotoControlador(usuario=usuario, foto=resultado)
-    
+
     return resultado
-  
-  
+
+
 @roteador.post(
-    "/id/eu/editar-dados",
+    "/editar-dados",
     name="Editar dados do usuário autenticado",
     description="""O usuário é capaz de editar os dados""",
 )
@@ -269,7 +280,6 @@ def editarDados(
     twitter: Annotated[HttpUrl, Form()],
     usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
 ):
-    
     # agrupa redes sociais
     redesSociais = {
         "github": github,
@@ -284,10 +294,7 @@ def editarDados(
         if chave not in link:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="O link "
-                + link
-                + " não é válido com a rede social "
-                + chave,
+                detail="O link " + link + " não é válido com a rede social " + chave,
             )
 
     resultado = editaUsuarioControlador(
@@ -301,7 +308,7 @@ def editarDados(
 
 
 @roteador.post(
-    "/id/eu/alterar-senha",
+    "/alterar-senha",
     name="Editar senha do usuário autenticado",
     description="""O usuário é capaz de editar sua senha\n
     Caso a opção deslogarAoTrocarSenha for ativada, todos as sessões serão deslogadas ao trocar a senha.""",
@@ -314,7 +321,6 @@ def editarSenha(
     usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
-    
     # verifica nova senha
     if not validaSenha(
         novaSenha.get_secret_value(), confirmacaoSenha.get_secret_value()
@@ -342,7 +348,7 @@ def editarSenha(
 
 
 @roteador.post(
-    "/id/eu/alterar-email",
+    "/alterar-email",
     name="Editar email do usuário autenticado",
     description="""O usuário é capaz de editar seu email""",
 )
@@ -352,7 +358,6 @@ def editarEmail(
     usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
-    
     if not validaEmail(novoEmail):
         logging.info("Erro. Novo email não foi validado com sucesso.")
         raise HTTPException(
@@ -373,5 +378,5 @@ def editarEmail(
         gerenciarTokens.deletarTokensUsuario(
             gerenciarTokens.getIdUsuarioDoToken(token=token)["mensagem"]
         )
-    
+
     return resultado

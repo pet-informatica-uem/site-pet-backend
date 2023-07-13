@@ -26,5 +26,5 @@ class ValidarEvento:
             "arte qrcode": {"type": "string", "required": False},
         }
 
-        validadorEvento = Validator(schemaEvento) # type: ignore
+        validadorEvento = Validator(schemaEvento)  # type: ignore
         return validadorEvento

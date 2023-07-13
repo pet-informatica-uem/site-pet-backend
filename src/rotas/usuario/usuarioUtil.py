@@ -1,7 +1,7 @@
 import logging
-from autenticacao.autenticacao import hashSenha
 
-from modelos.usuario.usuarioBD import UsuarioBD
+from src.autenticacao.autenticacao import hashSenha
+from src.modelos.usuario.usuarioBD import UsuarioBD
 
 
 def ativaconta(id: str, email: str) -> dict:
