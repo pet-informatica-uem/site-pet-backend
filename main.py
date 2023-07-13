@@ -1,9 +1,8 @@
 import logging, locale
-
 from fastapi import FastAPI
 
-from api import roteadorEvento, roteadorPetianos, roteadorUsuario
-from core.criaPastas import criaPastas
+from img.criaPastas import criaPastas
+
 
 logging.basicConfig(
     handlers=[
