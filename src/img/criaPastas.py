@@ -4,11 +4,11 @@ import os
 
 def criaPastas():
     directories = [
-        "images",
-        "images/usuarios",
-        "images/eventos",
-        "images/eventos/arte",
-        "images/eventos/qrcode",
+        "img",
+        "img/usuarios",
+        "img/eventos",
+        "img/eventos/arte",
+        "img/eventos/qrcode",
     ]
 
     for directory in directories:
