@@ -23,7 +23,7 @@ from src.rotas.evento.eventoControlador import (
     inscricaoEventoControlador,
 )
 from src.rotas.evento.eventoInscritosControlador import InscritosEventoController
-from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, tokenAcesso
+from src.rotas.usuario.usuarioRotas import getPetianoAutenticado,tokenAcesso
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"
@@ -165,9 +165,7 @@ def listarEventos() -> dict:
         Falha, caso o evento não exista o evento.
     """,
 )
-def getInscritosEvento(
-    idEvento: str, usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)]
-) -> dict:
+def getInscritosEvento(idEvento: str) -> dict:
     inscritosController = InscritosEventoController()
 
     inscritos = inscritosController.getInscritosEvento(idEvento)
@@ -186,13 +184,16 @@ def getInscritosEvento(
     status_code=status.HTTP_201_CREATED,
 )
 def getDadosInscricaoEvento(
-    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
+    token: Annotated[str, Depends(tokenAcesso)],
     idEvento: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
     pagamento: Annotated[bool, Form()],
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
 ):
-    idUsuario: usuario.id
+    conexaoAuthToken = AuthTokenBD()
+
+    resp: dict = conexaoAuthToken.getIdUsuarioDoToken(token)
+    idUsuario: str = resp["mensagem"]
 
     resposta: dict = inscricaoEventoControlador(
         idUsuario, idEvento, nivelConhecimento, tipoDeInscricao, pagamento
