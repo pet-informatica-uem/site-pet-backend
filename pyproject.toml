@@ -5,9 +5,7 @@ description = "Backend do website do PET-Informática."
 authors = ["PET-Informática <pet@din.uem.br>"]
 readme = "README.md"
 packages = [
-    {include = "api"},
-    {include = "app"},
-    {include = "core"}
+    {include = "src"}
 ]
 
 [tool.poetry.dependencies]
@@ -22,6 +20,7 @@ python-jose = {version = "^3.3.0", extras = ["cryptography"]}
 email-validator = "^2.0.0.post2"
 python-dotenv = "^1.0.0"
 python-multipart = "^0.0.6"
+isort = "^5.12.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"
