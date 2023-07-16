@@ -1,6 +1,7 @@
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
+from src.modelos.exceptions import UsuarioJaExisteExcecao
 
 from src.modelos.usuario.usuarioValidator import ValidarUsuario
 
@@ -12,18 +13,15 @@ class UsuarioBD:
         self.__colecao = db["usuarios"]
         self.__validarDados = ValidarUsuario().usuario()
 
-    def criarUsuario(self, dadoUsuario: object) -> dict:
+    def criarUsuario(self, dadoUsuario: object) -> str:
         if self.__validarDados.validate(dadoUsuario):
             try:
                 resultado = self.__colecao.insert_one(dadoUsuario)
-                return {
-                    "mensagem": resultado.inserted_id,
-                    "status": "200",
-                }
-            except DuplicateKeyError:
-                return {"mensagem": "CPF ou email já existem", "status": "409"}
+                return str(resultado.inserted_id)
+            except DuplicateKeyError as ex:
+                raise UsuarioJaExisteExcecao(message="teste")
         else:
-            return {"mensagem": self.__validarDados.errors, "status": "400"}
+            raise Exception(self.__validarDados.errors)
 
     def deletarUsuario(self, idUsuario: str) -> dict:
         idUsuario = ObjectId(idUsuario)

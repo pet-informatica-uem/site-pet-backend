@@ -7,6 +7,7 @@ from src.img.criaPastas import criaPastas
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.petiano.petianoRotas import roteador as roteadorPetianos
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
+from src.middleware import request_handler
 
 logging.basicConfig(
     handlers=[
@@ -23,6 +24,7 @@ locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 criaPastas()
 
 petBack = FastAPI()
+petBack.middleware("http")(request_handler)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorPetianos)
 petBack.include_router(roteadorEvento)

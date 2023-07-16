@@ -53,7 +53,7 @@ def ativaContaControlador(token: str) -> dict:
 
 def cadastraUsuarioControlador(
     *, nomeCompleto: str, cpf: str, email: str, senha: str, curso: str | None
-) -> dict:
+) -> str:
     """
     Cria uma conta com os dados fornecidos, e envia um email
     de confirmação de criação de conta ao endereço fornecido.
@@ -75,48 +75,31 @@ def cadastraUsuarioControlador(
     """
 
     # 3. verifico se o email já existe e crio o usuário
-    try:
-        bd = UsuarioBD()
-        resultado = bd.criarUsuario(
-            {
-                "nome": nomeCompleto,
-                "email": email,
-                "cpf": cpf,
-                "curso": curso,
-                "estado da conta": EstadoConta.INATIVO,
-                "senha": hashSenha(senha),
-                "tipo conta": TipoConta.ESTUDANTE,
-                "data criacao": datetime.now(),
-            }
-        )
+    bd = UsuarioBD()
 
-        if resultado["status"] != "200":
-            return resultado
+    id = bd.criarUsuario(
+        {
+            "nome": nomeCompleto,
+            "email": email,
+            "cpf": cpf,
+            "curso": curso,
+            "estado da conta": EstadoConta.INATIVO,
+            "senha": hashSenha(senha),
+            "tipo conta": TipoConta.ESTUDANTE,
+            "data criacao": datetime.now(),
+        }
+    )
 
-        id = str(resultado["mensagem"])
+    # 4. gera token de ativação válido por 24h
+    token = geraTokenAtivaConta(id, email, timedelta(days=1))
 
-        # 4. gera token de ativação válido por 24h
-        token = geraTokenAtivaConta(id, email, timedelta(days=1))
+    # 5. manda email de ativação
+    # não é necessário fazer urlencode pois jwt é url-safe
+    linkConfirmacao = config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token
+    # print(linkConfirmacao)
+    verificarEmail(config.EMAIL_SMTP, config.SENHA_SMTP, email, linkConfirmacao)
 
-        # 5. manda email de ativação
-        # não é necessário fazer urlencode pois jwt é url-safe
-        linkConfirmacao = (
-            config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token
-        )
-        # print(linkConfirmacao)
-        resultado = verificarEmail(
-            config.EMAIL_SMTP, config.SENHA_SMTP, email, linkConfirmacao
-        )
-
-        if resultado["status"] != "200":
-            # return {"status": "400", "mensagem": "Erro no envio do email."}
-            # não indicar que o email não existe para evitar spam
-            pass
-
-        return {"status": "201", "mensagem": id}
-    except Exception as e:
-        logging.error("Erro no cadastro de usuário: " + str(e))
-        return {"status": "500", "mensagem": str(e)}
+    return id
 
 
 # Envia um email para trocar de senha se o email estiver cadastrado no bd

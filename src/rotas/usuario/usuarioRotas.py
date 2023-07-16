@@ -13,6 +13,7 @@ from fastapi import (
 )
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, HttpUrl, SecretStr
+from src.modelos.exceptions import UsuarioJaExisteExcecao, get_exception_responses
 
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.usuario.usuario import Usuario, UsuarioSenha
@@ -47,6 +48,7 @@ roteador = APIRouter(
     " - Deve ter ao menos um dígito\n"
     " - Deve ter ao menos um caractere não alfanumérico\n",
     status_code=status.HTTP_201_CREATED,
+    responses=get_exception_responses(UsuarioJaExisteExcecao),
 )
 def cadastrarUsuario(
     nomeCompleto: Annotated[str, Form(max_length=200)],
@@ -77,6 +79,7 @@ def cadastrarUsuario(
     cpf = "".join(c for c in cpf if c in "0123456789")
 
     # despacha para controlador
+    # try:
     resultado = cadastraUsuarioControlador(
         nomeCompleto=nomeCompleto,
         cpf=cpf,
@@ -84,17 +87,8 @@ def cadastrarUsuario(
         senha=senha.get_secret_value(),
         curso=curso,
     )
-    if resultado["status"] != "201":
-        logging.info(
-            "Tentativa de cadastro de usuário falhou. Dados: "
-            + str(resultado["mensagem"])
-        )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
-        )
 
-    # retorna OK
-    return resultado["mensagem"]
+    return resultado
 
 
 @roteador.get(
