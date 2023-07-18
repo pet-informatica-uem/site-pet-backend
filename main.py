@@ -3,6 +3,7 @@ import logging
 
 from fastapi import FastAPI
 
+from fastapi.middleware.cors import CORSMiddleware
 from src.img.criaPastas import criaPastas
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.petiano.petianoRotas import roteador as roteadorPetianos
@@ -18,11 +19,22 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+origins = [
+    'http://localhost:3000',
+    'http://localhost'
+]
 
 # Caso não existam, cria as pastas para armazenar imagens.
 criaPastas()
 
 petBack = FastAPI()
+petBack.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=['*'],
+    allow_headers=['*'],
+)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorPetianos)
 petBack.include_router(roteadorEvento)
