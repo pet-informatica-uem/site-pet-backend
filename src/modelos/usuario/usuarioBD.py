@@ -2,6 +2,7 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 
+from src.modelos.excecao import UsuarioJaExisteExcecao, NaoEncontradoExcecao, JaExisteExcecao
 from src.modelos.usuario.usuarioValidator import ValidarUsuario
 
 
@@ -12,37 +13,34 @@ class UsuarioBD:
         self.__colecao = db["usuarios"]
         self.__validarDados = ValidarUsuario().usuario()
 
-    def criarUsuario(self, dadoUsuario: object) -> dict:
+    def criarUsuario(self, dadoUsuario: object) -> str:
         if self.__validarDados.validate(dadoUsuario):
             try:
                 resultado = self.__colecao.insert_one(dadoUsuario)
-                return {
-                    "mensagem": resultado.inserted_id,
-                    "status": "200",
-                }
-            except DuplicateKeyError:
-                return {"mensagem": "CPF ou email já existem", "status": "409"}
+                return str(resultado.inserted_id)
+            except DuplicateKeyError as ex:
+                raise UsuarioJaExisteExcecao(message="teste")
         else:
-            return {"mensagem": self.__validarDados.errors, "status": "400"}
+            raise Exception(self.__validarDados.errors)
 
     def deletarUsuario(self, idUsuario: str) -> dict:
         idUsuario = ObjectId(idUsuario)
         resultado = self.__colecao.delete_one({"_id": idUsuario})
-        if resultado.deleted_count == 1:
-            return {"mensagem": "Usuário removido com sucesso", "status": "200"}
-        else:
-            return {"mensagem": "Usuário não encontrado", "status": "404"}
+        if resultado.deleted_count:
+            return True 
+        
+        raise NaoEncontradoExcecao()
 
     def atualizarUsuario(self, idUsuario: str, dadoUsuario: object) -> dict:
         idUsuario = ObjectId(idUsuario)
         if self.__validarDados.validate(dadoUsuario):
             try:
-                self.__colecao.update_one({"_id": idUsuario}, {"$set": dadoUsuario})
-                return {"mensagem": "Usuário atualizado", "status": "200"}
+                resultado = self.__colecao.update_one({"_id": idUsuario}, {"$set": dadoUsuario})
+                return resultado.upserted_id
             except DuplicateKeyError:
-                return {"mensagem": "CPF ou email já existem", "status": "409"}
+                raise JaExisteExcecao(mensage="CPF ou email já existem")
         else:
-            return {"mensagem": self.__validarDados.errors, "status": "404"}
+            raise Exception(self.__validarDados.errors)
 
     def getUsuario(self, idUsuario: str) -> dict:
         idUsuario = ObjectId(idUsuario)

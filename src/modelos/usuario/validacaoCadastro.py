@@ -32,7 +32,7 @@ class ValidacaoCadastro():
             return False
 
         # Validacao do primeiro digito verificador:
-        somaDosProdutos :int = sum(a * b for a, b in zip(cpf[0:9], range(10, 1, -1)))
+        somaDosProdutos :int = sum(int(a) * int(b) for a, b in zip(cpf[0:9], range(10, 1, -1)))
         digitoEsperado :int = (somaDosProdutos * 10 % 11) % 10
         if cpf[9] != digitoEsperado:
             return False

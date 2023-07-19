@@ -78,7 +78,7 @@ class UsuarioControlador():
         # 3. verifico se o email já existe e crio o usuário
         try:
             bd = UsuarioBD()
-            resultado = bd.criarUsuario(
+            id = bd.criarUsuario(
                 {
                     "nome": nomeCompleto,
                     "email": email,
@@ -90,11 +90,6 @@ class UsuarioControlador():
                     "data criacao": datetime.now(),
                 }
             )
-
-            if resultado["status"] != "200":
-                return resultado
-
-            id = str(resultado["mensagem"])
 
             # 4. gera token de ativação válido por 24h
             token = geraTokenAtivaConta(id, email, timedelta(days=1))

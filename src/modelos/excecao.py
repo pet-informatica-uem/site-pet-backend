@@ -29,6 +29,26 @@ class JaExisteExcecao(APIExcecaoBase):
     code = status.HTTP_409_CONFLICT
     model = JaExisteErro
 
+class NaoEncontradoExcecao(APIExcecaoBase):
+    message = "A entidade não foi encontrada."
+    code = status.HTTP_404_NOT_FOUND
+    model = ErroBase
+
+class ErroInternoExcecao(APIExcecaoBase):
+    message = "Ocorreu um erro interno."
+    code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    model = ErroBase
+
+class ErroValidacaoExcecao(APIExcecaoBase):
+    message = "Ocorreu um erro de validação."
+    code = status.HTTP_400_BAD_REQUEST
+    model = ErroBase
+
+class ErroAutenticacaoExcecao(APIExcecaoBase):
+    message = "Ocorreu um erro de autenticação."
+    code = status.HTTP_401_UNAUTHORIZED
+    model = ErroBase
+
 
 class UsuarioJaExisteExcecao(JaExisteExcecao):
     message = "O usuário já existe."
