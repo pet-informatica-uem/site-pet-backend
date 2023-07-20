@@ -23,7 +23,7 @@ from src.rotas.evento.eventoControlador import (
     inscricaoEventoControlador,
 )
 from src.rotas.evento.eventoInscritosControlador import InscritosEventoController
-from src.rotas.usuario.usuarioRotas import getPetianoAutenticado,tokenAcesso
+from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, tokenAcesso
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"
