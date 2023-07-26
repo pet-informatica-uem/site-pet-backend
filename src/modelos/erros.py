@@ -7,8 +7,10 @@ class ErroBase(BaseModel):
 
 
 class NaoEncontradoErro(ErroBase):
-    pass
-
+    message: str = Field(..., description="Erro não encontrado.")
 
 class JaExisteErro(ErroBase):
-    pass
+    message: str = Field(..., description="A entidade já existe.")
+
+class AcaoNaoCompletaErro(ErroBase):
+    message: str = Field(..., description="Não foi possível concluir a ação.")

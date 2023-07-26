@@ -4,6 +4,8 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 
 from src.modelos.evento.inscritosEvento import ValidarInscritosEvento
+from src.modelos.excecao import JaExisteExcecao, NaoEncontradoExcecao, NaoAtualizadaExcecao, ErroNaAlteracaoExcecao, SemVagasDisponiveisExcecao, TipoVagaInvalidoExcecao
+
 
 
 class InscritosEventoBD:
@@ -13,33 +15,27 @@ class InscritosEventoBD:
         self.__colecao = db["inscritos eventos"]
         self.__validarEvento = ValidarInscritosEvento()
 
-    def criarListaInscritos(self, dadosListaInscritos: dict) -> dict:
+    def criarListaInscritos(self, dadosListaInscritos: dict) -> bool:
         if self.__validarEvento.vagasEvento().validate(dadosListaInscritos):
-            return {
-                "mensagem": self.__validarEvento.vagasEvento().errors,
-                "status": "400",
-            }
-
+            raise Exception(self.__validarEvento.vagasEvento().errors)
+        
         if (
             self.__colecao.find_one({"idEvento": dadosListaInscritos["idEvento"]})
             != None
         ):
-            return {"mensagem": "Evento já cadastrado!", "status": "409"}
+            raise JaExisteExcecao(messege = "Evento já cadastrado! ")
 
         self.__colecao.insert_one(dadosListaInscritos)
-        return {"mensagem": "Lista de inscritos criada com sucesso!", "status": "200"}
+        return True
 
-    def deletarListaInscritos(self, idEvento: str) -> dict:
+    def deletarListaInscritos(self, idEvento: str) -> bool:
         resultado = self.__colecao.delete_one({"idEvento": idEvento})
         if resultado.deleted_count == 1:
-            return {
-                "mensagem": "Lista de inscritos deletada com sucesso!",
-                "status": "200",
-            }
+            return True
         else:
-            return {"mensagem": "Evento não encontrado!", "status": "404"}
+            raise NaoEncontradoExcecao(messege = "Evento não encontrado!")
 
-    def atualizarVagasOfertadas(self, idEvento: str, dadosVagas: dict) -> dict:
+    def atualizarVagasOfertadas(self, idEvento: str, dadosVagas: dict) -> str:
         idEvento = ObjectId(idEvento)
 
         try:
@@ -58,31 +54,22 @@ class InscritosEventoBD:
                     }
                 },
             )
-            return {
-                "mensagem": "Quantidade de vagas atualizadas com sucesso!",
-                "status": "200",
-            }
+            return str(idEvento)
         except:
-            return {
-                "mensagem": "Não foi possível atualizar a quantidade de vagas.",
-                "status": "404",
-            }
+            raise NaoAtualizadaExcecao(messege = "Não foi possível atualizar a quantidade de vagas. ")
 
-    def getListaInscritos(self, idEvento: str) -> dict:
+    def getListaInscritos(self, idEvento: str) -> bool:
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"idEvento": idEvento})
 
         if resultado:
-            return {"mensagem": resultado["inscritos"], "status": "200"}
+            return resultado["inscritos"]
         else:
-            return {"mensagem": "Evento não encontrado!", "status": "404"}
+            raise NaoEncontradoExcecao(messege = "Evento não encontrado! ")
 
     def setInscricao(self, dadosInscricao: dict) -> dict:
         if self.__validarEvento.inscricao().validate(dadosInscricao):
-            return {
-                "mensagem": self.__validarEvento.inscritos().errors,  # type: ignore
-                "status": "400",
-            }
+            raise Exception(self.__validarEvento.inscritos().errors)
 
         idEvento = ObjectId(dadosInscricao["idEvento"])
 
@@ -91,14 +78,10 @@ class InscritosEventoBD:
         )
 
         if usuariosInscritos:
-            return {"mensagem": "Usuário já inscrito!", "status": "409"}
+            raise JaExisteExcecao(messege = "Usuário já inscrito! ")
 
-        vagasOfertadas = self.__setVaga(idEvento, dadosInscricao["tipoInscricao"])
-        if vagasOfertadas["status"] != "200":
-            return {
-                "mensagem": vagasOfertadas["mensagem"],
-                "status": vagasOfertadas["status"],
-            }
+        # duvida, quando gera um erro na funcao __setVaga, eu preciso tratar esse erro?
+        self.__setVaga(idEvento, dadosInscricao["tipoInscricao"])
 
         self.__colecao.update_one(
             {"idEvento": idEvento},
@@ -116,9 +99,9 @@ class InscritosEventoBD:
             },
         )
 
-        return {"mensagem": "Usuário inscrito com sucesso!", "status": "200"}
+        return True
 
-    def setPresenca(self, idEvento: str, idUsuario: str) -> dict:
+    def setPresenca(self, idEvento: str, idUsuario: str) -> bool:
         idEvento = ObjectId(idEvento)
 
         if self.__colecao.find_one(
@@ -136,13 +119,13 @@ class InscritosEventoBD:
                     {"idEvento": idEvento, "inscritos.idUsuario": idUsuario},
                     {"$set": {"inscritos.$.presente": True}},
                 )
-                return {"mensagem": "Presença cadastrada!", "status": "200"}
+                return True
             else:
-                return {"mensagem": "Usuário não pagou o evento!", "status": "409"}
+                raise NaoEncontradoExcecao(messege = "Pagamento não encontrado. ")
         else:
-            return {"mensagem": "Usuário não inscrito no evento!", "status": "404"}
+            raise NaoEncontradoExcecao(messege = "Usuário não encontrado na lista de incritos. ")
 
-    def setPagamento(self, idEvento: str, idUsuario: str) -> dict:
+    def setPagamento(self, idEvento: str, idUsuario: str) -> bool:
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.update_one(
             {"idEvento": idEvento, "inscritos.idUsuario": idUsuario},
@@ -150,17 +133,13 @@ class InscritosEventoBD:
         )
 
         if resultado.modified_count == 1:
-            return {"mensagem": "Pagamento registrado com sucesso!", "status": "200"}
+            return True
         else:
-            return {"mensagem": "Usuário não encontrado!", "status": "404"}
+            return NaoEncontradoExcecao(messege = "Usuário não encontrado na lista de incritos. ")
 
-    def __setVaga(self, idEvento: str, tipoVaga: str) -> dict:
+    def __setVaga(self, idEvento: str, tipoVaga: str) -> bool:
         idEvento = ObjectId(idEvento)
         vagasOfertadas = self.getVagas(idEvento)
-        if vagasOfertadas["status"] == "404":
-            return {"mensagem": vagasOfertadas["mensagem"], "status": "404"}
-
-        vagasOfertadas = vagasOfertadas["mensagem"]
 
         if tipoVaga == "com notebook" or tipoVaga == "sem notebook":
             if (
@@ -172,23 +151,20 @@ class InscritosEventoBD:
                     {"$inc": {"vagas ofertadas.vagas preenchidas " + tipoVaga: 1}},
                 )
                 if resultado.modified_count > 0:
-                    return {"mensagem": "Vaga adicionada com sucesso!", "status": "200"}
+                    return True
                 else:
-                    return {
-                        "mensagem": "Não foi possível adicionar a vaga.",
-                        "status": "404",
-                    }
+                    raise NaoAtualizadaExcecao(messege = "Não foi possível adicionar a vaga.")
             else:
-                return {"mensagem": "Não há vagas disponíveis.", "status": "410"}
+                raise NaoAtualizadaExcecao(messege = "Não há vagas disponíveis.")
 
         else:
-            return {"mensagem": "Tipo de vaga inválido.", "status": "404"}
+            raise TipoVagaInvalidoExcecao()
 
     def getVagas(self, idEvento: str) -> dict:
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"idEvento": idEvento})
 
         if resultado:
-            return {"mensagem": resultado["vagas ofertadas"], "status": "200"}
+            return resultado["vagas ofertadas"]
         else:
-            return {"mensagem": "Evento não encontrado!", "status": "404"}
+            raise NaoEncontradoExcecao(messege = "Evento não encontrado! ")

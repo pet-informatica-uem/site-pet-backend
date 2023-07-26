@@ -6,6 +6,7 @@ from pymongo.errors import DuplicateKeyError
 
 from src.modelos.evento.dadosEvento import ValidarEvento
 from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
+from src.modelos.excecao import JaExisteExcecao, NaoEncontradoExcecao, NaoAtualizadaExcecao, ErroNaAlteracaoExcecao, SemVagasDisponiveisExcecao, TipoVagaInvalidoExcecao
 
 
 class EventoBD:
@@ -16,7 +17,7 @@ class EventoBD:
         self.__validarEvento = ValidarEvento().evento()
         self.__insctirosEvento = InscritosEventoBD()
 
-    def cadastrarEvento(self, dadosEvento: dict) -> dict:
+    def cadastrarEvento(self, dadosEvento: dict) -> bool:
         dadosEvento["data criação"] = datetime.now()
         dadosEvento["vagas ofertadas"]["vagas preenchidas com notebook"] = 0
         dadosEvento["vagas ofertadas"]["vagas preenchidas sem notebook"] = 0
@@ -43,11 +44,11 @@ class EventoBD:
                 # criar documento com os inscritos do evento
                 self.__insctirosEvento.criarListaInscritos(dadosListaInscritos)
 
-                return {"mensagem": "Evento cadastrado com sucesso!", "status": "200"}
+                return resultado.inserted_id
             except DuplicateKeyError:
-                return {"mensagem": "Evento já cadastrado!", "status": "409"}
+                raise JaExisteExcecao("Evento já cadastrado! ")
         else:
-            return {"mensagem": self.__validarEvento.errors, "status": "400"}  # type: ignore
+            raise Exception(self.__validarEvento.errors)  # type: ignore
 
     def removerEvento(self, idEvento: str) -> dict:
         idEvento = ObjectId(idEvento)
@@ -55,9 +56,9 @@ class EventoBD:
         if resultado:
             self.__insctirosEvento.deletarListaInscritos(resultado["_id"])
             self.__colecao.delete_one({"_id": idEvento})
-            return {"mensagem": "Evento removido com sucesso!", "status": "200"}
+            return True
         else:
-            return {"mensagem": "Evento não encontrado!", "status": "404"}
+            return NaoEncontradoExcecao(messege = "Evento não encontrado. ")
 
     def atualizarEvento(self, idEvento: str, dadosEvento: object) -> dict:
         idEvento = ObjectId(idEvento)

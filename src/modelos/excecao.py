@@ -1,7 +1,7 @@
 from fastapi import status
 from fastapi.responses import JSONResponse
 
-from src.modelos.erros import ErroBase, JaExisteErro
+from src.modelos.erros import ErroBase, JaExisteErro, NaoEncontradoErro, AcaoNaoCompletaErro
 
 from typing import Type
 
@@ -49,9 +49,29 @@ class ErroAutenticacaoExcecao(APIExcecaoBase):
     code = status.HTTP_401_UNAUTHORIZED
     model = ErroBase
 
+    code = status.HTTP_404_CONFLICT
+    model = NaoEncontradoErro
 
-class UsuarioJaExisteExcecao(JaExisteExcecao):
-    message = "O usuário já existe."
+class NaoAtualizadaExcecao(AcaoNaoCompletaErro):
+    message = "Não foi possível atualizar."
+    code = status.HTTP_404_CONFLICT
+    model = AcaoNaoCompletaErro
+
+class ErroNaAlteracaoExcecao(AcaoNaoCompletaErro):
+    message = "Não foi possível fazer a alteração."
+    code = status.HTTP_404_CONFLICT
+    model = AcaoNaoCompletaErro
+
+class SemVagasDisponiveisExcecao(AcaoNaoCompletaErro):
+    message = "Não há vagas disponíveis."
+    code = status.HTTP_410_CONFLICT
+    model = AcaoNaoCompletaErro
+
+class TipoVagaInvalidoExcecao(NaoEncontradoErro):
+    message = "Tipo de vaga inválido."
+    code = status.HTTP_404_CONFLICT
+    model = NaoEncontradoErro
+
 
 
 def get_exception_responses(*args: Type[APIExcecaoBase]) -> dict:
