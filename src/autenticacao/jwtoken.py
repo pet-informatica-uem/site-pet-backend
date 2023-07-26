@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 
 from jose import JWTError, jwt
-from modelos.excecao import NaoAutenticadoExcecao
 
+from modelos.excecao import NaoAutenticadoExcecao
 from src.config import config
 
 
@@ -27,7 +27,9 @@ def processaTokenAtivaConta(token: str) -> dict[str, str]:
 
     # Tenta decodificar o token
     try:
-        token_info: dict[str, str] = jwt.decode(token, config.SEGREDO_JWT, algorithms=["HS256"])
+        token_info: dict[str, str] = jwt.decode(
+            token, config.SEGREDO_JWT, algorithms=["HS256"]
+        )
     except JWTError:
         raise NaoAutenticadoExcecao()
 

@@ -2,8 +2,8 @@ import locale
 import logging
 
 from fastapi import FastAPI
-
 from fastapi.middleware.cors import CORSMiddleware
+
 from middlewareExcecao import requestHandler as middlewareExcecao
 from src.img.criaPastas import criaPastas
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
@@ -24,18 +24,15 @@ locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 # Caso não existam, cria as pastas para armazenar imagens.
 criaPastas()
 
-origins = [
-    'http://localhost:3000',
-    'http://localhost'
-]
-    
+origins = ["http://localhost:3000", "http://localhost"]
+
 petBack = FastAPI()
 petBack.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=['*'],
-    allow_headers=['*'],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 petBack.middleware("http")(middlewareExcecao)
 petBack.include_router(roteadorUsuario)

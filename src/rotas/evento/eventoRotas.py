@@ -2,27 +2,19 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Annotated, BinaryIO
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    Form,
-    HTTPException,
-    Response,
-    UploadFile,
-    status,
-)
+from fastapi import (APIRouter, Depends, Form, HTTPException, Response,
+                     UploadFile, status)
 
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.evento.evento import DadosEvento
 from src.modelos.usuario.usuario import UsuarioSenha
-from src.rotas.evento.eventoControlador import (
-    EventoController,
-    controladorDeletaEvento,
-    controladorEditarEvento,
-    controladorNovoEvento,
-    inscricaoEventoControlador,
-)
-from src.rotas.evento.eventoInscritosControlador import InscritosEventoController
+from src.rotas.evento.eventoControlador import (EventoController,
+                                                controladorDeletaEvento,
+                                                controladorEditarEvento,
+                                                controladorNovoEvento,
+                                                inscricaoEventoControlador)
+from src.rotas.evento.eventoInscritosControlador import \
+    InscritosEventoController
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, tokenAcesso
 
 # Especifica o formato das datas para serem convertidos

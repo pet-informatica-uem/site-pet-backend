@@ -3,8 +3,9 @@ from datetime import datetime
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoExcecao
 
+from modelos.excecao import (APIExcecaoBase, JaExisteExcecao,
+                             NaoEncontradoExcecao)
 from src.modelos.autenticacao.authToken import ValidarAuthToken
 
 

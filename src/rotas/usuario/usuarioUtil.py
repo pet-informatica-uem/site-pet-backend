@@ -1,6 +1,6 @@
 import logging
-from modelos.excecao import NaoAutenticadoExcecao
 
+from modelos.excecao import NaoAutenticadoExcecao
 from src.autenticacao.autenticacao import hashSenha
 from src.modelos.usuario.usuarioBD import UsuarioBD
 
@@ -55,7 +55,6 @@ def verificaSeUsuarioExiste(email: str) -> str:
 
     # Verifica se existe usuário com esse email
     return conexao.getIdUsuario(email)
-    
 
 
 def atualizaSenha(email: str, senha: str) -> None:

@@ -1,9 +1,11 @@
 from typing import Any
+
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from modelos.excecao import APIExcecaoBase, UsuarioJaExisteExcecao, UsuarioNaoEncontradoExcecao
 
+from modelos.excecao import (APIExcecaoBase, UsuarioJaExisteExcecao,
+                             UsuarioNaoEncontradoExcecao)
 from src.modelos.usuario.usuarioValidator import ValidarUsuario
 
 
