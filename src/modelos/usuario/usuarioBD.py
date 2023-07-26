@@ -1,6 +1,8 @@
+from typing import Any
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
+from modelos.excecao import APIExcecaoBase, UsuarioJaExisteExcecao, UsuarioNaoEncontradoExcecao
 
 from src.modelos.usuario.usuarioValidator import ValidarUsuario
 
@@ -12,18 +14,15 @@ class UsuarioBD:
         self.__colecao = db["usuarios"]
         self.__validarDados = ValidarUsuario().usuario()
 
-    def criarUsuario(self, dadoUsuario: object) -> dict:
+    def criarUsuario(self, dadoUsuario: object) -> str:
         if self.__validarDados.validate(dadoUsuario):
             try:
                 resultado = self.__colecao.insert_one(dadoUsuario)
-                return {
-                    "mensagem": resultado.inserted_id,
-                    "status": "200",
-                }
+                return str(resultado.inserted_id)
             except DuplicateKeyError:
-                return {"mensagem": "CPF ou email já existem", "status": "409"}
+                raise UsuarioJaExisteExcecao()
         else:
-            return {"mensagem": self.__validarDados.errors, "status": "400"}
+            raise APIExcecaoBase(message="Erro de validação")
 
     def deletarUsuario(self, idUsuario: str) -> dict:
         idUsuario = ObjectId(idUsuario)
@@ -33,26 +32,22 @@ class UsuarioBD:
         else:
             return {"mensagem": "Usuário não encontrado", "status": "404"}
 
-    def atualizarUsuario(self, idUsuario: str, dadoUsuario: object) -> dict:
+    def atualizarUsuario(self, idUsuario: str, dadoUsuario: object) -> None:
         idUsuario = ObjectId(idUsuario)
         if self.__validarDados.validate(dadoUsuario):
             try:
                 self.__colecao.update_one({"_id": idUsuario}, {"$set": dadoUsuario})
-                return {"mensagem": "Usuário atualizado", "status": "200"}
             except DuplicateKeyError:
-                return {"mensagem": "CPF ou email já existem", "status": "409"}
+                raise UsuarioJaExisteExcecao()
         else:
-            return {"mensagem": self.__validarDados.errors, "status": "404"}
+            raise APIExcecaoBase(message="Erro de validação")
 
-    def getUsuario(self, idUsuario: str) -> dict:
+    def getUsuario(self, idUsuario: str) -> dict[str, Any]:
         idUsuario = ObjectId(idUsuario)
         if resultado := self.__colecao.find_one({"_id": idUsuario}):
-            return {
-                "mensagem": resultado,
-                "status": "200",
-            }
+            return resultado
         else:
-            return {"mensagem": "Usuário não encontrado", "status": "404"}
+            raise UsuarioNaoEncontradoExcecao()
 
     # recebe uma lista de IDs de usuários
     def getListaUsuarios(self, listaIdUsuarios: list) -> dict:
@@ -80,11 +75,8 @@ class UsuarioBD:
             "status": "200",
         }
 
-    def getIdUsuario(self, email: str) -> dict:
+    def getIdUsuario(self, email: str) -> str:
         if usuario := self.__colecao.find_one({"email": email}):
-            return {
-                "mensagem": usuario["_id"],
-                "status": "200",
-            }
+            return str(usuario["_id"])
         else:
-            return {"mensagem": "Usuário não encontrado", "status": "404"}
+            raise UsuarioNaoEncontradoExcecao()

@@ -3,6 +3,7 @@ import secrets
 from datetime import datetime, timedelta
 
 from fastapi import UploadFile
+from modelos.excecao import ImagemInvalidaExcecao, NaoAutenticadoExcecao
 
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
@@ -24,7 +25,7 @@ from src.rotas.usuario.usuarioUtil import (
 )
 
 
-def ativaContaControlador(token: str) -> dict:
+def ativaContaControlador(token: str) -> None:
     """
     Recebe um token JWT de ativação de conta.
 
@@ -36,24 +37,19 @@ def ativaContaControlador(token: str) -> dict:
     """
 
     # Verifica o token e recupera o email
-    retorno = processaTokenAtivaConta(token)
-    if retorno.get("status") != "200":
-        return retorno
+    msg: dict[str, str] = processaTokenAtivaConta(token)
 
     # Ativa a conta no BD
-    msg = retorno.get("mensagem")
     assert msg is not None  # tipagem
-    id = msg["idUsuario"]
-    email = msg["email"]
+    id: str = msg["idUsuario"]
+    email: str = msg["email"]
 
-    retorno = ativaconta(id, email)
-
-    return retorno
+    ativaconta(id, email)
 
 
 def cadastraUsuarioControlador(
     *, nomeCompleto: str, cpf: str, email: str, senha: str, curso: str | None
-) -> dict:
+) -> str:
     """
     Cria uma conta com os dados fornecidos, e envia um email
     de confirmação de criação de conta ao endereço fornecido.
@@ -75,77 +71,53 @@ def cadastraUsuarioControlador(
     """
 
     # 3. verifico se o email já existe e crio o usuário
-    try:
-        bd = UsuarioBD()
-        resultado = bd.criarUsuario(
-            {
-                "nome": nomeCompleto,
-                "email": email,
-                "cpf": cpf,
-                "curso": curso,
-                "estado da conta": EstadoConta.INATIVO,
-                "senha": hashSenha(senha),
-                "tipo conta": TipoConta.ESTUDANTE,
-                "data criacao": datetime.now(),
-            }
-        )
+    bd = UsuarioBD()
+    id = bd.criarUsuario(
+        {
+            "nome": nomeCompleto,
+            "email": email,
+            "cpf": cpf,
+            "curso": curso,
+            "estado da conta": EstadoConta.INATIVO,
+            "senha": hashSenha(senha),
+            "tipo conta": TipoConta.ESTUDANTE,
+            "data criacao": datetime.now(),
+        }
+    )
 
-        if resultado["status"] != "200":
-            return resultado
+    # 4. gera token de ativação válido por 24h
+    token = geraTokenAtivaConta(id, email, timedelta(days=1))
 
-        id = str(resultado["mensagem"])
+    # 5. manda email de ativação
+    # não é necessário fazer urlencode pois jwt é url-safe
+    linkConfirmacao = (
+        config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token
+    )
+    # print(linkConfirmacao)
+    resultado = verificarEmail(
+        config.EMAIL_SMTP, config.SENHA_SMTP, email, linkConfirmacao
+    )
 
-        # 4. gera token de ativação válido por 24h
-        token = geraTokenAtivaConta(id, email, timedelta(days=1))
-
-        # 5. manda email de ativação
-        # não é necessário fazer urlencode pois jwt é url-safe
-        linkConfirmacao = (
-            config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token
-        )
-        # print(linkConfirmacao)
-        resultado = verificarEmail(
-            config.EMAIL_SMTP, config.SENHA_SMTP, email, linkConfirmacao
-        )
-
-        if resultado["status"] != "200":
-            # return {"status": "400", "mensagem": "Erro no envio do email."}
-            # não indicar que o email não existe para evitar spam
-            pass
-
-        return {"status": "201", "mensagem": id}
-    except Exception as e:
-        logging.error("Erro no cadastro de usuário: " + str(e))
-        return {"status": "500", "mensagem": str(e)}
+    return id
 
 
 # Envia um email para trocar de senha se o email estiver cadastrado no bd
-def recuperaContaControlador(email: str) -> dict:
+def recuperaContaControlador(email: str) -> None:
     # Verifica se o usuário está cadastrado no bd
     retorno = verificaSeUsuarioExiste(email)
-    if retorno.get("status") == "500":
-        return retorno
 
     # Gera o link e envia o email se o usuário estiver cadastrado
-    if retorno.get("status") == "200":
-        link = geraLink(email)
-        resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
 
-    return {"mensagem": "OK", "status": "200"}
+    link = geraLink(email)
+    resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
 
 
-def trocaSenhaControlador(token, senha: str) -> dict:
+def trocaSenhaControlador(token, senha: str) -> None:
     # Verifica o token e recupera o email
-    retorno = processaTokenTrocaSenha(token)
-    if retorno.get("status") != "200":
-        return retorno
+    email = processaTokenTrocaSenha(token)
 
     # Atualiza a senha no bd
-    email = retorno.get("email")
-    retorno = atualizaSenha(email, senha)
-
-    return retorno
-
+    atualizaSenha(email, senha)
 
 def autenticaUsuarioControlador(email: str, senha: str) -> dict:
     """
@@ -158,51 +130,37 @@ def autenticaUsuarioControlador(email: str, senha: str) -> dict:
     - "mensagem" contém um token de autenticação no formato OAuth2 se autenticado com
       sucesso, ou uma mensagem de erro caso contrário.
     """
-    try:
-        # verifica senha
-        conexaoUsuario = UsuarioBD()
 
-        resp = conexaoUsuario.getIdUsuario(email)
-        if resp["status"] != "200":
-            return resp
-        id = resp["mensagem"]
+    # verifica senha
+    conexaoUsuario = UsuarioBD()
 
-        resp = conexaoUsuario.getUsuario(id)
-        if resp["status"] != "200":
-            return resp
-        usuario = UsuarioSenha.deBd(resp["mensagem"])
+    id = conexaoUsuario.getIdUsuario(email)
 
-        if not conferirHashSenha(senha, usuario.senha):
-            return {"status": "401", "mensagem": "Não autenticado"}
+    usuario = UsuarioSenha.deBd(conexaoUsuario.getUsuario(id))
 
-        # está ativo?
-        if usuario.estadoConta != EstadoConta.ATIVO:
-            return {"status": "403", "mensagem": "Não autorizado"}
+    if not conferirHashSenha(senha, usuario.senha):
+        raise NaoAutenticadoExcecao()
 
-        # cria token
-        tk = secrets.token_urlsafe()
-        conexaoToken = AuthTokenBD()
-        resp = conexaoToken.criarToken(
-            {
-                "_id": tk,
-                "idUsuario": usuario.id,
-                "validade": datetime.now() + timedelta(days=2),
-            }
-        )
-        if resp["status"] != "200":
-            return resp
+    # está ativo?
+    if usuario.estadoConta != EstadoConta.ATIVO:
+        raise NaoAutenticadoExcecao()
 
-        # retorna token
-        return {
-            "status": "200",
-            "mensagem": {"access_token": tk, "token_type": "bearer"},
+    # cria token
+    tk = secrets.token_urlsafe()
+    conexaoToken = AuthTokenBD()
+    conexaoToken.criarToken(
+        {
+            "_id": tk,
+            "idUsuario": usuario.id,
+            "validade": datetime.now() + timedelta(days=2),
         }
-    except Exception as e:
-        logging.error("Erro no cadastro de usuário: " + str(e))
-        return {"status": "500", "mensagem": str(e)}
+    )
+
+    # retorna token
+    return {"access_token": tk, "token_type": "bearer"}
 
 
-def getUsuarioAutenticadoControlador(token: str) -> dict:
+def getUsuarioAutenticadoControlador(token: str) -> UsuarioSenha:
     """
     Obtém dados do usuário dono do token fornecido. Falha se o token estiver expirado
     ou for inválido.
@@ -212,28 +170,17 @@ def getUsuarioAutenticadoControlador(token: str) -> dict:
     - "mensagem" contém uma instância da classe UsuarioSenha em caso de sucesso e uma
       mensagem de erro caso contrário.
     """
-    try:
-        conexaoAuthToken = AuthTokenBD()
+    conexaoAuthToken = AuthTokenBD()
 
-        resp = conexaoAuthToken.getIdUsuarioDoToken(token)
-        if resp["status"] != "200":
-            return resp
-        id = resp["mensagem"]
+    id = conexaoAuthToken.getIdUsuarioDoToken(token)
 
-        conexaoUsuario = UsuarioBD()
+    conexaoUsuario = UsuarioBD()
 
-        resp = conexaoUsuario.getUsuario(id)
-        if resp["status"] != "200":
-            return resp
-
-        usuario = UsuarioSenha.deBd(resp["mensagem"])
-        return {"status": "200", "mensagem": usuario}
-    except Exception as e:
-        logging.error("Erro na autenticação: " + str(e))
-        return {"status": "500", "mensagem": str(e)}
+    usuario = UsuarioSenha.deBd(conexaoUsuario.getUsuario(id))
+    return usuario
 
 
-def getUsuarioControlador(id: str) -> dict:
+def getUsuarioControlador(id: str) -> UsuarioSenha:
     """
     Obtém dados do usuário com o id fornecido.
 
@@ -243,23 +190,14 @@ def getUsuarioControlador(id: str) -> dict:
     - "mensagem" contém uma instância da classe UsuarioSenha em caso de sucesso e uma
       mensagem de erro caso contrário.
     """
-    try:
-        conexaoUsuario = UsuarioBD()
+    conexaoUsuario = UsuarioBD()
+    return UsuarioSenha.deBd(conexaoUsuario.getUsuario(id))
 
-        resp = conexaoUsuario.getUsuario(id)
-        if resp["status"] != "200":
-            return resp
-
-        usuario = UsuarioSenha.deBd(resp["mensagem"])
-        return {"status": "200", "mensagem": usuario}
-    except Exception as e:
-        logging.error("Erro ao recuperar dados do usuário: " + str(e))
-        return {"status": "500", "mensagem": str(e)}
 
 
 def editaUsuarioControlador(
     *, usuario: UsuarioSenha, nomeCompleto: str, curso: str | None, redesSociais: dict
-) -> dict:
+) -> None:
     """
     Atualiza os dados básicos (nome, curso, redes sociais) da conta de um usuário existente.
 
@@ -274,39 +212,24 @@ def editaUsuarioControlador(
 
     A atualização da conta pode não suceder por erro na validação de dados.
     """
-    try:
-        bd = UsuarioBD()
-        usuarioDados: dict = usuario.paraBd()
+    bd = UsuarioBD()
+    usuarioDados: dict = usuario.paraBd()
 
-        usuarioDados.update(
-            {
-                "nome": nomeCompleto,
-                "curso": curso,
-                "redes sociais": redesSociais,
-            }
-        )
-        id = usuarioDados.pop("_id")
-        atualizacao = bd.atualizarUsuario(id, usuarioDados)
-        if atualizacao["status"] == "200":
-            logging.info("Dados do usuário atualizados, id: " + str(id))
-            return {"status": "200", "mensagem": "Usuário atualizado com sucesso."}
-        else:
-            logging.error(
-                "Erro no banco de dados ao fazer a atualização: "
-                + str(atualizacao["mensagem"])
-            )
-            return {
-                "status": atualizacao["status"],
-                "mensagem": atualizacao["mensagem"],
-            }
-    except Exception as e:
-        logging.error("Erro na atualização de usuário: " + str(e))
-        return {"status": "500", "mensagem": str(e)}
+    usuarioDados.update(
+        {
+            "nome": nomeCompleto,
+            "curso": curso,
+            "redes sociais": redesSociais,
+        }
+    )
+
+    id = usuarioDados.pop("_id")
+    bd.atualizarUsuario(id, usuarioDados)
 
 
 def editaSenhaControlador(
     *, senhaAtual: str, novaSenha: str, usuario: UsuarioSenha
-) -> dict:
+) -> None:
     """
     Atualiza a senha de um usuário existente.
 
@@ -321,38 +244,19 @@ def editaSenhaControlador(
 
     A atualização da conta pode não suceder por erro na validação de dados.
     """
-    try:
-        bd = UsuarioBD()
-        usuarioDados: dict = usuario.paraBd()
-        if conferirHashSenha(senhaAtual, usuarioDados["senha"]):
-            usuarioDados.update({"senha": hashSenha(novaSenha)})
-            id = usuarioDados.pop("_id")
-            atualizacao = bd.atualizarUsuario(id, usuarioDados)
-            if atualizacao["status"] == "200":
-                logging.info("Dados do usuário atualizados, id: " + str(id))
-                return {
-                    "status": "200",
-                    "mensagem": "Usuário atualizado com sucesso.",
-                }
-            else:
-                logging.error(
-                    "Erro no banco de dados ao fazer a atualização: "
-                    + str(atualizacao["mensagem"])
-                )
-                return {
-                    "status": atualizacao["status"],
-                    "mensagem": atualizacao["mensagem"],
-                }
-        else:
-            return {"status": "400", "mensagem": "Senha incorreta"}
-    except Exception as e:
-        logging.error("Erro na atualização de senha do Usuário: " + str(e))
-        return {"status": "500", "mensagem": str(e)}
+    bd = UsuarioBD()
+    usuarioDados: dict = usuario.paraBd()
+    if conferirHashSenha(senhaAtual, usuarioDados["senha"]):
+        usuarioDados.update({"senha": hashSenha(novaSenha)})
+        id = usuarioDados.pop("_id")
+        bd.atualizarUsuario(id, usuarioDados)
+    else:
+        raise NaoAutenticadoExcecao()
 
 
 def editaEmailControlador(
     *, senhaAtual: str, novoEmail: str, usuario: UsuarioSenha
-) -> dict:
+) -> None:
     """
     Atualiza o email de um usuário existente.
 
@@ -369,48 +273,30 @@ def editaEmailControlador(
 
     A atualização da conta pode não suceder por erro na validação de dados.
     """
-    try:
-        bd = UsuarioBD()
-        usuarioDados: dict = usuario.paraBd()
-        if conferirHashSenha(senhaAtual, usuarioDados["senha"]):
-            usuarioDados.update({"email": novoEmail, "estado da conta": "inativo"})
-            id = usuarioDados.pop("_id")
-            atualizacao = bd.atualizarUsuario(id, usuarioDados)
-            if atualizacao["status"] == "200":
-                token24h = geraTokenAtivaConta(id, novoEmail, timedelta(days=1))
-                linkConfirmacao = (
-                    config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token24h
-                )
-                verificarEmail(
-                    emailPet=config.EMAIL_SMTP,
-                    senhaPet=config.SENHA_SMTP,
-                    emailDestino=novoEmail,
-                    link=linkConfirmacao,
-                )
-                logging.info("Dados do usuário atualizados, id: " + str(id))
-                return {
-                    "status": "200",
-                    "mensagem": "Usuário atualizado com sucesso.",
-                }
-            else:
-                logging.error(
-                    "Erro no banco de dados ao fazer a atualização: "
-                    + str(atualizacao["mensagem"])
-                )
-                return {
-                    "status": atualizacao["status"],
-                    "mensagem": atualizacao["mensagem"],
-                }
-        else:
-            return {"status": "400", "mensagem": "Senha incorreta"}
-    except Exception as e:
-        logging.error("Erro na atualização de email do Usuário: " + str(e))
-        return {"status": "500", "mensagem": str(e)}
+    bd = UsuarioBD()
+    usuarioDados: dict = usuario.paraBd()
+    if conferirHashSenha(senhaAtual, usuarioDados["senha"]):
+        usuarioDados.update({"email": novoEmail, "estado da conta": "inativo"})
+        id = usuarioDados.pop("_id")
+        bd.atualizarUsuario(id, usuarioDados)
+        token24h = geraTokenAtivaConta(id, novoEmail, timedelta(days=1))
+        linkConfirmacao = (
+            config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token24h
+        )
+        verificarEmail(
+            emailPet=config.EMAIL_SMTP,
+            senhaPet=config.SENHA_SMTP,
+            emailDestino=novoEmail,
+            link=linkConfirmacao,
+        )
+        logging.info("Dados do usuário atualizados, id: " + str(id))
+    else:
+        raise NaoAutenticadoExcecao()
 
 
 def editarFotoControlador(
-    *, usuario: UsuarioSenha, foto: dict[str, UploadFile]
-) -> dict:
+    *, usuario: UsuarioSenha, foto: UploadFile | None
+) -> None:
     """
     Atualiza a foto de perfil de um usuário existente.
 
@@ -425,33 +311,14 @@ def editarFotoControlador(
 
     A atualização da conta pode não suceder por erro na validação de dados.
     """
-    try:
-        bd = UsuarioBD()
-        usuarioDados: dict = usuario.paraBd()
+    bd = UsuarioBD()
+    usuarioDados: dict = usuario.paraBd()
 
-        if not validaImagem(foto["mensagem"].file):  # type: ignore
-            return {"mensagem": "Foto de perfil inválida.", "status": "400"}
+    if not validaImagem(foto.file):  # type: ignore
+        raise ImagemInvalidaExcecao()
 
-        deletaImagem(usuarioDados["nome"], "usuarios")
-        caminhoFotoPerfil = armazenaFotoUsuario(usuarioDados["nome"], foto["mensagem"].file)  # type: ignore
-        usuarioDados["foto perfil"] = caminhoFotoPerfil
-        id = usuarioDados.pop("_id")
-        atualizacao = bd.atualizarUsuario(id, usuarioDados)
-        if atualizacao["status"] == "200":
-            logging.info("Dados do usuário atualizados, id: " + str(id))
-            return {
-                "status": "200",
-                "mensagem": "Usuário atualizado com sucesso.",
-            }
-        else:
-            logging.error(
-                "Erro no banco de dados ao fazer a atualização: "
-                + str(atualizacao["mensagem"])
-            )
-            return {
-                "status": atualizacao["status"],
-                "mensagem": atualizacao["mensagem"],
-            }
-    except Exception as e:
-        logging.error("Erro na atualização de foto de perfil do Usuário: " + str(e))
-        return {"status": "500", "mensagem": str(e)}
+    deletaImagem(usuarioDados["nome"], ["usuarios"])
+    caminhoFotoPerfil = armazenaFotoUsuario(usuarioDados["nome"], foto.file)  # type: ignore
+    usuarioDados["foto perfil"] = caminhoFotoPerfil
+    id = usuarioDados.pop("_id")
+    bd.atualizarUsuario(id, usuarioDados)

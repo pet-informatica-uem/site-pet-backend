@@ -4,6 +4,7 @@ import logging
 from fastapi import FastAPI
 
 from fastapi.middleware.cors import CORSMiddleware
+from middlewareExcecao import requestHandler as middlewareExcecao
 from src.img.criaPastas import criaPastas
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.petiano.petianoRotas import roteador as roteadorPetianos
@@ -36,6 +37,7 @@ petBack.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+petBack.middleware("http")(middlewareExcecao)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorPetianos)
 petBack.include_router(roteadorEvento)
