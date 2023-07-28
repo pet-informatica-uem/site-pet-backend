@@ -36,10 +36,10 @@ class Configuracoes(BaseSettings):
     """
 
     CAMINHO_IMAGEM: str = os.path.join(
-        os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "images"
+        os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "img"
     )
     """
-    Caminho onde serão armazenadas as imagens (.../images/). 
+    Caminho onde serão armazenadas as imagens (.../img/). 
     """
 
     class Config:
