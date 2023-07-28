@@ -13,7 +13,7 @@ from src.autenticacao.jwtoken import (
 )
 from src.config import config
 from src.email.operacoesEmail import resetarSenha, verificarEmail
-from src.img.operacoesImagem import deletaImagem
+from src.img.operacoesImagem import deletaImagem, validaImagem, armazenaFotoUsuario
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.usuario.usuario import EstadoConta, TipoConta, UsuarioSenha
 from src.modelos.usuario.usuarioBD import UsuarioBD
