@@ -71,42 +71,43 @@ class ErroAutenticacaoExcecao(APIExcecaoBase):
     code = status.HTTP_401_UNAUTHORIZED
     model = ErroBase
 
-class NaoAtualizadaExcecao(AcaoNaoCompletaErro): #conflito
+class NaoAtualizadaExcecao(APIExcecaoBase): #conflito
     message = "Não foi possível atualizar."
     code = status.HTTP_404_NOT_FOUND
     model = AcaoNaoCompletaErro
 
-class ErroNaAlteracaoExcecao(AcaoNaoCompletaErro): #conflito
+class ErroNaAlteracaoExcecao(APIExcecaoBase): #conflito
     message = "Não foi possível fazer a alteração."
     code = status.HTTP_404_NOT_FOUND
     model = AcaoNaoCompletaErro
 
-class SemVagasDisponiveisExcecao(AcaoNaoCompletaErro): #conflito
+class SemVagasDisponiveisExcecao(APIExcecaoBase): #conflito
     message = "Não há vagas disponíveis."
     code = status.HTTP_410_GONE
     model = AcaoNaoCompletaErro
 
-class TipoVagaInvalidoExcecao(NaoEncontradoErro): #conflito
+class TipoVagaInvalidoExcecao(APIExcecaoBase): #conflito
     message = "Tipo de vaga inválido."
     code = status.HTTP_404_NOT_FOUND
     model = NaoEncontradoErro
 
-class EmailNaoFoiEnviadoExcecao(ErroInternoExcecao):
+class EmailNaoFoiEnviadoExcecao(APIExcecaoBase):
     message = "Não foi possível enviar o E-mail"
     code = status.HTTP_500_INTERNAL_SERVER_ERROR
     model = AcaoNaoCompletaErro
 
-class TipoDeInscricaoErradoExcecao(AcaoNaoCompletaErro):
+class TipoDeInscricaoErradoExcecao(APIExcecaoBase):
     message = "Tipo de inscricao errada, deveria ser <com notebook> ou <sem notebook>"
     code = status.HTTP_400_BAD_REQUEST
     model = AcaoNaoCompletaErro
 
-class TipoDeInscricaoErradoExcecao(AcaoNaoCompletaErro):
+class NivelDeConhecimentoErradoExcecao(APIExcecaoBase):
     message = "Nivel de conhecimento erradao, deveria ser 1,2,3,4 ou 5"
     code = status.HTTP_400_BAD_REQUEST
     model = AcaoNaoCompletaErro    
 
-class UsuarioJaExisteExcecao(JaExisteExcecao):
+
+class UsuarioJaExisteExcecao(APIExcecaoBase):
     message = "O usuário já existe."
 
 

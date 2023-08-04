@@ -1,6 +1,6 @@
 import logging
 
-from modelos.excecao import NaoAutenticadoExcecao
+from src.modelos.excecao import NaoAutenticadoExcecao
 from src.autenticacao.autenticacao import hashSenha
 from src.modelos.usuario.usuarioBD import UsuarioBD
 

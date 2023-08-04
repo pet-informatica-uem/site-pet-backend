@@ -3,7 +3,7 @@ from typing import BinaryIO
 
 
 
-from src.modelos.excecao import EmailNaoFoiEnviadoExcecao, NaoEncontradoExcecao, TipoDeInscricaoErradoExcecao, ErroInternoExcecao
+from src.modelos.excecao import EmailNaoFoiEnviadoExcecao, NivelDeConhecimentoErradoExcecao, UsuarioNaoEncontradoExcecao, NaoEncontradoExcecao, TipoDeInscricaoErradoExcecao, ErroInternoExcecao
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
 from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
@@ -59,13 +59,13 @@ def inscricaoEventoControlador(
     tipoDeInscricao: str,
     pagamento: bool | None,
 ) -> dict:
-    #if tipoDeInscricao not in ["sem notebook", "com notebook"]:
-    #    raise EmailNaoFoiEnviadoExcecao()
+    if tipoDeInscricao not in ["sem notebook", "com notebook"]:
+        raise TipoDeInscricaoErradoExcecao()
         
     usuarioBD = UsuarioBD()
     dicionarioUsuario : dict = usuarioBD.getUsuario(idUsuario)
-    #if not dicionarioUsuario:
-    #    raise NaoEncontradoExcecao(message="Usuario nao foi encontrado")
+    if not dicionarioUsuario:
+        raise UsuarioNaoEncontradoExcecao()
 
     eventoBD = EventoBD()
     dicionarioEvento : dict = eventoBD.getEvento(idEvento)
@@ -75,11 +75,11 @@ def inscricaoEventoControlador(
         "data/hora evento": dicionarioEvento["data/hora evento"],
         "pré-requisitos": dicionarioEvento["pré-requisitos"],
     }
-    #if not dicionarioEvento:
-    #    raise NaoEncontradoExcecao("message="Evento nao foi encontrado")
+    if not dicionarioEvento:
+        raise NaoEncontradoExcecao()
 
-    #if nivelConhecimento not in ["1", "2", "3", "4", "5", None]:
-    #    raise TipoDeInscricaoErradoExcecao() #nivel de conhecimentoinvalido
+    if nivelConhecimento not in ["1", "2", "3", "4", "5", None]:
+        raise NivelDeConhecimentoErradoExcecao() 
 
     inscritos = InscritosEventoBD()
     inscrito: dict = {
@@ -91,13 +91,13 @@ def inscricaoEventoControlador(
     }
 
     situacaoInscricao: bool = inscritos.setInscricao(inscrito)
-    #if not situacaoInscricao:
-    #    raise ErroInternoExcecao()#nao deu pra fazer inscricao
+    if not situacaoInscricao:
+        raise ErroInternoExcecao(message = "Nao foi possivel realizar a inscricao")
 
     emailConfirmacaoEvento(
         emailPet=config.EMAIL_SMTP,
         senhaPet=config.SENHA_SMTP,
-        emailDestino=dicionarioUsuario['mensagem']['email'],
+        emailDestino=dicionarioUsuario['email'],
         evento=dicionarioEnvioGmail
     )
 

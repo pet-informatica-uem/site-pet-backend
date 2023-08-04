@@ -178,7 +178,7 @@ def getInscritosEvento(
     status_code=status.HTTP_201_CREATED,
 )
 def getDadosInscricaoEvento( 
-    idUsuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)],
+    #idUsuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)],
     idEvento: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
     pagamento: Annotated[bool, Form()],

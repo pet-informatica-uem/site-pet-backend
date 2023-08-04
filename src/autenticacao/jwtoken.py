@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from jose import JWTError, jwt
 
-from modelos.excecao import NaoAutenticadoExcecao
+from src.modelos.excecao import NaoAutenticadoExcecao
 from src.config import config
 
 

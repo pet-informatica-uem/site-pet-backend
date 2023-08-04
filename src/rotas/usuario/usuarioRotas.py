@@ -7,7 +7,7 @@ from fastapi import (APIRouter, Depends, Form, HTTPException, Request,
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, HttpUrl, SecretStr
 
-from modelos.excecao import (APIExcecaoBase, NaoAutenticadoExcecao,
+from src.modelos.excecao import (APIExcecaoBase, NaoAutenticadoExcecao,
                              NaoEncontradoExcecao, UsuarioJaExisteExcecao,
                              UsuarioNaoEncontradoExcecao,
                              listaRespostasExcecoes)
@@ -58,6 +58,7 @@ def cadastrarUsuario(
     curso: Annotated[str | None, Form(max_length=200)] = None,
 ) -> str:
     # valida dados
+    validar = ValidacaoCadastro()
     if (
         not validar.cpf(cpf)
         or not validar.senha(
@@ -143,7 +144,7 @@ def recuperaConta(
 )
 def trocaSenha(token, senha: Annotated[str, Form()]):
     # Validacao basica da senha
-    if not validar.senha(senha, senha):
+    if not validaSenha(senha, senha):
         raise HTTPException(status_code=400, detail="Senha inválida.")
 
     # Despacha o token para o controlador
