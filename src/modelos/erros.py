@@ -6,6 +6,10 @@ class ErroBase(BaseModel):
     etc: str = "oi"
 
 
+class NaoAutenticadoErro(ErroBase):
+    pass
+
+
 class NaoEncontradoErro(ErroBase):
     pass
 

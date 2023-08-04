@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 
 from jose import JWTError, jwt
 
+from modelos.excecao import NaoAutenticadoExcecao
 from src.config import config
 
 
@@ -13,7 +14,7 @@ def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
     return token
 
 
-def processaTokenAtivaConta(token: str) -> dict:
+def processaTokenAtivaConta(token: str) -> dict[str, str]:
     """
     Verifica a validade do token e retorna o email e id de usuário nele contidos.
     Falha, se o token for inválido (expirado ou corrompido).
@@ -26,19 +27,18 @@ def processaTokenAtivaConta(token: str) -> dict:
 
     # Tenta decodificar o token
     try:
-        token_info = jwt.decode(token, config.SEGREDO_JWT, algorithms=["HS256"])
+        token_info: dict[str, str] = jwt.decode(
+            token, config.SEGREDO_JWT, algorithms=["HS256"]
+        )
     except JWTError:
-        return {"mensagem": "Token inválido.", "status": "400"}
+        raise NaoAutenticadoExcecao()
 
     # Recupera as informações do token
-    email = token_info.get("email")
-    idUsuario = token_info.get("sub")
-
-    if not email or not idUsuario:
-        return {"mensagem": "Token inválido.", "status": "400"}
+    email: str = token_info["email"]
+    idUsuario: str = token_info["sub"]
 
     # Retorna o email
-    return {"mensagem": {"idUsuario": idUsuario, "email": email}, "status": "200"}
+    return {"idUsuario": idUsuario, "email": email}
 
 
 def geraLink(email: str) -> str:
@@ -59,7 +59,7 @@ def geraLink(email: str) -> str:
     return url
 
 
-def processaTokenTrocaSenha(token) -> dict:
+def processaTokenTrocaSenha(token) -> str:
     """
     Verifica a validade do token e resgata o email nele contido.
     Falha, se o token for inválido (expirado ou corrompido).
@@ -73,16 +73,16 @@ def processaTokenTrocaSenha(token) -> dict:
     try:
         token_info = jwt.decode(token, config.SEGREDO_JWT, algorithms=["HS256"])
     except JWTError:
-        return {"mensagem": "Token inválido.", "status": "400"}
+        raise NaoAutenticadoExcecao()
 
     # Recupera as informações do token
-    email = token_info.get("email")
-    validade = token_info.get("validade")
+    email: str = token_info["email"]
+    validade = token_info["validade"]
 
     # Verifica a validade do token
-    validade = datetime.fromtimestamp(validade)  # type: ignore
+    validade: datetime = datetime.fromtimestamp(validade)  # type: ignore
     if validade < datetime.utcnow():
-        return {"mensagem": "Token expirou.", "status": "400"}
+        raise NaoAutenticadoExcecao()
 
     # Retorna o email
-    return {"email": email, "status": "200"}
+    return email

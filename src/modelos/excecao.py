@@ -1,9 +1,10 @@
+from typing import Type
+
 from fastapi import status
 from fastapi.responses import JSONResponse
 
-from src.modelos.erros import ErroBase, JaExisteErro
-
-from typing import Type
+from src.modelos.erros import (ErroBase, JaExisteErro, NaoAutenticadoErro,
+                               NaoEncontradoErro)
 
 
 class APIExcecaoBase(Exception):
@@ -24,6 +25,27 @@ class APIExcecaoBase(Exception):
         return {cls.code: {"model": cls.model}}
 
 
+class ImagemInvalidaExcecao(APIExcecaoBase):
+    message = "A foto não é válida."
+    code = status.HTTP_400_BAD_REQUEST
+
+
+class NaoAutenticadoExcecao(APIExcecaoBase):
+    message = "Usuário não autenticado."
+    code = status.HTTP_401_UNAUTHORIZED
+    model = NaoAutenticadoErro
+
+
+class NaoEncontradoExcecao(APIExcecaoBase):
+    message = "A entidade não foi encontrada."
+    code = status.HTTP_404_NOT_FOUND
+    model = NaoEncontradoErro
+
+
+class UsuarioNaoEncontradoExcecao(NaoEncontradoExcecao):
+    message = "O usuário não foi encontrado."
+
+
 class JaExisteExcecao(APIExcecaoBase):
     message = "A entidade já existe."
     code = status.HTTP_409_CONFLICT
@@ -34,10 +56,10 @@ class UsuarioJaExisteExcecao(JaExisteExcecao):
     message = "O usuário já existe."
 
 
-def get_exception_responses(*args: Type[APIExcecaoBase]) -> dict:
+def listaRespostasExcecoes(*args: Type[APIExcecaoBase]) -> dict:
     """Given BaseAPIException classes, return a dict of responses used on FastAPI endpoint definition, with the format:
     {statuscode: schema, statuscode: schema, ...}"""
-    responses = dict()
+    respostas = dict()
     for cls in args:
-        responses.update(cls.response_model())
-    return responses
+        respostas.update(cls.response_model())
+    return respostas
