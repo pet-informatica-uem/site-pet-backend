@@ -14,7 +14,7 @@ from modelos.excecao import (APIExcecaoBase, NaoAutenticadoExcecao,
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.usuario.usuario import Usuario, UsuarioSenha
 from src.modelos.usuario.validacaoCadastro import (validaCpf, validaEmail,
-                                                   validaSenha)
+                                                   validaSenha, ValidacaoCadastro)
 from src.rotas.usuario.usuarioControlador import (
     ativaContaControlador, autenticaUsuarioControlador,
     cadastraUsuarioControlador, editaEmailControlador, editarFotoControlador,
