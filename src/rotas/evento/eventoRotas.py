@@ -2,15 +2,8 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Annotated, BinaryIO
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    Form,
-    HTTPException,
-    Response,
-    UploadFile,
-    status,
-)
+from fastapi import (APIRouter, Depends, Form, HTTPException, Response,
+                     UploadFile, status)
 
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.evento.evento import DadosEvento

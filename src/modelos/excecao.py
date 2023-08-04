@@ -1,9 +1,10 @@
-from fastapi import status
 from fastapi.responses import JSONResponse
 
-from src.modelos.erros import ErroBase, JaExisteErro, NaoEncontradoErro, AcaoNaoCompletaErro
-
 from typing import Type
+from fastapi import status
+
+from src.modelos.erros import (ErroBase, JaExisteErro, NaoAutenticadoErro,
+                               NaoEncontradoErro, AcaoNaoCompletaErro)
 
 
 class APIExcecaoBase(Exception):
@@ -23,10 +24,26 @@ class APIExcecaoBase(Exception):
     def response_model(cls):
         return {cls.code: {"model": cls.model}}
 
-class UsuarioJaExisteExcecao(APIExcecaoBase):
-    message = "O usuario já existe."
-    code = status.HTTP_409_CONFLICT
-    model = JaExisteErro
+
+class ImagemInvalidaExcecao(APIExcecaoBase):
+    message = "A foto não é válida."
+    code = status.HTTP_400_BAD_REQUEST
+
+
+class NaoAutenticadoExcecao(APIExcecaoBase):
+    message = "Usuário não autenticado."
+    code = status.HTTP_401_UNAUTHORIZED
+    model = NaoAutenticadoErro
+
+
+class NaoEncontradoExcecao(APIExcecaoBase):
+    message = "A entidade não foi encontrada."
+    code = status.HTTP_404_NOT_FOUND
+    model = NaoEncontradoErro
+
+
+class UsuarioNaoEncontradoExcecao(NaoEncontradoExcecao):
+    message = "O usuário não foi encontrado."
 
 
 class JaExisteExcecao(APIExcecaoBase):
@@ -89,11 +106,14 @@ class TipoDeInscricaoErradoExcecao(AcaoNaoCompletaErro):
     code = status.HTTP_400_BAD_REQUEST
     model = AcaoNaoCompletaErro    
 
+class UsuarioJaExisteExcecao(JaExisteExcecao):
+    message = "O usuário já existe."
 
-def get_exception_responses(*args: Type[APIExcecaoBase]) -> dict:
+
+def listaRespostasExcecoes(*args: Type[APIExcecaoBase]) -> dict:
     """Given BaseAPIException classes, return a dict of responses used on FastAPI endpoint definition, with the format:
     {statuscode: schema, statuscode: schema, ...}"""
-    responses = dict()
+    respostas = dict()
     for cls in args:
-        responses.update(cls.response_model())
-    return responses
+        respostas.update(cls.response_model())
+    return respostas

@@ -4,6 +4,8 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 
+from modelos.excecao import (APIExcecaoBase, JaExisteExcecao,
+                             NaoEncontradoExcecao)
 from src.modelos.autenticacao.authToken import ValidarAuthToken
 
 
@@ -19,14 +21,11 @@ class AuthTokenBD:
             try:
                 dadoToken.update({"idUsuario": ObjectId(dadoToken["idUsuario"])})
                 resultado = self.__colecao.insert_one(dadoToken)
-                return {
-                    "mensagem": resultado.inserted_id,
-                    "status": "200",
-                }
+                return resultado.inserted_id
             except DuplicateKeyError:
-                return {"mensagem": "Token já existe", "status": "409"}
+                raise JaExisteExcecao()
         else:
-            return {"mensagem": self.__validarDados.errors, "status": "400"}  # type: ignore
+            raise APIExcecaoBase(message="Erro na validação dos dados")
 
     def deletarToken(self, token: str) -> dict:
         resultado = self.__colecao.delete_one({"_id": token})
@@ -35,17 +34,14 @@ class AuthTokenBD:
         else:
             return {"mensagem": "Token não encontrado", "status": "404"}
 
-    def getIdUsuarioDoToken(self, token: str) -> dict:
+    def getIdUsuarioDoToken(self, token: str) -> str:
         if resultado := self.__colecao.find_one({"_id": token}):
             if resultado["validade"] < datetime.now():
-                return {"mensagem": "Token não encontrado", "status": "404"}
+                raise NaoEncontradoExcecao()
 
-            return {
-                "mensagem": resultado["idUsuario"],
-                "status": "200",
-            }
+            return resultado["idUsuario"]
         else:
-            return {"mensagem": "Token não encontrado", "status": "404"}
+            raise NaoEncontradoExcecao()
 
     def deletarTokensUsuario(self, idUsuario: str) -> dict:
         resultado = self.__colecao.delete_many({"idUsuario": idUsuario})
