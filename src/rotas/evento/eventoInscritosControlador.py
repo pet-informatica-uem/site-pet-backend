@@ -1,6 +1,15 @@
+import logging
+from typing import BinaryIO
+
+
+
+from src.modelos.excecao import EmailNaoFoiEnviadoExcecao, NaoEncontradoExcecao, TipoDeInscricaoErradoExcecao, ErroInternoExcecao
+from src.config import config
+from src.email.operacoesEmail import emailConfirmacaoEvento
 from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
 from src.modelos.usuario.usuarioBD import UsuarioBD
-
+from src.modelos.evento.evento import DadosEvento
+from src.modelos.evento.eventoBD import EventoBD
 
 class InscritosEventoController:
     def __init__(self):
@@ -12,7 +21,7 @@ class InscritosEventoController:
         if inscritosEvento["status"] == "404":  # type: ignore
             return inscritosEvento  # type: ignore
 
-        # lista de usuários inscritos no evento
+        # lista de usuários inscritos no event
         idsUsuarios: list = [
             usuario["idUsuario"] for usuario in inscritosEvento["mensagem"]  # type: ignore
         ]
@@ -41,3 +50,55 @@ class InscritosEventoController:
         dadosUsuario.pop("data criacao")
 
         return dadosUsuario
+
+
+def inscricaoEventoControlador(
+    idUsuario: str,
+    idEvento: str,
+    nivelConhecimento: str | None,
+    tipoDeInscricao: str,
+    pagamento: bool | None,
+) -> dict:
+    #if tipoDeInscricao not in ["sem notebook", "com notebook"]:
+    #    raise EmailNaoFoiEnviadoExcecao()
+        
+    usuarioBD = UsuarioBD()
+    dicionarioUsuario : dict = usuarioBD.getUsuario(idUsuario)
+    #if not dicionarioUsuario:
+    #    raise NaoEncontradoExcecao(message="Usuario nao foi encontrado")
+
+    eventoBD = EventoBD()
+    dicionarioEvento : dict = eventoBD.getEvento(idEvento)
+    dicionarioEnvioGmail : dict = {
+        "nome evento": dicionarioEvento["nome evento"],
+        "local": dicionarioEvento["local"],
+        "data/hora evento": dicionarioEvento["data/hora evento"],
+        "pré-requisitos": dicionarioEvento["pré-requisitos"],
+    }
+    #if not dicionarioEvento:
+    #    raise NaoEncontradoExcecao("message="Evento nao foi encontrado")
+
+    #if nivelConhecimento not in ["1", "2", "3", "4", "5", None]:
+    #    raise TipoDeInscricaoErradoExcecao() #nivel de conhecimentoinvalido
+
+    inscritos = InscritosEventoBD()
+    inscrito: dict = {
+        "idEvento": idEvento,
+        "idUsuario": idUsuario,
+        "nivelConhecimento": nivelConhecimento,
+        "tipoInscricao": tipoDeInscricao,
+        "pagamento": pagamento,
+    }
+
+    situacaoInscricao: bool = inscritos.setInscricao(inscrito)
+    #if not situacaoInscricao:
+    #    raise ErroInternoExcecao()#nao deu pra fazer inscricao
+
+    emailConfirmacaoEvento(
+        emailPet=config.EMAIL_SMTP,
+        senhaPet=config.SENHA_SMTP,
+        emailDestino=dicionarioUsuario['mensagem']['email'],
+        evento=dicionarioEnvioGmail
+    )
+
+    return situacaoInscricao

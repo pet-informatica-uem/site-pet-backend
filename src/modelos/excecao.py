@@ -23,6 +23,11 @@ class APIExcecaoBase(Exception):
     def response_model(cls):
         return {cls.code: {"model": cls.model}}
 
+class UsuarioJaExisteExcecao(APIExcecaoBase):
+    message = "O usuario já existe."
+    code = status.HTTP_409_CONFLICT
+    model = JaExisteErro
+
 
 class JaExisteExcecao(APIExcecaoBase):
     message = "A entidade já existe."
@@ -49,29 +54,40 @@ class ErroAutenticacaoExcecao(APIExcecaoBase):
     code = status.HTTP_401_UNAUTHORIZED
     model = ErroBase
 
-    code = status.HTTP_404_CONFLICT
-    model = NaoEncontradoErro
-
-class NaoAtualizadaExcecao(AcaoNaoCompletaErro):
+class NaoAtualizadaExcecao(AcaoNaoCompletaErro): #conflito
     message = "Não foi possível atualizar."
-    code = status.HTTP_404_CONFLICT
+    code = status.HTTP_404_NOT_FOUND
     model = AcaoNaoCompletaErro
 
-class ErroNaAlteracaoExcecao(AcaoNaoCompletaErro):
+class ErroNaAlteracaoExcecao(AcaoNaoCompletaErro): #conflito
     message = "Não foi possível fazer a alteração."
-    code = status.HTTP_404_CONFLICT
+    code = status.HTTP_404_NOT_FOUND
     model = AcaoNaoCompletaErro
 
-class SemVagasDisponiveisExcecao(AcaoNaoCompletaErro):
+class SemVagasDisponiveisExcecao(AcaoNaoCompletaErro): #conflito
     message = "Não há vagas disponíveis."
-    code = status.HTTP_410_CONFLICT
+    code = status.HTTP_410_GONE
     model = AcaoNaoCompletaErro
 
-class TipoVagaInvalidoExcecao(NaoEncontradoErro):
+class TipoVagaInvalidoExcecao(NaoEncontradoErro): #conflito
     message = "Tipo de vaga inválido."
-    code = status.HTTP_404_CONFLICT
+    code = status.HTTP_404_NOT_FOUND
     model = NaoEncontradoErro
 
+class EmailNaoFoiEnviadoExcecao(ErroInternoExcecao):
+    message = "Não foi possível enviar o E-mail"
+    code = status.HTTP_500_INTERNAL_SERVER_ERROR
+    model = AcaoNaoCompletaErro
+
+class TipoDeInscricaoErradoExcecao(AcaoNaoCompletaErro):
+    message = "Tipo de inscricao errada, deveria ser <com notebook> ou <sem notebook>"
+    code = status.HTTP_400_BAD_REQUEST
+    model = AcaoNaoCompletaErro
+
+class TipoDeInscricaoErradoExcecao(AcaoNaoCompletaErro):
+    message = "Nivel de conhecimento erradao, deveria ser 1,2,3,4 ou 5"
+    code = status.HTTP_400_BAD_REQUEST
+    model = AcaoNaoCompletaErro    
 
 
 def get_exception_responses(*args: Type[APIExcecaoBase]) -> dict:

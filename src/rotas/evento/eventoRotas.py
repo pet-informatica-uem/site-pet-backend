@@ -20,10 +20,9 @@ from src.rotas.evento.eventoControlador import (
     controladorDeletaEvento,
     controladorEditarEvento,
     controladorNovoEvento,
-    inscricaoEventoControlador,
 )
-from src.rotas.evento.eventoInscritosControlador import InscritosEventoController
-from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, tokenAcesso
+from src.rotas.evento.eventoInscritosControlador import InscritosEventoController, inscricaoEventoControlador
+from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado, tokenAcesso
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"
@@ -185,40 +184,16 @@ def getInscritosEvento(
     description="Recebe o id do inscrito, o id do evento, o nivel do conhecimento do inscrito, o tipo de de inscrição e a situação de pagamento da inscricao em eventos do usuario autenticado.",
     status_code=status.HTTP_201_CREATED,
 )
-def getDadosInscricaoEvento(
-    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
+def getDadosInscricaoEvento( 
+    idUsuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)],
     idEvento: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
     pagamento: Annotated[bool, Form()],
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
-):
-    idUsuario: usuario.id
+):  
+    situacaoInscricao:bool = inscricaoEventoControlador("64a74d739fa7901a5516f8cb", idEvento, nivelConhecimento, tipoDeInscricao, pagamento)
+    #situacaoInscricao:bool = inscricaoEventoControlador(idUsuario, idEvento, nivelConhecimento, tipoDeInscricao, pagamento)
 
-    resposta: dict = inscricaoEventoControlador(
-        idUsuario, idEvento, nivelConhecimento, tipoDeInscricao, pagamento
-    )
+    #if not situacaoInscricao:
+    #    raise alguma excecao kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk coringuei
 
-    statusResposta: str = resposta["status"]
-    mensagemResposta: str = resposta["mensagem"]
-    if statusResposta == "400":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=mensagemResposta
-        )
-    if statusResposta == "404":
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail=mensagemResposta
-        )
-    if statusResposta == "409":
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT, detail=mensagemResposta
-        )
-    if statusResposta == "406":
-        raise HTTPException(
-            status_code=status.HTTP_406_NOT_ACCEPTABLE, detail=mensagemResposta
-        )
-    if statusResposta == "410":
-        raise HTTPException(status_code=status.HTTP_410_GONE, detail=mensagemResposta)
-
-    resposta["status"] = "201"
-    resposta["mensagem"] = "Usuario inscrito com sucesso!"
-    return resposta

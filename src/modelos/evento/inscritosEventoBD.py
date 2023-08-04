@@ -56,7 +56,7 @@ class InscritosEventoBD:
             )
             return str(idEvento)
         except:
-            raise NaoAtualizadaExcecao(messege = "Não foi possível atualizar a quantidade de vagas. ")
+            raise NaoAtualizadaExcecao(message = "Não foi possível atualizar a quantidade de vagas. ")
 
     def getListaInscritos(self, idEvento: str) -> bool:
         idEvento = ObjectId(idEvento)
@@ -78,8 +78,8 @@ class InscritosEventoBD:
         )
 
         if usuariosInscritos:
-            raise JaExisteExcecao(messege = "Usuário já inscrito! ")
-
+            raise JaExisteExcecao(message = "Usuário já inscrito! ")
+        #tem
         # duvida, quando gera um erro na funcao __setVaga, eu preciso tratar esse erro?
         self.__setVaga(idEvento, dadosInscricao["tipoInscricao"])
 
@@ -163,7 +163,6 @@ class InscritosEventoBD:
     def getVagas(self, idEvento: str) -> dict:
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"idEvento": idEvento})
-
         if resultado:
             return resultado["vagas ofertadas"]
         else:
