@@ -285,14 +285,13 @@ def editarDados(
 def editarSenha(
     senhaAtual: Annotated[SecretStr, Form(max_length=200)],
     novaSenha: Annotated[SecretStr, Form(max_length=200)],
-    confirmacaoSenha: Annotated[SecretStr, Form(max_length=200)],
     deslogarAoTrocarSenha: Annotated[bool, Form()],
     usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
     # verifica nova senha
     if not validaSenha(
-        novaSenha.get_secret_value(), confirmacaoSenha.get_secret_value()
+        novaSenha.get_secret_value(), novaSenha.get_secret_value()
     ):
         logging.info("Erro. Nova senha não foi validada com sucesso.")
         raise HTTPException(

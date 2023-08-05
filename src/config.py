@@ -17,10 +17,10 @@ class Configuracoes(BaseSettings):
     ou acessar a instância global `config` declarada neste módulo.
     """
 
-    EMAIL_SMTP: str = "email-do-email-!"
+    EMAIL_SMTP: str = "pet@din.uem.br"
     """Email SMTP a ser utilizado pela aplicação"""
 
-    SENHA_SMTP: str = "senha-do-email-!"
+    SENHA_SMTP: str = "h5RosmQQKJvsVN"
     """Senha SMTP a ser utilizada pela aplicação"""
 
     SEGREDO_JWT: str = "chave-super-secreta-me-mude-!"
