@@ -160,7 +160,7 @@ def getUsuarioControlador(id: str) -> UsuarioSenha:
 
 
 def editaUsuarioControlador(
-    *, usuario: UsuarioSenha, nomeCompleto: str, curso: str | None, redesSociais: dict
+    *, usuario: UsuarioSenha, nomeCompleto: str, curso: str | None, redesSociais: dict | None
 ) -> None:
     """
     Atualiza os dados básicos (nome, curso, redes sociais) da conta de um usuário existente.
@@ -172,13 +172,21 @@ def editaUsuarioControlador(
     bd: UsuarioBD = UsuarioBD()
     usuarioDados: dict = usuario.paraBd()
 
-    usuarioDados.update(
-        {
-            "nome": nomeCompleto,
-            "curso": curso,
-            "redes sociais": redesSociais,
-        }
-    )
+    if redesSociais:
+        usuarioDados.update(
+            {
+                "nome": nomeCompleto,
+                "curso": curso,
+                "redes sociais": redesSociais,
+            }
+        )
+    else:
+        usuarioDados.update(
+            {
+                "nome": nomeCompleto,
+                "curso": curso,
+            }
+        )
 
     id: str = usuarioDados.pop("_id")
     bd.atualizarUsuario(id, usuarioDados)
