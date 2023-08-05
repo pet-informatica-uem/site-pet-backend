@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 from fastapi import UploadFile
 
-from modelos.excecao import ImagemInvalidaExcecao, NaoAutenticadoExcecao
+from src.modelos.excecao import ImagemInvalidaExcecao, NaoAutenticadoExcecao
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (geraLink, geraTokenAtivaConta,
                                       processaTokenAtivaConta,

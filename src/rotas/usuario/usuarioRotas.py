@@ -6,7 +6,7 @@ from fastapi import (APIRouter, Depends, Form, HTTPException, Request,
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, HttpUrl, SecretStr
 
-from modelos.excecao import (APIExcecaoBase, NaoAutenticadoExcecao,
+from src.modelos.excecao import (APIExcecaoBase, NaoAutenticadoExcecao,
                              NaoEncontradoExcecao, UsuarioJaExisteExcecao,
                              UsuarioNaoEncontradoExcecao,
                              listaRespostasExcecoes)

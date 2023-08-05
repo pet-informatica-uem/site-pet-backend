@@ -56,6 +56,11 @@ class UsuarioJaExisteExcecao(JaExisteExcecao):
     message = "O usuário já existe."
 
 
+class TokenInvalidoExcecao(APIExcecaoBase):
+    message = "O token é inválido."
+    code = status.HTTP_400_BAD_REQUEST
+
+
 def listaRespostasExcecoes(*args: Type[APIExcecaoBase]) -> dict:
     """Given BaseAPIException classes, return a dict of responses used on FastAPI endpoint definition, with the format:
     {statuscode: schema, statuscode: schema, ...}"""
