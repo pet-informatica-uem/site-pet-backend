@@ -172,6 +172,11 @@ def getUsuarioControlador(id: str) -> UsuarioSenha:
     return UsuarioSenha.deBd(conexaoUsuario.getUsuario(id))
 
 
+def getTodosUsuariosControlador() -> list[UsuarioSenha]:
+    conexaoUsuario: UsuarioBD = UsuarioBD()
+    return [UsuarioSenha.deBd(u) for u in conexaoUsuario.getTodosUsuarios()]
+
+
 def editaUsuarioControlador(
     *,
     usuario: UsuarioSenha,
@@ -207,6 +212,11 @@ def editaUsuarioControlador(
 
     id: str = usuarioDados.pop("_id")
     bd.atualizarUsuario(id, usuarioDados)
+
+
+def deletaUsuarioControlador(id: str):
+    bd: UsuarioBD = UsuarioBD()
+    bd.deletarUsuario(id)
 
 
 def editaSenhaControlador(

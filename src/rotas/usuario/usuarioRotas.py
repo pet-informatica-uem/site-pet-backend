@@ -1,25 +1,45 @@
 import logging
 from typing import Annotated
 
-from fastapi import (APIRouter, Depends, Form, HTTPException, Request,
-                     Response, UploadFile, status)
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Request,
+    Response,
+    UploadFile,
+    status,
+)
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, HttpUrl, SecretStr
 
-from src.modelos.excecao import (APIExcecaoBase, NaoAutenticadoExcecao,
-                             NaoEncontradoExcecao, UsuarioJaExisteExcecao,
-                             UsuarioNaoEncontradoExcecao,
-                             listaRespostasExcecoes)
+from src.modelos.excecao import (
+    APIExcecaoBase,
+    NaoAutenticadoExcecao,
+    NaoEncontradoExcecao,
+    UsuarioJaExisteExcecao,
+    UsuarioNaoEncontradoExcecao,
+    listaRespostasExcecoes,
+)
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
-from src.modelos.usuario.usuario import Usuario, UsuarioSenha
-from src.modelos.usuario.validacaoCadastro import (validaCpf, validaEmail,
-                                                   validaSenha)
+from src.modelos.usuario.usuario import TipoConta, Usuario, UsuarioSenha
+from src.modelos.usuario.validacaoCadastro import validaCpf, validaEmail, validaSenha
 from src.rotas.usuario.usuarioControlador import (
-    ativaContaControlador, autenticaUsuarioControlador,
-    cadastraUsuarioControlador, editaEmailControlador, editarFotoControlador,
-    editaSenhaControlador, editaUsuarioControlador,
-    getUsuarioAutenticadoControlador, getUsuarioControlador,
-    recuperaContaControlador, trocaSenhaControlador)
+    ativaContaControlador,
+    autenticaUsuarioControlador,
+    cadastraUsuarioControlador,
+    deletaUsuarioControlador,
+    editaEmailControlador,
+    editarFotoControlador,
+    editaSenhaControlador,
+    editaUsuarioControlador,
+    getTodosUsuariosControlador,
+    getUsuarioAutenticadoControlador,
+    getUsuarioControlador,
+    recuperaContaControlador,
+    trocaSenhaControlador,
+)
 
 
 class Token(BaseModel):
@@ -28,16 +48,104 @@ class Token(BaseModel):
 
 
 roteador: APIRouter = APIRouter(
-    prefix="/usuario",
+    prefix="/usuarios",
     tags=["Usuário"],
 )
 
 
-tokenAcesso: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="/usuario/token")
+tokenAcesso: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="/usuarios/token")
+
+
+def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
+    try:
+        return getUsuarioAutenticadoControlador(token)
+    except NaoAutenticadoExcecao as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Não autenticado",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+
+def getPetianoAutenticado(
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)]
+):
+    if usuario.tipoConta == "petiano":
+        return usuario
+    raise HTTPException(status_code=401, detail="Acesso negado.")
+
+
+@roteador.get(
+    "/",
+    name="Recuperar usuários cadastrados",
+    description="Lista todos os usuários cadastrados.",
+    response_model=list[Usuario],
+)
+def listarUsuarios(
+    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
+):
+    return getTodosUsuariosControlador()
+
+
+@roteador.get(
+    "/{id}",
+    name="Obter detalhes do usuário autenticado",
+    description="""
+    Retorna detalhes do usuário autenticado.
+    """,
+    status_code=status.HTTP_200_OK,
+    response_model=Usuario,
+    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
+)
+def getUsuario(
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)], id: str
+):
+    if usuario.id == id:
+        return usuario
+    elif usuario.tipoConta == TipoConta.PETIANO:
+        vitima = getUsuarioControlador(id)
+        return vitima
+    else:
+        raise NaoAutenticadoExcecao()
+
+
+@roteador.patch(
+    "/{id}",
+    name="Editar dados do usuário selecionado",
+    description="""
+    Edita os dados do usuário. Os dados a serem modificados podem ser: (i) apenas o email, (ii) apenas a senha, e precisa da senha atual, ou (iii) demais dados.
+    """,
+    status_code=status.HTTP_200_OK,
+    response_model=Usuario,
+    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
+)
+def patchUsuario(
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)],
+    id: str,
+):
+    raise APIExcecaoBase(message="oi :)")
+
+
+@roteador.delete(
+    "/{id}",
+    name="Remove o usuário indicado",
+    description="""
+    Elimina o usuário.
+    """,
+    status_code=status.HTTP_200_OK,
+)
+def deletaUsuario(
+    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)],
+    id: str,
+):
+    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
+        deletaUsuarioControlador(id)
+    else:
+        raise NaoAutenticadoExcecao()
 
 
 @roteador.post(
-    "/cadastrar",
+    "/",
     name="Cadastrar usuário",
     description="Cadastra um novo usuário com os dados fornecidos.\n"
     "Os dados fornecidos devem ser válidos. Os requisitos de senha são:\n"
@@ -176,53 +284,6 @@ def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
     return autenticaUsuarioControlador(email, senha)
 
 
-def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
-    try:
-        return getUsuarioAutenticadoControlador(token)
-    except NaoAutenticadoExcecao as e:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Não autenticado",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-
-def getPetianoAutenticado(
-    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)]
-):
-    if usuario.tipoConta == "petiano":
-        return usuario
-    raise HTTPException(status_code=401, detail="Acesso negado.")
-
-
-@roteador.get(
-    "/id/eu",
-    name="Obter detalhes do usuário autenticado",
-    description="""
-    Retorna detalhes do usuário autenticado.
-    """,
-    status_code=status.HTTP_200_OK,
-    response_model=Usuario,
-    responses=listaRespostasExcecoes(NaoEncontradoExcecao, UsuarioNaoEncontradoExcecao),
-)
-def getUsuarioEu(usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)]):
-    return usuario
-
-
-@roteador.get(
-    "/id/{id}",
-    name="Obter detalhes do usuário autenticado",
-    description="""
-    Retorna detalhes do usuário autenticado.
-    """,
-    status_code=status.HTTP_200_OK,
-    response_model=Usuario,
-    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
-)
-def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
-    return getUsuarioControlador(id)
-
-
 @roteador.post(
     "/editar-foto",
     name="Atualizar foto de perfil",
@@ -251,7 +312,7 @@ def editarDados(
 ):
     redesSociais = None
     # agrupa redes sociais
-    if usuario.tipoConta == 'petiano':
+    if usuario.tipoConta == "petiano":
         redesSociais: dict[str, str] = {
             "github": github,
             "linkedin": linkedin,
@@ -265,7 +326,10 @@ def editarDados(
             if chave not in link:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="O link " + link + " não é válido com a rede social " + chave,
+                    detail="O link "
+                    + link
+                    + " não é válido com a rede social "
+                    + chave,
                 )
 
     editaUsuarioControlador(
@@ -290,9 +354,7 @@ def editarSenha(
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
     # verifica nova senha
-    if not validaSenha(
-        novaSenha.get_secret_value(), novaSenha.get_secret_value()
-    ):
+    if not validaSenha(novaSenha.get_secret_value(), novaSenha.get_secret_value()):
         logging.info("Erro. Nova senha não foi validada com sucesso.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
