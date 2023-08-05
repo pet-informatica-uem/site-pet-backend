@@ -230,7 +230,7 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
 )
 def editarFoto(
     foto: UploadFile | None,
-    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
+    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)] = ...,
 ) -> None:
     editarFotoControlador(usuario=usuario, foto=foto)
 
