@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 from jose import JWTError, jwt
 
-from src.modelos.excecao import NaoAutenticadoExcecao
+from src.modelos.excecao import NaoAutenticadoExcecao, TokenInvalidoExcecao
 from src.config import config
 
 
@@ -31,7 +31,7 @@ def processaTokenAtivaConta(token: str) -> dict[str, str]:
             token, config.SEGREDO_JWT, algorithms=["HS256"]
         )
     except JWTError:
-        raise NaoAutenticadoExcecao()
+        raise TokenInvalidoExcecao()
 
     # Recupera as informações do token
     email: str = token_info["email"]
@@ -73,7 +73,7 @@ def processaTokenTrocaSenha(token) -> str:
     try:
         token_info = jwt.decode(token, config.SEGREDO_JWT, algorithms=["HS256"])
     except JWTError:
-        raise NaoAutenticadoExcecao()
+        raise TokenInvalidoExcecao()
 
     # Recupera as informações do token
     email: str = token_info["email"]
@@ -82,7 +82,7 @@ def processaTokenTrocaSenha(token) -> str:
     # Verifica a validade do token
     validade: datetime = datetime.fromtimestamp(validade)  # type: ignore
     if validade < datetime.utcnow():
-        raise NaoAutenticadoExcecao()
+        raise TokenInvalidoExcecao()
 
     # Retorna o email
     return email

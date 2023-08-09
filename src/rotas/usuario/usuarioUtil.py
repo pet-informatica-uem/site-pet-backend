@@ -63,6 +63,7 @@ def atualizaSenha(email: str, senha: str) -> None:
     # Recupera os dados do usuário a partir do email
     idUsuario = conexao.getIdUsuario(email)
     dadosUsuario = conexao.getUsuario(idUsuario)
+    dadosUsuario.pop('_id')
 
     # Atualiza a senha
     dadosUsuario["senha"] = hashSenha(senha)

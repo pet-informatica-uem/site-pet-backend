@@ -233,7 +233,7 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
 )
 def editarFoto(
     foto: UploadFile | None,
-    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
+    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)] = ...,
 ) -> None:
     editarFotoControlador(usuario=usuario, foto=foto)
 
@@ -246,28 +246,30 @@ def editarFoto(
 def editarDados(
     nomeCompleto: Annotated[str, Form(max_length=200)],
     curso: Annotated[str, Form(max_length=200)],
-    github: Annotated[HttpUrl, Form()],
-    instagram: Annotated[HttpUrl, Form()],
-    linkedin: Annotated[HttpUrl, Form()],
-    twitter: Annotated[HttpUrl, Form()],
+    github: Annotated[HttpUrl | None, Form()] = None,
+    instagram: Annotated[HttpUrl | None, Form()] = None,
+    linkedin: Annotated[HttpUrl | None, Form()] = None,
+    twitter: Annotated[HttpUrl | None, Form()] = None,
     usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
 ):
+    redesSociais = None
     # agrupa redes sociais
-    redesSociais: dict[str, str] = {
-        "github": github,
-        "linkedin": linkedin,
-        "instagram": instagram,
-        "twitter": twitter,
-    }
+    if usuario.tipoConta == 'petiano':
+        redesSociais: dict[str, str] = {
+            "github": github,
+            "linkedin": linkedin,
+            "instagram": instagram,
+            "twitter": twitter,
+        }
 
-    # valida links
-    for chave in redesSociais:
-        link = str(redesSociais[chave])
-        if chave not in link:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="O link " + link + " não é válido com a rede social " + chave,
-            )
+        # valida links
+        for chave in redesSociais:
+            link = str(redesSociais[chave])
+            if chave not in link:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="O link " + link + " não é válido com a rede social " + chave,
+                )
 
     editaUsuarioControlador(
         usuario=usuario,
@@ -286,15 +288,14 @@ def editarDados(
 def editarSenha(
     senhaAtual: Annotated[SecretStr, Form(max_length=200)],
     novaSenha: Annotated[SecretStr, Form(max_length=200)],
-    confirmacaoSenha: Annotated[SecretStr, Form(max_length=200)],
     deslogarAoTrocarSenha: Annotated[bool, Form()],
     usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
     validar = ValidacaoCadastro()
     # verifica nova senha
-    if not validar.senha(
-        novaSenha.get_secret_value(), confirmacaoSenha.get_secret_value()
+    if not validaSenha(
+        novaSenha.get_secret_value(), novaSenha.get_secret_value()
     ):
         logging.info("Erro. Nova senha não foi validada com sucesso.")
         raise HTTPException(

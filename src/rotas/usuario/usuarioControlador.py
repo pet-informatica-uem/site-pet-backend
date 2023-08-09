@@ -4,19 +4,29 @@ from datetime import datetime, timedelta
 
 from fastapi import UploadFile
 
-from src.modelos.excecao import ImagemInvalidaExcecao, NaoAutenticadoExcecao
+from src.modelos.excecao import (
+    ImagemInvalidaExcecao,
+    NaoAutenticadoExcecao,
+    NaoEncontradoExcecao,
+)
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
-from src.autenticacao.jwtoken import (geraLink, geraTokenAtivaConta,
-                                      processaTokenAtivaConta,
-                                      processaTokenTrocaSenha)
+from src.autenticacao.jwtoken import (
+    geraLink,
+    geraTokenAtivaConta,
+    processaTokenAtivaConta,
+    processaTokenTrocaSenha,
+)
 from src.config import config
 from src.email.operacoesEmail import resetarSenha, verificarEmail
 from src.img.operacoesImagem import deletarImagem, validaImagem, armazenaFotoUsuario
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.usuario.usuario import EstadoConta, TipoConta, UsuarioSenha
 from src.modelos.usuario.usuarioBD import UsuarioBD
-from src.rotas.usuario.usuarioUtil import (ativaconta, atualizaSenha,
-                                           verificaSeUsuarioExiste)
+from src.rotas.usuario.usuarioUtil import (
+    ativaconta,
+    atualizaSenha,
+    verificaSeUsuarioExiste,
+)
 
 
 def ativaContaControlador(token: str) -> None:
@@ -139,7 +149,10 @@ def getUsuarioAutenticadoControlador(token: str) -> UsuarioSenha:
     """
     conexaoAuthToken: AuthTokenBD = AuthTokenBD()
 
-    id: str = conexaoAuthToken.getIdUsuarioDoToken(token)
+    try:
+        id: str = conexaoAuthToken.getIdUsuarioDoToken(token)
+    except NaoEncontradoExcecao:
+        raise NaoAutenticadoExcecao()
 
     conexaoUsuario: UsuarioBD = UsuarioBD()
 
@@ -156,7 +169,11 @@ def getUsuarioControlador(id: str) -> UsuarioSenha:
 
 
 def editaUsuarioControlador(
-    *, usuario: UsuarioSenha, nomeCompleto: str, curso: str | None, redesSociais: dict
+    *,
+    usuario: UsuarioSenha,
+    nomeCompleto: str,
+    curso: str | None,
+    redesSociais: dict | None
 ) -> None:
     """
     Atualiza os dados básicos (nome, curso, redes sociais) da conta de um usuário existente.
@@ -168,13 +185,21 @@ def editaUsuarioControlador(
     bd: UsuarioBD = UsuarioBD()
     usuarioDados: dict = usuario.paraBd()
 
-    usuarioDados.update(
-        {
-            "nome": nomeCompleto,
-            "curso": curso,
-            "redes sociais": redesSociais,
-        }
-    )
+    if redesSociais:
+        usuarioDados.update(
+            {
+                "nome": nomeCompleto,
+                "curso": curso,
+                "redes sociais": redesSociais,
+            }
+        )
+    else:
+        usuarioDados.update(
+            {
+                "nome": nomeCompleto,
+                "curso": curso,
+            }
+        )
 
     id: str = usuarioDados.pop("_id")
     bd.atualizarUsuario(id, usuarioDados)
