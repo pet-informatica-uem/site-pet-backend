@@ -154,8 +154,11 @@ def getDadosInscricaoEvento(
     pagamento: Annotated[bool, Form()],
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
 ):  
+    
+    print(idUsuario)
+    print(idEvento)
     inscritosController = InscritosEventoControlador()
-    situacaoInscricao :bool = inscritosController.inscricaoEventoControlador(idUsuario, idEvento, nivelConhecimento, tipoDeInscricao, pagamento)
+    situacaoInscricao :bool = inscritosController.inscricaoEventoControlador(idUsuario['id'], idEvento, nivelConhecimento, tipoDeInscricao, pagamento)
 
     #if not situacaoInscricao:
     #    raise alguma excecao kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk coringuei
