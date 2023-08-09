@@ -11,7 +11,7 @@ from src.modelos.usuario.usuarioBD import UsuarioBD
 from src.modelos.evento.evento import DadosEvento
 from src.modelos.evento.eventoBD import EventoBD
 
-class InscritosEventoController:
+class InscritosEventoControlador:
     def __init__(self):
         self.__inscritosEvento = InscritosEventoBD()
 
@@ -52,53 +52,53 @@ class InscritosEventoController:
         return dadosUsuario
 
 
-def inscricaoEventoControlador(
-    idUsuario: str,
-    idEvento: str,
-    nivelConhecimento: str | None,
-    tipoDeInscricao: str,
-    pagamento: bool | None,
-) -> dict:
-    if tipoDeInscricao not in ["sem notebook", "com notebook"]:
-        raise TipoDeInscricaoErradoExcecao()
-        
-    usuarioBD = UsuarioBD()
-    dicionarioUsuario : dict = usuarioBD.getUsuario(idUsuario)
-    if not dicionarioUsuario:
-        raise UsuarioNaoEncontradoExcecao()
+    def inscricaoEventoControlador(
+        self, idUsuario: str,
+        idEvento: str,
+        nivelConhecimento: str | None,
+        tipoDeInscricao: str,
+        pagamento: bool | None,
+    ) -> dict:
+        if tipoDeInscricao not in ["sem notebook", "com notebook"]:
+            raise TipoDeInscricaoErradoExcecao()
+            
+        usuarioBD = UsuarioBD()
+        dicionarioUsuario : dict = usuarioBD.getUsuario(idUsuario)
+        if not dicionarioUsuario:
+            raise UsuarioNaoEncontradoExcecao()
 
-    eventoBD = EventoBD()
-    dicionarioEvento : dict = eventoBD.getEvento(idEvento)
-    dicionarioEnvioGmail : dict = {
-        "nome evento": dicionarioEvento["nome evento"],
-        "local": dicionarioEvento["local"],
-        "data/hora evento": dicionarioEvento["data/hora evento"],
-        "pré-requisitos": dicionarioEvento["pré-requisitos"],
-    }
-    if not dicionarioEvento:
-        raise NaoEncontradoExcecao()
+        eventoBD = EventoBD()
+        dicionarioEvento : dict = eventoBD.getEvento(idEvento)
+        dicionarioEnvioGmail : dict = {
+            "nome evento": dicionarioEvento["nome evento"],
+            "local": dicionarioEvento["local"],
+            "data/hora evento": dicionarioEvento["data/hora evento"],
+            "pré-requisitos": dicionarioEvento["pré-requisitos"],
+        }
+        if not dicionarioEvento:
+            raise NaoEncontradoExcecao()
 
-    if nivelConhecimento not in ["1", "2", "3", "4", "5", None]:
-        raise NivelDeConhecimentoErradoExcecao() 
+        if nivelConhecimento not in ["1", "2", "3", "4", "5", None]:
+            raise NivelDeConhecimentoErradoExcecao() 
 
-    inscritos = InscritosEventoBD()
-    inscrito: dict = {
-        "idEvento": idEvento,
-        "idUsuario": idUsuario,
-        "nivelConhecimento": nivelConhecimento,
-        "tipoInscricao": tipoDeInscricao,
-        "pagamento": pagamento,
-    }
+        inscritos = InscritosEventoBD()
+        inscrito: dict = {
+            "idEvento": idEvento,
+            "idUsuario": idUsuario,
+            "nivelConhecimento": nivelConhecimento,
+            "tipoInscricao": tipoDeInscricao,
+            "pagamento": pagamento,
+        }
 
-    situacaoInscricao: bool = inscritos.setInscricao(inscrito)
-    if not situacaoInscricao:
-        raise ErroInternoExcecao(message = "Nao foi possivel realizar a inscricao")
+        situacaoInscricao: bool = inscritos.setInscricao(inscrito)
+        if not situacaoInscricao:
+            raise ErroInternoExcecao(message = "Nao foi possivel realizar a inscricao")
 
-    emailConfirmacaoEvento(
-        emailPet=config.EMAIL_SMTP,
-        senhaPet=config.SENHA_SMTP,
-        emailDestino=dicionarioUsuario['email'],
-        evento=dicionarioEnvioGmail
-    )
+        emailConfirmacaoEvento(
+            emailPet=config.EMAIL_SMTP,
+            senhaPet=config.SENHA_SMTP,
+            emailDestino=dicionarioUsuario['email'],
+            evento=dicionarioEnvioGmail
+        )
 
-    return situacaoInscricao
+        return situacaoInscricao

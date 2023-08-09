@@ -8,19 +8,15 @@ from fastapi import (APIRouter, Depends, Form, HTTPException, Response,
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.evento.evento import DadosEvento
 from src.modelos.usuario.usuario import UsuarioSenha
-from src.rotas.evento.eventoControlador import (
-    EventoController,
-    controladorDeletaEvento,
-    controladorEditarEvento,
-    controladorNovoEvento,
-)
-from src.rotas.evento.eventoInscritosControlador import InscritosEventoController, inscricaoEventoControlador
+from src.rotas.evento.eventoControlador import EventoControlador
+from src.rotas.evento.eventoInscritosControlador import InscritosEventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado, tokenAcesso
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"
 
 roteador = APIRouter(prefix="/evento", tags=["Eventos"])
+eventoControlador = EventoControlador()
 
 
 # Classe de dados para receber o formulário com as informações do evento
@@ -51,7 +47,7 @@ def criaEvento(
     arteEvento: UploadFile,
     arteQrcode: UploadFile | None = None,
     formEvento: FormEvento = Depends(),
-):
+) -> str:
     # Cria um dicionário para as imagens
     imagens: dict[str, BinaryIO | None] = {
         "arteEvento": arteEvento.file,
@@ -62,16 +58,9 @@ def criaEvento(
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
-    retorno = controladorNovoEvento(dadosEvento, imagens)
+    idEvento = eventoControlador.novoEvento(dadosEvento, imagens)
 
-    # Trata o retorno do controlador
-    if retorno["status"] != "201":
-        raise HTTPException(
-            status_code=int(retorno["status"]), detail=retorno["mensagem"]
-        )
-    else:
-        response.status_code = int(retorno["status"])
-        return {retorno["mensagem"]}
+    return idEvento
 
 
 @roteador.post(
@@ -87,7 +76,7 @@ def editaEvento(
     formEvento: FormEvento = Depends(),
     arteEvento: UploadFile | None = None,
     arteQrcode: UploadFile | None = None,
-):
+) -> str:
     # Cria um dicionário para as imagens
     imagens: dict[str, BinaryIO | None] = {"arteEvento": None, "arteQrcode": None}
     if arteEvento:
@@ -97,16 +86,9 @@ def editaEvento(
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
-    retorno = controladorEditarEvento(idEvento, dadosEvento, imagens)
+    idEvento = eventoControlador.editarEvento(idEvento, dadosEvento, imagens)
 
-    # Trata o retorno do controlador
-    if retorno["status"] != "200":
-        raise HTTPException(
-            status_code=int(retorno["status"]), detail=retorno["mensagem"]
-        )
-    else:
-        response.status_code = int(retorno["status"])
-        return {retorno["mensagem"]}
+    return idEvento
 
 
 @roteador.delete(
@@ -120,13 +102,8 @@ def deletaEvento(
     usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
 ):
     # Despacha para o controlador
-    retorno: dict = controladorDeletaEvento(idEvento)
+    retorno: bool = eventoControlador.deletarEvento(idEvento)
 
-    # Trata o retorno
-    if retorno["status"] != "200":
-        raise HTTPException(
-            status_code=int(retorno["status"]), detail=retorno["mensagem"]
-        )
     return retorno
 
 
@@ -138,15 +115,7 @@ def deletaEvento(
     """,
 )
 def listarEventos() -> dict:
-    eventoController = EventoController()
-
-    eventos = eventoController.listarEventos()
-    if eventos.get("status") != "200":
-        raise HTTPException(
-            status_code=int(eventos["status"]), detail=eventos["mensagem"]
-        )
-
-    return {"mensagem": eventos.get("mensagem")}
+    return eventoControlador.listarEventos()
 
 
 @roteador.get(
@@ -160,8 +129,9 @@ def listarEventos() -> dict:
 def getInscritosEvento(
     idEvento: str, usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)]
 ) -> dict:
-    inscritosController = InscritosEventoController()
+    inscritosController = InscritosEventoControlador()
 
+    # aqui é a branch da Amanda TODO alterar
     inscritos = inscritosController.getInscritosEvento(idEvento)
     if inscritos.get("status") != "200":
         raise HTTPException(
@@ -178,14 +148,14 @@ def getInscritosEvento(
     status_code=status.HTTP_201_CREATED,
 )
 def getDadosInscricaoEvento( 
-    #idUsuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)],
+    idUsuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)],
     idEvento: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
     pagamento: Annotated[bool, Form()],
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
 ):  
-    situacaoInscricao:bool = inscricaoEventoControlador("64a74d739fa7901a5516f8cb", idEvento, nivelConhecimento, tipoDeInscricao, pagamento)
-    #situacaoInscricao:bool = inscricaoEventoControlador(idUsuario, idEvento, nivelConhecimento, tipoDeInscricao, pagamento)
+    inscritosController = InscritosEventoControlador()
+    situacaoInscricao :bool = inscritosController.inscricaoEventoControlador(idUsuario, idEvento, nivelConhecimento, tipoDeInscricao, pagamento)
 
     #if not situacaoInscricao:
     #    raise alguma excecao kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk coringuei

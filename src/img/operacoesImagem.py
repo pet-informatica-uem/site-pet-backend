@@ -72,7 +72,7 @@ def procuraImagem(nomeImagem: str, searchPath: list[str] = []) -> list[str]:
     return matches
 
 
-def deletaImagem(nomeImagem: str, path: list[str] = []) -> dict:
+def deletarImagem(nomeImagem: str, path: list[str] = []) -> dict:
     """Deleta uma imagem. Caso seja encontrado mais de uma imagem com o termo de busca, todas serão deletadas.
 
     :param nomeImagem -- nome da imagem para ser removida

@@ -90,7 +90,7 @@ class EventoBD:
     def listarEventos(self) -> list:
         return list(self.__colecao.find())
 
-    def getEvento(self, idEvento: str) -> dict:   #AQUI TA ERRADO, AQUI É GETEVENTOID O IUTRO É OELO NOME.
+    def getEvento(self, idEvento: str) -> dict:   #AQUI TA ERRADO, AQUI É getEvento O outro É PELO NOME.
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"_id": idEvento})
         if resultado:

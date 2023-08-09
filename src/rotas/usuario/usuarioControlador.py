@@ -11,7 +11,7 @@ from src.autenticacao.jwtoken import (geraLink, geraTokenAtivaConta,
                                       processaTokenTrocaSenha)
 from src.config import config
 from src.email.operacoesEmail import resetarSenha, verificarEmail
-from src.img.operacoesImagem import deletaImagem, validaImagem, armazenaFotoUsuario
+from src.img.operacoesImagem import deletarImagem, validaImagem, armazenaFotoUsuario
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.usuario.usuario import EstadoConta, TipoConta, UsuarioSenha
 from src.modelos.usuario.usuarioBD import UsuarioBD
@@ -250,7 +250,7 @@ def editarFotoControlador(*, usuario: UsuarioSenha, foto: UploadFile | None) -> 
     if not validaImagem(foto.file):  # type: ignore
         raise ImagemInvalidaExcecao()
 
-    deletaImagem(usuarioDados["nome"], ["usuarios"])
+    deletarImagem(usuarioDados["nome"], ["usuarios"])
     caminhoFotoPerfil: str = armazenaFotoUsuario(usuarioDados["nome"], foto.file)  # type: ignore
     usuarioDados["foto perfil"] = caminhoFotoPerfil
     id: str = usuarioDados.pop("_id")
