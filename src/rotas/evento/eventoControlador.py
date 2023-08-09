@@ -1,5 +1,6 @@
 import logging
 from typing import BinaryIO
+from bson.objectid import ObjectId
 
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
@@ -91,7 +92,7 @@ class EventoControlador:
 
     def novoEvento(
         self, dadosEvento: DadosEvento, imagens: dict[str, BinaryIO | None]
-    ) -> dict:
+    ) -> ObjectId:
         # Valida as imagens
         if not validaImagem(imagens["arteEvento"]):  # type: ignore
             raise ImagemInvalidaExcecao(mesage="Imagem do evento inválida")
@@ -112,9 +113,9 @@ class EventoControlador:
         # Valida os dados e registra o evento no bd
         try:
             conexao = EventoBD()
-            idEvento = conexao.cadastrarEvento(dadosEvento.paraBD())
+            idEvento :ObjectId = conexao.cadastrarEvento(dadosEvento.paraBD())
             deletarImagem(dadosEvento.nomeEvento)
-            idEvento = conexao.getEventoID(dadosEvento.nomeEvento)
+            # idEvento = conexao.getEventoID(dadosEvento.nomeEvento)
             logging.info(f"Evento cadastrado com id: {idEvento}")
 
             return idEvento

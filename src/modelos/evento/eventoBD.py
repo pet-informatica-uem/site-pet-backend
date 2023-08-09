@@ -44,7 +44,6 @@ class EventoBD:
                 dadosListaInscritos["idEvento"] = resultado.inserted_id
                 # criar documento com os inscritos do evento
                 self.__insctirosEvento.criarListaInscritos(dadosListaInscritos)
-
                 return resultado.inserted_id
             except DuplicateKeyError:
                 logging.warning("Evento já cadastrado!")

@@ -1,6 +1,7 @@
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Annotated, BinaryIO
+from bson.objectid import ObjectId
 
 from fastapi import (APIRouter, Depends, Form, HTTPException, Response,
                      UploadFile, status)
@@ -58,9 +59,9 @@ def criaEvento(
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
-    idEvento = eventoControlador.novoEvento(dadosEvento, imagens)
+    idEvento :ObjectId = eventoControlador.novoEvento(dadosEvento, imagens)
 
-    return idEvento
+    return str(idEvento)
 
 
 @roteador.post(
