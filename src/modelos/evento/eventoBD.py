@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from bson.objectid import ObjectId
@@ -38,8 +39,6 @@ class EventoBD:
         if self.__validarEvento.validate(dadosEvento):  # type: ignore
             try:
                 # criar documento com os dados do evento
-                print('\n\n\nTESTEEEEEEEEEEEE\n\n')
-                print(dadosEvento)
                 resultado = self.__colecao.insert_one(dadosEvento)
                 
                 dadosListaInscritos["idEvento"] = resultado.inserted_id
@@ -48,7 +47,7 @@ class EventoBD:
 
                 return resultado.inserted_id
             except DuplicateKeyError:
-                print('\n\noiiiiiiiiiiiii\n\n')
+                logging.warning("Evento já cadastrado!")
                 raise JaExisteExcecao(message="Evento já cadastrado!")
         else:
             raise Exception(self.__validarEvento.errors)  # type: ignore

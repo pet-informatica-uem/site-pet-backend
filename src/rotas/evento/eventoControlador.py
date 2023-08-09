@@ -87,7 +87,7 @@ class EventoControlador:
 
         except Exception as e:
             logging.warning("Problema para editar eventos.")
-            raise Exception(e)
+            raise ErroInternoExcecao(menssage='Problema para editar eventos.')
 
     def novoEvento(
         self, dadosEvento: DadosEvento, imagens: dict[str, BinaryIO | None]
@@ -113,16 +113,12 @@ class EventoControlador:
         try:
             conexao = EventoBD()
             idEvento = conexao.cadastrarEvento(dadosEvento.paraBD())
-            print('\n\nJULIANAAAAa 2\n\n')
             deletarImagem(dadosEvento.nomeEvento)
-            print('\n\nJULIANAAAAa 3\n\n')
             idEvento = conexao.getEventoID(dadosEvento.nomeEvento)
-            print('\n\nJULIANAAAAa 4\n\n')
             logging.info(f"Evento cadastrado com id: {idEvento}")
 
             return idEvento
 
         except Exception as e:
             logging.warning("Problema para adicionar eventos.")
-            raise Exception(e)
-            # raise ErroInternoExcecao()
+            raise ErroInternoExcecao(menssage='Problema para adicionar eventos.')
