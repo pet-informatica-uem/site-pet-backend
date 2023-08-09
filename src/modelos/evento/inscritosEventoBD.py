@@ -58,7 +58,7 @@ class InscritosEventoBD:
         except:
             raise NaoAtualizadaExcecao(message = "Não foi possível atualizar a quantidade de vagas. ")
 
-    def getListaInscritos(self, idEvento: str) -> bool:
+    def getListaInscritos(self, idEvento: str) -> list[dict]:
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"idEvento": idEvento})
 

@@ -129,18 +129,12 @@ def listarEventos() -> list:
 )
 def getInscritosEvento(
     idEvento: str, usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)]
-) -> dict:
+) -> list[dict]:
     inscritosController = InscritosEventoControlador()
 
-    # aqui é a branch da Amanda TODO alterar
-    inscritos = inscritosController.getInscritosEvento(idEvento)
-    if inscritos.get("status") != "200":
-        raise HTTPException(
-            status_code=int(inscritos["status"]), detail=inscritos["mensagem"]
-        )
+    inscritos:list[dict] = inscritosController.getInscritosEvento(idEvento)
 
-    return {"mensagem": inscritos.get("mensagem")}
-
+    return inscritos
 
 @roteador.post(
     "/cadastroEmEvento",
