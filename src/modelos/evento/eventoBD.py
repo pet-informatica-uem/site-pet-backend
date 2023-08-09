@@ -77,13 +77,16 @@ class EventoBD:
                     {"_id": idEvento}, {"$set": dadosEvento}
                 )
 
-                resultado = self.__insctirosEvento.atualizarVagasOfertadas(
+                print('\n\n\naté aqui foi')
+                print(dadosVagasOfertadas)
+                # TODO não está atualizando as vagas, aquela variáevl reultado é necessária?
+
+                idEvento :ObjectId = self.__insctirosEvento.atualizarVagasOfertadas(
                     evento["_id"], dadosVagasOfertadas
                 )
-                if resultado["status"] == "404":
-                    raise NaoAtualizadaExcecao(message="Não foi possível atualizar a quantidade de vagas.")
 
-                return evento["_id"]
+
+                return idEvento
             except DuplicateKeyError:
                 raise JaExisteExcecao("Evento já cadastrado! ")
         else:

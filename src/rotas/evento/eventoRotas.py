@@ -87,9 +87,9 @@ def editaEvento(
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
-    idEvento = eventoControlador.editarEvento(idEvento, dadosEvento, imagens)
+    idEvento :ObjectId = eventoControlador.editarEvento(idEvento, dadosEvento, imagens)
 
-    return idEvento
+    return str(idEvento)
 
 
 @roteador.delete(
@@ -98,7 +98,7 @@ def editaEvento(
     description="Um usuário petiano pode deletar um evento.",
     status_code=status.HTTP_200_OK,
 )
-def deletaEvento(
+def deletarEvento(
     idEvento: str,
     usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
 ):
@@ -115,7 +115,7 @@ def deletaEvento(
         Recupera todos os eventos cadastrados no banco de dados.
     """,
 )
-def listarEventos() -> dict:
+def listarEventos() -> list:
     return eventoControlador.listarEventos()
 
 
