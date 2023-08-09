@@ -22,11 +22,11 @@ class EventoControlador:
     def __init__(self):
         self.__eventoConexao = EventoBD()
 
-    def listarEventos(self) -> dict:
-        eventos: dict = self.__eventoConexao.listarEventos()
+    def listarEventos(self) -> list:
+        eventos: list = self.__eventoConexao.listarEventos()
 
         if eventos != []:
-            for evento in eventos["mensagem"]:
+            for evento in eventos:
                 evento["_id"] = str(evento["_id"])
 
         return eventos
@@ -35,60 +35,58 @@ class EventoControlador:
         # Verifica se o evento existe
         evento: dict = self.__eventoConexao.getEvento(idEvento)
 
-        removerEvento = self.__eventoConexao.removerEvento(idEvento)
+        removerEvento :bool = self.__eventoConexao.removerEvento(idEvento)
 
         # precisa de outra branch TODO
         deletarImagem(evento["nome evento"])
         return removerEvento
 
     def editarEvento(
-        self, idEvento, dadosEvento: DadosEvento, imagens: dict
+        self, idEvento, novosDadosEvento: DadosEvento, imagens: dict
     ):
-        try:
-            conexao = EventoBD()
+        # Verfica se o evento existe e recupera os dados dele
+        dadosEventoBanco :dict = self.__eventoConexao.getEvento(idEvento)
 
-            # Verfica se o evento existe e recupera os dados dele
-            dadosEvento = conexao.getEvento(idEvento)
+        # Valida as imagens (se existirem)
+        # TODO depende da outra branch
+        if imagens["arteEvento"] and not validaImagem(imagens["arteEvento"]):
+            raise ImagemInvalidaExcecao()
 
-            # Valida as imagens (se existirem)
-            if imagens["arteEvento"] and not validaImagem(imagens["arteEvento"]):
-                raise ImagemInvalidaExcecao()
+        if imagens["arteQrcode"] and not validaImagem(imagens["arteQrcode"]):
+            raise ImagemInvalidaExcecao(message="Imagem do qrCode inválida.")
 
-            if imagens["arteQrcode"] and not validaImagem(imagens["arteQrcode"]):
-                raise ImagemInvalidaExcecao(message="Imagem do qrCode inválida.")
+        novosDadosEvento.caminhoArteEvento = dadosEventoBanco["arte evento"]
+        novosDadosEvento.caminhoArteQrcode = dadosEventoBanco["arte qrcode"]
 
-            dadosEvento.caminhoArteEvento = dadosEvento["arte evento"]
-            dadosEvento.caminhoArteQrcode = dadosEvento["arte qrcode"]
+        # Verifica os dados e atualiza o evento
+        idEvento :ObjectId = self.__eventoConexao.atualizarEvento(idEvento, novosDadosEvento.paraBD())
 
-            # Verifica os dados e atualiza o evento
-            idEvento = conexao.atualizarEvento(idEvento, dadosEvento.paraBD())
+        print('\n\n\n')
+        print(idEvento)
 
-            # Deleta as imagens antigas e armazena as novas
-            if imagens["arteEvento"]:
-                deletarImagem(dadosEvento["nome evento"], ["eventos", "arte"])
-                dadosEvento.caminhoArteEvento = armazenaArteEvento(
-                    dadosEvento.nomeEvento, imagens["arteEvento"]
-                )  # type: ignore
-            else:
-                dadosEvento.caminhoArteEvento = dadosEvento["arte evento"]
+        # Deleta as imagens antigas e armazena as novas
+        if imagens["arteEvento"]:
+            deletarImagem(dadosEventoBanco["nome evento"], ["eventos", "arte"])
+            novosDadosEvento.caminhoArteEvento = armazenaArteEvento(
+                novosDadosEvento.nomeEvento, imagens["arteEvento"]
+            )  # type: ignore
+        else:
+            novosDadosEvento.caminhoArteEvento = dadosEventoBanco["arte evento"]
 
-            if imagens["arteQrcode"]:
-                deletarImagem(dadosEvento["nome evento"], ["eventos", "qrcode"])
-                dadosEvento.caminhoArteQrcode = armazenaQrCodeEvento(
-                    dadosEvento.nomeEvento, imagens["arteQrcode"]
-                )  # type: ignore
-            else:
-                dadosEvento.caminhoArteQrcode = dadosEvento["arte qrcode"]
+        if imagens["arteQrcode"]:
+            deletarImagem(dadosEventoBanco["nome evento"], ["eventos", "qrcode"])
+            novosDadosEvento.caminhoArteQrcode = armazenaQrCodeEvento(
+                novosDadosEvento.nomeEvento, imagens["arteQrcode"]
+            )  # type: ignore
+        else:
+            novosDadosEvento.caminhoArteQrcode = dadosEventoBanco["arte qrcode"]
 
-            # Caso alguma imagem tenha sido alterada, atualiza o evento novamente para adicionar o caminho para as imagens
-            if imagens["arteEvento"] or imagens["arteQrcode"]:
-                conexao.atualizarEvento(idEvento, dadosEvento.paraBD())
+        # Caso alguma imagem tenha sido alterada, atualiza o evento novamente para adicionar o caminho para as imagens
+        if imagens["arteEvento"] or imagens["arteQrcode"]:
+            self.__eventoConexao.atualizarEvento(idEvento, dadosEventoBanco.paraBD())
 
-            return idEvento
+        return idEvento
 
-        except Exception as e:
-            logging.warning("Problema para editar eventos.")
-            raise ErroInternoExcecao(menssage='Problema para editar eventos.')
 
     def novoEvento(
         self, dadosEvento: DadosEvento, imagens: dict[str, BinaryIO | None]
@@ -111,15 +109,9 @@ class EventoControlador:
             dadosEvento.caminhoArteQrcode = caminhoQrCode  # type: ignore
 
         # Valida os dados e registra o evento no bd
-        try:
-            conexao = EventoBD()
-            idEvento :ObjectId = conexao.cadastrarEvento(dadosEvento.paraBD())
-            deletarImagem(dadosEvento.nomeEvento)
-            # idEvento = conexao.getEventoID(dadosEvento.nomeEvento)
-            logging.info(f"Evento cadastrado com id: {idEvento}")
+        conexao = EventoBD()
+        idEvento :ObjectId = conexao.cadastrarEvento(dadosEvento.paraBD())
+        deletarImagem(dadosEvento.nomeEvento)
+        logging.info(f"Evento cadastrado com id: {idEvento}")
 
-            return idEvento
-
-        except Exception as e:
-            logging.warning("Problema para adicionar eventos.")
-            raise ErroInternoExcecao(menssage='Problema para adicionar eventos.')
+        return idEvento

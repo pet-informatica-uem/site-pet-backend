@@ -39,7 +39,7 @@ class InscritosEventoBD:
         idEvento = ObjectId(idEvento)
 
         try:
-            self.__colecao.update_one(
+            atualizacao = self.__colecao.update_one(
                 {"idEvento": idEvento},
                 {
                     "$set": {
@@ -54,7 +54,7 @@ class InscritosEventoBD:
                     }
                 },
             )
-            return str(idEvento)
+            return atualizacao['_id']
         except:
             raise NaoAtualizadaExcecao(message = "Não foi possível atualizar a quantidade de vagas. ")
 
