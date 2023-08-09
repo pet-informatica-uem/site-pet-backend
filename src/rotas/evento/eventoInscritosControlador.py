@@ -52,7 +52,7 @@ class InscritosEventoControlador:
         return dadosUsuario
 
 
-    def inscricaoEventoControlador(
+    def inscricaoEventoControlador(   
         self, idUsuario: str,
         idEvento: str,
         nivelConhecimento: str | None,
@@ -61,7 +61,7 @@ class InscritosEventoControlador:
     ) -> dict:
         if tipoDeInscricao not in ["sem notebook", "com notebook"]:
             raise TipoDeInscricaoErradoExcecao()
-            
+
         usuarioBD = UsuarioBD()
         dicionarioUsuario : dict = usuarioBD.getUsuario(idUsuario)
         if not dicionarioUsuario:
