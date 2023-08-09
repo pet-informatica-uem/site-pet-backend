@@ -35,26 +35,22 @@ class InscritosEventoBD:
         else:
             raise NaoEncontradoExcecao(messege = "Evento não encontrado!")
 
-    def atualizarVagasOfertadas(self, idEvento: str, dadosVagas: dict) -> str:
+    def atualizarVagasOfertadas(self, idEvento: str, dadosVagas: dict) -> ObjectId:
         idEvento = ObjectId(idEvento)
 
-        try:
-            atualizacao = self.__colecao.update_one(
+        try: 
+            self.__colecao.update_one(
                 {"idEvento": idEvento},
                 {
                     "$set": {
                         "vagas ofertadas": {
-                            "vagas com notebook": dadosVagas["vagas ofertadas"][
-                                "vagas com notebook"
-                            ],
-                            "vagas sem notebook": dadosVagas["vagas ofertadas"][
-                                "vagas sem notebook"
-                            ],
+                            "vagas com notebook": dadosVagas["vagas com notebook"],
+                            "vagas sem notebook": dadosVagas["vagas sem notebook"],
                         }
                     }
                 },
             )
-            return atualizacao['_id']
+            return idEvento
         except:
             raise NaoAtualizadaExcecao(message = "Não foi possível atualizar a quantidade de vagas. ")
 

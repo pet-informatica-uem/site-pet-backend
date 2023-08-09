@@ -52,7 +52,7 @@ class EventoBD:
             raise Exception(self.__validarEvento.errors)  # type: ignore
 
     def removerEvento(self, idEvento: str) -> bool:
-        idEvento = ObjectId(idEvento)
+        idEvento :ObjectId = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"_id": idEvento})
         if resultado:
             self.__insctirosEvento.deletarListaInscritos(resultado["_id"])
@@ -61,30 +61,23 @@ class EventoBD:
         else:
             return NaoEncontradoExcecao(messege = "Evento não encontrado. ")
 
-    def atualizarEvento(self, idEvento: str, dadosEvento: object) -> str:
-        idEvento = ObjectId(idEvento)
+    def atualizarEvento(self, idEvento: str, dadosEvento: object) -> ObjectId:
+        idEvento :ObjectId = ObjectId(idEvento)
 
-        dadosVagasOfertadas = {
-            "vagas ofertadas": dadosEvento.pop("vagas ofertadas"),  # type: ignore
-        }
+        dadosVagasOfertadas :dict = dadosEvento.pop("vagas ofertadas")
 
-        evento = self.__colecao.find_one({"_id": idEvento})
-        dadosEvento["data criação"] = evento["data criação"]  # type: ignore
+        evento :dict = self.__colecao.find_one({"_id": idEvento})
+        dadosEvento["data criação"] :dict = evento["data criação"]  
 
         if self.__validarEvento.validate(dadosEvento):  # type: ignore
-            try:
-                resultado = self.__colecao.update_one(
+            try: 
+                self.__colecao.update_one(
                     {"_id": idEvento}, {"$set": dadosEvento}
                 )
-
-                print('\n\n\naté aqui foi')
-                print(dadosVagasOfertadas)
-                # TODO não está atualizando as vagas, aquela variáevl reultado é necessária?
-
+                
                 idEvento :ObjectId = self.__insctirosEvento.atualizarVagasOfertadas(
                     evento["_id"], dadosVagasOfertadas
                 )
-
 
                 return idEvento
             except DuplicateKeyError:

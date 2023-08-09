@@ -70,7 +70,7 @@ def criaEvento(
     description="Valida as informações e edita um evento.",
     status_code=status.HTTP_200_OK,
 )
-def editaEvento(
+def editarEvento(
     idEvento: str,
     response: Response,
     usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
@@ -84,7 +84,7 @@ def editaEvento(
         imagens["arteEvento"] = arteEvento.file
     if arteQrcode:
         imagens["arteQrcode"] = arteQrcode.file
-
+        
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
     idEvento :ObjectId = eventoControlador.editarEvento(idEvento, dadosEvento, imagens)
