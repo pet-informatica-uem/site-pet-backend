@@ -38,14 +38,18 @@ class EventoBD:
         if self.__validarEvento.validate(dadosEvento):  # type: ignore
             try:
                 # criar documento com os dados do evento
+                print('\n\n\nTESTEEEEEEEEEEEE\n\n')
+                print(dadosEvento)
                 resultado = self.__colecao.insert_one(dadosEvento)
+                
                 dadosListaInscritos["idEvento"] = resultado.inserted_id
                 # criar documento com os inscritos do evento
                 self.__insctirosEvento.criarListaInscritos(dadosListaInscritos)
 
                 return resultado.inserted_id
             except DuplicateKeyError:
-                raise JaExisteExcecao("Evento já cadastrado! ")
+                print('\n\noiiiiiiiiiiiii\n\n')
+                raise JaExisteExcecao(message="Evento já cadastrado!")
         else:
             raise Exception(self.__validarEvento.errors)  # type: ignore
 

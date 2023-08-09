@@ -98,7 +98,7 @@ class EventoControlador:
 
         if imagens["arteQrcode"] and not validaImagem(imagens["arteQrcode"]):
             raise ImagemInvalidaExcecao(mesage="Imagem do qrCode inválida")
-
+        
         # Armazena as imagens
         caminhoArte = armazenaArteEvento(dadosEvento.nomeEvento, imagens["arteEvento"])  # type: ignore
         dadosEvento.caminhoArteEvento = caminhoArte  # type: ignore
@@ -113,8 +113,11 @@ class EventoControlador:
         try:
             conexao = EventoBD()
             idEvento = conexao.cadastrarEvento(dadosEvento.paraBD())
+            print('\n\nJULIANAAAAa 2\n\n')
             deletarImagem(dadosEvento.nomeEvento)
+            print('\n\nJULIANAAAAa 3\n\n')
             idEvento = conexao.getEventoID(dadosEvento.nomeEvento)
+            print('\n\nJULIANAAAAa 4\n\n')
             logging.info(f"Evento cadastrado com id: {idEvento}")
 
             return idEvento
