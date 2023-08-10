@@ -63,21 +63,20 @@ class InscritosEventoBD:
         else:
             raise NaoEncontradoExcecao(messege = "Evento não encontrado! ")
 
-    def setInscricao(self, dadosInscricao: dict) -> dict:
+    def setInscricao(self, dadosInscricao: dict) -> bool:
         if self.__validarEvento.inscricao().validate(dadosInscricao):
             raise Exception(self.__validarEvento.inscritos().errors)
 
         idEvento = ObjectId(dadosInscricao["idEvento"])
 
-        usuariosInscritos = self.__colecao.find_one(
-            {"idEvento": idEvento, "inscritos.idUsuario": dadosInscricao["idUsuario"]}
+        usuarioInscrito = self.__colecao.find_one(
+            {"idEvento": idEvento, "inscritos.idUsuario": str(dadosInscricao["idUsuario"])}
         )
 
-        if usuariosInscritos:
+        if usuarioInscrito:
             raise JaExisteExcecao(message = "Usuário já inscrito! ")
-        #tem
-        # duvida, quando gera um erro na funcao __setVaga, eu preciso tratar esse erro?
-        self.__setVaga(idEvento, dadosInscricao["tipoInscricao"])
+
+        _ = self.__setVaga(idEvento, dadosInscricao["tipoInscricao"])
 
         self.__colecao.update_one(
             {"idEvento": idEvento},
@@ -154,7 +153,7 @@ class InscritosEventoBD:
                 raise NaoAtualizadaExcecao(messege = "Não há vagas disponíveis.")
 
         else:
-            raise TipoVagaInvalidoExcecao()
+            raise TipoVagaInvalidoExcecao(messege="Tipo de vaga inválido.")
 
     def getVagas(self, idEvento: str) -> dict:
         idEvento = ObjectId(idEvento)

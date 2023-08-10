@@ -47,53 +47,12 @@ class InscritosEventoControlador:
         return dadosUsuario
 
 
-    def inscricaoEventoControlador(   
-        self, idUsuario: str,
-        idEvento: str,
-        nivelConhecimento: str | None,
-        tipoDeInscricao: str,
-        pagamento: bool | None,
-    ) -> dict:
-        if tipoDeInscricao not in ["sem notebook", "com notebook"]:
-            raise TipoDeInscricaoErradoExcecao()
-
-        usuarioBD = UsuarioBD()
-        dicionarioUsuario : dict = usuarioBD.getUsuario(idUsuario)
-        if not dicionarioUsuario:
-            raise UsuarioNaoEncontradoExcecao()
-
-        eventoBD = EventoBD()
-        dicionarioEvento : dict = eventoBD.getEvento(idEvento)
-        dicionarioEnvioGmail : dict = {
-            "nome evento": dicionarioEvento["nome evento"],
-            "local": dicionarioEvento["local"],
-            "data/hora evento": dicionarioEvento["data/hora evento"],
-            "pré-requisitos": dicionarioEvento["pré-requisitos"],
-        }
-        if not dicionarioEvento:
-            raise NaoEncontradoExcecao()
-
-        if nivelConhecimento not in ["1", "2", "3", "4", "5", None]:
-            raise NivelDeConhecimentoErradoExcecao() 
-
-        inscritos = InscritosEventoBD()
-        inscrito: dict = {
-            "idEvento": idEvento,
-            "idUsuario": idUsuario,
-            "nivelConhecimento": nivelConhecimento,
-            "tipoInscricao": tipoDeInscricao,
-            "pagamento": pagamento,
-        }
-
-        situacaoInscricao: bool = inscritos.setInscricao(inscrito)
+    def inscricaoEvento(   
+        self, inscrito: dict
+    ) -> bool:
+        
+        situacaoInscricao: bool = self.__inscritosEvento.setInscricao(inscrito)
         if not situacaoInscricao:
             raise ErroInternoExcecao(message = "Nao foi possivel realizar a inscricao")
-
-        emailConfirmacaoEvento(
-            emailPet=config.EMAIL_SMTP,
-            senhaPet=config.SENHA_SMTP,
-            emailDestino=dicionarioUsuario['email'],
-            evento=dicionarioEnvioGmail
-        )
 
         return situacaoInscricao

@@ -8,7 +8,7 @@ from fastapi import (APIRouter, Depends, Form, HTTPException, Response,
 
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.evento.evento import DadosEvento
-from src.modelos.usuario.usuario import UsuarioSenha
+from src.modelos.usuario.usuario import UsuarioSenha, Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.evento.eventoInscritosControlador import InscritosEventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado, tokenAcesso
@@ -84,7 +84,7 @@ def editarEvento(
         imagens["arteEvento"] = arteEvento.file
     if arteQrcode:
         imagens["arteQrcode"] = arteQrcode.file
-        
+
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
     idEvento :ObjectId = eventoControlador.editarEvento(idEvento, dadosEvento, imagens)
@@ -118,7 +118,7 @@ def deletarEvento(
 def listarEventos() -> list:
     return eventoControlador.listarEventos()
 
-
+# TODO conferir
 @roteador.get(
     "/recuperarInscritos",
     name="Recuperar os inscritos de um determinado evento por ID",
@@ -137,22 +137,28 @@ def getInscritosEvento(
     return inscritos
 
 @roteador.post(
-    "/cadastroEmEvento",
+    "/inscricaoUsuarioEmEvento",
     name="Recebe dados da inscrição e realiza a inscrição no evento.",
     description="Recebe o id do inscrito, o id do evento, o nivel do conhecimento do inscrito, o tipo de de inscrição e a situação de pagamento da inscricao em eventos do usuario autenticado.",
     status_code=status.HTTP_201_CREATED,
 )
 def getDadosInscricaoEvento( 
-    idUsuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)],
+    idUsuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
     idEvento: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
     pagamento: Annotated[bool, Form()],
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
 ):  
 
-    inscritosController = InscritosEventoControlador()
-    situacaoInscricao :bool = inscritosController.inscricaoEventoControlador(idUsuario.id, idEvento, nivelConhecimento, tipoDeInscricao, pagamento)
+    inscrito: dict = {
+            "idUsuario": idUsuario.paraBd()['_id'],
+            "idEvento": idEvento,
+            "nivelConhecimento": nivelConhecimento,
+            "tipoInscricao": tipoDeInscricao,
+            "pagamento": pagamento,
+        }
 
-    #if not situacaoInscricao:
-    #    raise alguma excecao kkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkkk coringuei
+    inscritosControlador = InscritosEventoControlador()
+    situacaoInscricao :bool = inscritosControlador.inscricaoEvento(inscrito)
 
+    return situacaoInscricao
