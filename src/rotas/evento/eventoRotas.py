@@ -9,16 +9,10 @@ from fastapi import (APIRouter, Depends, Form, HTTPException, Response,
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.evento.evento import DadosEvento
 from src.modelos.usuario.usuario import UsuarioSenha, Usuario
-from src.rotas.evento.eventoControlador import (
-    EventoController,
-    controladorDeletaEvento,
-    controladorEditarEvento,
-    controladorNovoEvento,
-    inscricaoEventoControlador,
-)
-from src.rotas.evento.eventoInscritosControlador import InscritosEventoController
+from src.rotas.evento.eventoControlador import EventoControlador
+from src.rotas.evento.eventoInscritosControlador import InscritosEventoControlador
 
-from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado, tokenAcesso
+from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"

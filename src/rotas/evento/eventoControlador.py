@@ -7,7 +7,7 @@ from src.email.operacoesEmail import emailConfirmacaoEvento
 from src.img.operacoesImagem import (
     armazenaArteEvento,
     armazenaQrCodeEvento,
-    deletarImagem,
+    deletaImagem,
     validaImagem,
 )
 from src.modelos.evento.evento import DadosEvento
@@ -38,7 +38,7 @@ class EventoControlador:
         removerEvento :bool = self.__eventoConexao.removerEvento(idEvento)
 
         # precisa de outra branch TODO
-        deletarImagem(evento["nome evento"])
+        deletaImagem(evento["nome evento"])
         return removerEvento
 
     def editarEvento(
@@ -66,7 +66,7 @@ class EventoControlador:
 
         # Deleta as imagens antigas e armazena as novas
         if imagens["arteEvento"]:
-            deletarImagem(dadosEventoBanco["nome evento"], ["eventos", "arte"])
+            deletaImagem(dadosEventoBanco["nome evento"], ["eventos", "arte"])
             novosDadosEvento.caminhoArteEvento = armazenaArteEvento(
                 novosDadosEvento.nomeEvento, imagens["arteEvento"]
             )  # type: ignore
@@ -74,7 +74,7 @@ class EventoControlador:
             novosDadosEvento.caminhoArteEvento = dadosEventoBanco["arte evento"]
 
         if imagens["arteQrcode"]:
-            deletarImagem(dadosEventoBanco["nome evento"], ["eventos", "qrcode"])
+            deletaImagem(dadosEventoBanco["nome evento"], ["eventos", "qrcode"])
             novosDadosEvento.caminhoArteQrcode = armazenaQrCodeEvento(
                 novosDadosEvento.nomeEvento, imagens["arteQrcode"]
             )  # type: ignore
@@ -111,7 +111,7 @@ class EventoControlador:
         # Valida os dados e registra o evento no bd
         conexao = EventoBD()
         idEvento :ObjectId = conexao.cadastrarEvento(dadosEvento.paraBD())
-        deletarImagem(dadosEvento.nomeEvento)
+        deletaImagem(dadosEvento.nomeEvento)
         logging.info(f"Evento cadastrado com id: {idEvento}")
 
         return idEvento
