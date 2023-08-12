@@ -18,7 +18,7 @@ from src.autenticacao.jwtoken import (
 )
 from src.config import config
 from src.email.operacoesEmail import resetarSenha, verificarEmail
-from src.img.operacoesImagem import deletaImagem, validaImagem, armazenaFotoUsuario
+from src.img.operacoesImagem import deletarImagem, validaImagem, armazenaFotoUsuario
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.usuario.usuario import EstadoConta, TipoConta, UsuarioSenha
 from src.modelos.usuario.usuarioBD import UsuarioBD
@@ -54,14 +54,10 @@ def cadastraUsuarioControlador(
     Cria uma conta com os dados fornecidos, e envia um email
     de confirmação de criação de conta ao endereço fornecido.
 
-    Este controlador assume que o cpf e email já estão nas formas
-    normalizadas (cpf contendo 11 dígitos, email sem espaço em branco
-    prefixado ou sufixado e com todos os caracteres em caixa baixa).
-
-    A criação da conta pode não suceder por erro na validação de dados,
-    por já haver uma conta cadastrada com tal CPF ou email ou por falha
-    de conexão com o banco de dados.
-    """
+        A criação da conta pode não suceder por erro na validação de dados,
+        por já haver uma conta cadastrada com tal CPF ou email ou por falha
+        de conexão com o banco de dados.
+        """
 
     # 3. verifico se o email já existe e crio o usuário
     bd: UsuarioBD = UsuarioBD()
@@ -215,7 +211,10 @@ def editaSenhaControlador(
     """
     Atualiza a senha de um usuário existente.
 
-    Para atualizar a senha, o usuário deve digitar sua senha atual.
+        # Gera o link e envia o email se o usuário estiver cadastrado
+        if retorno.get("status") == "200":
+            link = geraLink(email)
+            resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
 
     A atualização da conta pode não suceder por erro na validação de dados.
     """
@@ -276,7 +275,7 @@ def editarFotoControlador(*, usuario: UsuarioSenha, foto: UploadFile | None) -> 
     if not validaImagem(foto.file):  # type: ignore
         raise ImagemInvalidaExcecao()
 
-    deletaImagem(usuarioDados["nome"], ["usuarios"])
+    deletarImagem(usuarioDados["nome"], ["usuarios"])
     caminhoFotoPerfil: str = armazenaFotoUsuario(usuarioDados["nome"], foto.file)  # type: ignore
     usuarioDados["foto perfil"] = caminhoFotoPerfil
     id: str = usuarioDados.pop("_id")

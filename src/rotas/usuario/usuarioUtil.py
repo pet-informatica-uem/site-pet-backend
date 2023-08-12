@@ -69,4 +69,4 @@ def atualizaSenha(email: str, senha: str) -> None:
     dadosUsuario["senha"] = hashSenha(senha)
     conexao.atualizarUsuario(idUsuario, dadosUsuario)
 
-    logging.info("Senha atualizada para o usuário com ID: " + str(id))
+    logging.info("Senha atualizada para o usuário com ID: " + str(idUsuario))

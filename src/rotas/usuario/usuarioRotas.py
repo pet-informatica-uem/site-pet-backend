@@ -53,14 +53,13 @@ def cadastrarUsuario(
     cpf: Annotated[str, Form(max_length=200)],
     email: Annotated[EmailStr, Form()],
     senha: Annotated[SecretStr, Form(max_length=200)],
-    confirmacaoSenha: Annotated[SecretStr, Form(max_length=200)],
     curso: Annotated[str | None, Form(max_length=200)] = None,
 ) -> str:
     # valida dados
     if (
         not validaCpf(cpf)
         or not validaSenha(
-            senha.get_secret_value(), confirmacaoSenha.get_secret_value()
+            senha.get_secret_value(), senha.get_secret_value()
         )
         or not validaEmail(email)
     ):
@@ -139,13 +138,13 @@ def recuperaConta(
     status_code=status.HTTP_200_OK,
     responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
-def trocaSenha(token, senha: Annotated[str, Form()]):
+def trocaSenha(token, senha: Annotated[SecretStr, Form()]):
     # Validacao basica da senha
-    if not validaSenha(senha, senha):
+    if not validaSenha(senha.get_secret_value(), senha.get_secret_value()):
         raise HTTPException(status_code=400, detail="Senha inválida.")
 
     # Despacha o token para o controlador
-    trocaSenhaControlador(token, senha)
+    trocaSenhaControlador(token, senha.get_secret_value())
 
 
 @roteador.post(
@@ -279,8 +278,7 @@ def editarDados(
 @roteador.post(
     "/alterar-senha",
     name="Editar senha do usuário autenticado",
-    description="""O usuário é capaz de editar sua senha\n
-    Caso a opção deslogarAoTrocarSenha for ativada, todos as sessões serão deslogadas ao trocar a senha.""",
+    description="""O usuário é capaz de editar sua senha. Caso a opção deslogarAoTrocarSenha for ativada, todos as sessões serão deslogadas ao trocar a senha.""",
 )
 def editarSenha(
     senhaAtual: Annotated[SecretStr, Form(max_length=200)],

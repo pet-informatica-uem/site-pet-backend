@@ -3,6 +3,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
+# acho que precisa colocar um id aqui
 class DadosEvento(BaseModel):
     nomeEvento: str
     resumo: str

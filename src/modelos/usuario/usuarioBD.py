@@ -29,10 +29,10 @@ class UsuarioBD:
     def deletarUsuario(self, idUsuario: str) -> dict:
         idUsuario = ObjectId(idUsuario)
         resultado = self.__colecao.delete_one({"_id": idUsuario})
-        if resultado.deleted_count == 1:
-            return {"mensagem": "Usuário removido com sucesso", "status": "200"}
-        else:
-            return {"mensagem": "Usuário não encontrado", "status": "404"}
+        if resultado.deleted_count:
+            return True 
+        
+        raise UsuarioNaoEncontradoExcecao()
 
     def atualizarUsuario(self, idUsuario: str, dadoUsuario: object) -> None:
         idUsuario = ObjectId(idUsuario)

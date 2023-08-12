@@ -20,6 +20,10 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+origins = [
+    'http://localhost:3000',
+    'http://localhost'
+]
 
 # Caso não existam, cria as pastas para armazenar imagens.
 criaPastas()

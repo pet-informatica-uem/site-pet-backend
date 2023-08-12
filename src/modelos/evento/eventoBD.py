@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 
 from bson.objectid import ObjectId
@@ -6,7 +7,7 @@ from pymongo.errors import DuplicateKeyError
 
 from src.modelos.evento.dadosEvento import ValidarEvento
 from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
-
+from src.modelos.excecao import JaExisteExcecao, NaoEncontradoExcecao, NaoAtualizadaExcecao
 
 class EventoBD:
     def __init__(self) -> None:
@@ -16,7 +17,7 @@ class EventoBD:
         self.__validarEvento = ValidarEvento().evento()
         self.__insctirosEvento = InscritosEventoBD()
 
-    def cadastrarEvento(self, dadosEvento: dict) -> dict:
+    def cadastrarEvento(self, dadosEvento: dict) -> str:
         dadosEvento["data criação"] = datetime.now()
         dadosEvento["vagas ofertadas"]["vagas preenchidas com notebook"] = 0
         dadosEvento["vagas ofertadas"]["vagas preenchidas sem notebook"] = 0
@@ -39,73 +40,65 @@ class EventoBD:
             try:
                 # criar documento com os dados do evento
                 resultado = self.__colecao.insert_one(dadosEvento)
+                
                 dadosListaInscritos["idEvento"] = resultado.inserted_id
                 # criar documento com os inscritos do evento
                 self.__insctirosEvento.criarListaInscritos(dadosListaInscritos)
-
-                return {"mensagem": "Evento cadastrado com sucesso!", "status": "200"}
+                return resultado.inserted_id
             except DuplicateKeyError:
-                return {"mensagem": "Evento já cadastrado!", "status": "409"}
+                logging.warning("Evento já cadastrado!")
+                raise JaExisteExcecao(message="Evento já cadastrado!")
         else:
-            return {"mensagem": self.__validarEvento.errors, "status": "400"}  # type: ignore
+            raise Exception(self.__validarEvento.errors)  # type: ignore
 
-    def removerEvento(self, idEvento: str) -> dict:
-        idEvento = ObjectId(idEvento)
+    def removerEvento(self, idEvento: str) -> bool:
+        idEvento :ObjectId = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"_id": idEvento})
         if resultado:
             self.__insctirosEvento.deletarListaInscritos(resultado["_id"])
             self.__colecao.delete_one({"_id": idEvento})
-            return {"mensagem": "Evento removido com sucesso!", "status": "200"}
+            return True
         else:
-            return {"mensagem": "Evento não encontrado!", "status": "404"}
+            return NaoEncontradoExcecao(messege = "Evento não encontrado. ")
 
-    def atualizarEvento(self, idEvento: str, dadosEvento: object) -> dict:
-        idEvento = ObjectId(idEvento)
-        if self.getEvento(idEvento)["status"] == "404":
-            return {"mensagem": "Evento não encontrado!", "status": "404"}
+    def atualizarEvento(self, idEvento: str, dadosEvento: object) -> ObjectId:
+        idEvento :ObjectId = ObjectId(idEvento)
 
-        dadosVagasOfertadas = {
-            "vagas ofertadas": dadosEvento.pop("vagas ofertadas"),  # type: ignore
-        }
+        dadosVagasOfertadas :dict = dadosEvento.pop("vagas ofertadas")
 
-        evento = self.__colecao.find_one({"_id": idEvento})
-        dadosEvento["data criação"] = evento["data criação"]  # type: ignore
+        evento :dict = self.__colecao.find_one({"_id": idEvento})
+        dadosEvento["data criação"] :dict = evento["data criação"]  
 
         if self.__validarEvento.validate(dadosEvento):  # type: ignore
-            try:
-                resultado = self.__colecao.update_one(
+            try: 
+                self.__colecao.update_one(
                     {"_id": idEvento}, {"$set": dadosEvento}
                 )
-
-                resultado = self.__insctirosEvento.atualizarVagasOfertadas(
+                
+                idEvento :ObjectId = self.__insctirosEvento.atualizarVagasOfertadas(
                     evento["_id"], dadosVagasOfertadas
                 )
-                if resultado["status"] == "404":
-                    return {
-                        "mensagem": "Não foi possível atualizar a quantidade de vagas.",
-                        "status": "404",
-                    }
 
-                return {"mensagem": "Evento atualizado com sucesso!", "status": "200"}
+                return idEvento
             except DuplicateKeyError:
-                return {"mensagem": "Evento já cadastrado!", "status": "409"}
+                raise JaExisteExcecao("Evento já cadastrado! ")
         else:
-            return {"mensagem": self.__validarEvento.errors, "status": "400"}  # type: ignore
+            raise Exception(self.__validarEvento.errors)  # type: ignore
 
-    def listarEventos(self) -> dict:
-        return {"mensagem": list(self.__colecao.find()), "status": "200"}
+    def listarEventos(self) -> list:
+        return list(self.__colecao.find())
 
-    def getEvento(self, idEvento: str) -> dict:
+    def getEvento(self, idEvento: str) -> dict:   #AQUI TA ERRADO, AQUI É getEvento O outro É PELO NOME.
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"_id": idEvento})
         if resultado:
-            return {"mensagem": resultado, "status": "200"}
+            return resultado
         else:
-            return {"mensagem": "Evento não encontrado!", "status": "404"}
+            raise NaoEncontradoExcecao(messege = "Evento não encontrado!")
 
-    def getEventoID(self, nomeEvento: str) -> dict:
+    def getEventoID(self, nomeEvento: str) -> str:
         resultado = self.__colecao.find_one({"nome evento": nomeEvento})
         if resultado:
-            return {"mensagem": resultado["_id"], "status": "200"}
+            return resultado["_id"]
         else:
-            return {"mensagem": "Evento não encontrado!", "status": "404"}
+            raise NaoEncontradoExcecao(messege = "Evento não encontrado!")
