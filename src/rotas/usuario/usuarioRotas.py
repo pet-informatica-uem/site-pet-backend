@@ -1,40 +1,39 @@
 import logging
 from typing import Annotated
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    Form,
-    HTTPException,
-    Request,
-    Response,
-    UploadFile,
-    status,
-)
+from fastapi import (APIRouter, Depends, Form, HTTPException, Request,
+                     Response, UploadFile, status)
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, HttpUrl, SecretStr
 
+from src.modelos.excecao import (APIExcecaoBase, NaoAutenticadoExcecao,
+                             NaoEncontradoExcecao, UsuarioJaExisteExcecao,
+                             UsuarioNaoEncontradoExcecao,
+                             listaRespostasExcecoes)
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.usuario.usuario import Usuario, UsuarioSenha
-from src.modelos.usuario.validacaoCadastro import validaCpf, validaEmail, validaSenha
+from src.modelos.usuario.validacaoCadastro import (validaCpf, validaEmail,
+                                                   validaSenha)
 from src.rotas.usuario.usuarioControlador import (
-    ativaContaControlador,
-    autenticaUsuarioControlador,
-    cadastraUsuarioControlador,
-    editaEmailControlador,
-    editarFotoControlador,
-    editaSenhaControlador,
-    editaUsuarioControlador,
-    getUsuarioAutenticadoControlador,
-    getUsuarioControlador,
-    recuperaContaControlador,
-    trocaSenhaControlador,
-)
+    ativaContaControlador, autenticaUsuarioControlador,
+    cadastraUsuarioControlador, editaEmailControlador, editarFotoControlador,
+    editaSenhaControlador, editaUsuarioControlador,
+    getUsuarioAutenticadoControlador, getUsuarioControlador,
+    recuperaContaControlador, trocaSenhaControlador)
 
-roteador = APIRouter(
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
+roteador: APIRouter = APIRouter(
     prefix="/usuario",
     tags=["Usuário"],
 )
+
+
+tokenAcesso: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="/usuario/token")
 
 
 @roteador.post(
@@ -47,6 +46,7 @@ roteador = APIRouter(
     " - Deve ter ao menos um dígito\n"
     " - Deve ter ao menos um caractere não alfanumérico\n",
     status_code=status.HTTP_201_CREATED,
+    responses=listaRespostasExcecoes(UsuarioJaExisteExcecao, APIExcecaoBase),
 )
 def cadastrarUsuario(
     nomeCompleto: Annotated[str, Form(max_length=200)],
@@ -55,7 +55,7 @@ def cadastrarUsuario(
     senha: Annotated[SecretStr, Form(max_length=200)],
     confirmacaoSenha: Annotated[SecretStr, Form(max_length=200)],
     curso: Annotated[str | None, Form(max_length=200)] = None,
-):
+) -> str:
     # valida dados
     if (
         not validaCpf(cpf)
@@ -77,24 +77,16 @@ def cadastrarUsuario(
     cpf = "".join(c for c in cpf if c in "0123456789")
 
     # despacha para controlador
-    resultado = cadastraUsuarioControlador(
+    id: str = cadastraUsuarioControlador(
         nomeCompleto=nomeCompleto,
         cpf=cpf,
         email=email,
         senha=senha.get_secret_value(),
         curso=curso,
     )
-    if resultado["status"] != "201":
-        logging.info(
-            "Tentativa de cadastro de usuário falhou. Dados: "
-            + str(resultado["mensagem"])
-        )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
-        )
 
     # retorna OK
-    return resultado["mensagem"]
+    return id
 
 
 @roteador.get(
@@ -102,13 +94,15 @@ def cadastrarUsuario(
     name="Confirmação de email",
     description="Confirma o email de uma conta através do token suprido.",
     status_code=status.HTTP_200_OK,
+    responses=listaRespostasExcecoes(
+        NaoAutenticadoExcecao,
+        UsuarioNaoEncontradoExcecao,
+        APIExcecaoBase,
+        UsuarioJaExisteExcecao,
+    ),
 )
 def confirmaEmail(token: str):
-    resultado = ativaContaControlador(token)
-    if resultado["status"] != "200":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Token inválido."
-        )
+    ativaContaControlador(token)
 
 
 @roteador.post(
@@ -118,6 +112,7 @@ def confirmaEmail(token: str):
         Envia um email para a conta fornecida para trocar a senha.
         Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
     """,
+    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def recuperaConta(
     email: Annotated[EmailStr, Form()], request: Request, response: Response
@@ -132,10 +127,7 @@ def recuperaConta(
         )
 
     # Passa o email para o controlador
-    resposta = recuperaContaControlador(email)
-
-    response.status_code = int(resposta["status"])
-    return {"mensagem": resposta.get("mensagem")}
+    recuperaContaControlador(email)
 
 
 @roteador.post(
@@ -145,22 +137,15 @@ def recuperaConta(
         Altera a senha do usuário. Falha, se a senha ou o link forem inválidos.
     """,
     status_code=status.HTTP_200_OK,
+    responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
-def trocaSenha(token, senha: Annotated[str, Form()], response: Response):
+def trocaSenha(token, senha: Annotated[str, Form()]):
     # Validacao basica da senha
     if not validaSenha(senha, senha):
         raise HTTPException(status_code=400, detail="Senha inválida.")
 
     # Despacha o token para o controlador
-    retorno = trocaSenhaControlador(token, senha)
-
-    response.status_code = int(retorno.get("status"))
-    return {"mensagem": retorno.get("mensagem")}
-
-
-class Token(BaseModel):
-    access_token: str
-    token_type: str
+    trocaSenhaControlador(token, senha)
 
 
 @roteador.post(
@@ -171,6 +156,7 @@ class Token(BaseModel):
     """,
     status_code=status.HTTP_200_OK,
     response_model=Token,
+    responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
 def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
     exc = HTTPException(
@@ -180,33 +166,25 @@ def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
     )
 
     # obtém dados
-    email = dados.username
-    senha = dados.password
+    email: str = dados.username
+    senha: str = dados.password
 
     # normaliza email
-    email = email.lower().strip()
+    email: str = email.lower().strip()
 
     # chama controlador
-    resp = autenticaUsuarioControlador(email, senha)
-    if resp["status"] != "200":
-        raise exc
-
-    return resp["mensagem"]
-
-
-tokenAcesso = OAuth2PasswordBearer(tokenUrl="/usuario/token")
+    return autenticaUsuarioControlador(email, senha)
 
 
 def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
-    resp = getUsuarioAutenticadoControlador(token)
-    if resp["status"] != "200":
+    try:
+        return getUsuarioAutenticadoControlador(token)
+    except NaoAutenticadoExcecao as e:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Não autenticado",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    else:
-        return resp["mensagem"]
 
 
 def getPetianoAutenticado(
@@ -225,6 +203,7 @@ def getPetianoAutenticado(
     """,
     status_code=status.HTTP_200_OK,
     response_model=Usuario,
+    responses=listaRespostasExcecoes(NaoEncontradoExcecao, UsuarioNaoEncontradoExcecao),
 )
 def getUsuarioEu(usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)]):
     return usuario
@@ -238,16 +217,10 @@ def getUsuarioEu(usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)
     """,
     status_code=status.HTTP_200_OK,
     response_model=Usuario,
+    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
-    resp = getUsuarioControlador(id)
-    if resp["status"] != "200":
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Usuário não encontrado",
-        )
-    else:
-        return resp["mensagem"]
+    return getUsuarioControlador(id)
 
 
 @roteador.post(
@@ -257,13 +230,9 @@ def getUsuario(_token: Annotated[str, Depends(tokenAcesso)], id: str):
 )
 def editarFoto(
     foto: UploadFile | None,
-    usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
-) -> dict:
-    resultado = {"status": "200", "mensagem": foto}
-
-    editarFotoControlador(usuario=usuario, foto=resultado)
-
-    return resultado
+    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)] = ...,
+) -> None:
+    editarFotoControlador(usuario=usuario, foto=foto)
 
 
 @roteador.post(
@@ -274,37 +243,37 @@ def editarFoto(
 def editarDados(
     nomeCompleto: Annotated[str, Form(max_length=200)],
     curso: Annotated[str, Form(max_length=200)],
-    github: Annotated[HttpUrl, Form()],
-    instagram: Annotated[HttpUrl, Form()],
-    linkedin: Annotated[HttpUrl, Form()],
-    twitter: Annotated[HttpUrl, Form()],
+    github: Annotated[HttpUrl | None, Form()] = None,
+    instagram: Annotated[HttpUrl | None, Form()] = None,
+    linkedin: Annotated[HttpUrl | None, Form()] = None,
+    twitter: Annotated[HttpUrl | None, Form()] = None,
     usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
 ):
+    redesSociais = None
     # agrupa redes sociais
-    redesSociais = {
-        "github": github,
-        "linkedin": linkedin,
-        "instagram": instagram,
-        "twitter": twitter,
-    }
+    if usuario.tipoConta == 'petiano':
+        redesSociais: dict[str, str] = {
+            "github": github,
+            "linkedin": linkedin,
+            "instagram": instagram,
+            "twitter": twitter,
+        }
 
-    # valida links
-    for chave in redesSociais:
-        link = str(redesSociais[chave])
-        if chave not in link:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="O link " + link + " não é válido com a rede social " + chave,
-            )
+        # valida links
+        for chave in redesSociais:
+            link = str(redesSociais[chave])
+            if chave not in link:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="O link " + link + " não é válido com a rede social " + chave,
+                )
 
-    resultado = editaUsuarioControlador(
+    editaUsuarioControlador(
         usuario=usuario,
         nomeCompleto=nomeCompleto,
         curso=curso,
         redesSociais=redesSociais,
     )
-
-    return resultado
 
 
 @roteador.post(
@@ -316,14 +285,13 @@ def editarDados(
 def editarSenha(
     senhaAtual: Annotated[SecretStr, Form(max_length=200)],
     novaSenha: Annotated[SecretStr, Form(max_length=200)],
-    confirmacaoSenha: Annotated[SecretStr, Form(max_length=200)],
     deslogarAoTrocarSenha: Annotated[bool, Form()],
     usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
     # verifica nova senha
     if not validaSenha(
-        novaSenha.get_secret_value(), confirmacaoSenha.get_secret_value()
+        novaSenha.get_secret_value(), novaSenha.get_secret_value()
     ):
         logging.info("Erro. Nova senha não foi validada com sucesso.")
         raise HTTPException(
@@ -331,20 +299,18 @@ def editarSenha(
         )
 
     # efetua troca de senha
-    resultado = editaSenhaControlador(
+    editaSenhaControlador(
         senhaAtual=senhaAtual.get_secret_value(),
         novaSenha=novaSenha.get_secret_value(),
         usuario=usuario,
     )
 
     # efetua logout de todas as sessões, caso o usuário desejar
-    if deslogarAoTrocarSenha and resultado["status"] == "200":
-        gerenciarTokens = AuthTokenBD()
+    if deslogarAoTrocarSenha:
+        gerenciarTokens: AuthTokenBD = AuthTokenBD()
         gerenciarTokens.deletarTokensUsuario(
-            gerenciarTokens.getIdUsuarioDoToken(token=token)["mensagem"]
+            gerenciarTokens.getIdUsuarioDoToken(token=token)
         )
-
-    return resultado
 
 
 @roteador.post(
@@ -367,16 +333,13 @@ def editarEmail(
     # normaliza dados
     novoEmail = EmailStr(novoEmail.lower().strip())
 
-    resultado = editaEmailControlador(
+    editaEmailControlador(
         senhaAtual=senhaAtual.get_secret_value(),
         novoEmail=novoEmail,
         usuario=usuario,
     )
 
-    if resultado["status"] == "200":
-        gerenciarTokens = AuthTokenBD()
-        gerenciarTokens.deletarTokensUsuario(
-            gerenciarTokens.getIdUsuarioDoToken(token=token)["mensagem"]
-        )
-
-    return resultado
+    gerenciarTokens: AuthTokenBD = AuthTokenBD()
+    gerenciarTokens.deletarTokensUsuario(
+        gerenciarTokens.getIdUsuarioDoToken(token=token)
+    )

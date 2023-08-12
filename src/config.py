@@ -17,10 +17,10 @@ class Configuracoes(BaseSettings):
     ou acessar a instância global `config` declarada neste módulo.
     """
 
-    EMAIL_SMTP: str = "email-do-email-!"
+    EMAIL_SMTP: str = "email-me-mude-!"
     """Email SMTP a ser utilizado pela aplicação"""
 
-    SENHA_SMTP: str = "senha-do-email-!"
+    SENHA_SMTP: str = "senha-me-mude-!"
     """Senha SMTP a ser utilizada pela aplicação"""
 
     SEGREDO_JWT: str = "chave-super-secreta-me-mude-!"
@@ -36,10 +36,10 @@ class Configuracoes(BaseSettings):
     """
 
     CAMINHO_IMAGEM: str = os.path.join(
-        os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "images"
+        os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "img"
     )
     """
-    Caminho onde serão armazenadas as imagens (.../images/). 
+    Caminho onde serão armazenadas as imagens (.../img/). 
     """
 
     class Config:

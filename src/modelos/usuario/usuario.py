@@ -105,7 +105,7 @@ class Usuario(BaseModel):
                 "instagram": self.instagram,
                 "twitter": self.twitter,
             },
-            "foto perfil": self.foto,
+            "foto perfil": str(self.foto), #TODO TEM QUE TIRAR ESSE STR QUANDO O CERBERUS MORRER
         }
 
         if not (self.inicioPet or self.fimPet):

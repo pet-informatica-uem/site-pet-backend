@@ -1,10 +1,11 @@
 import logging
 
+from src.modelos.excecao import NaoAutenticadoExcecao
 from src.autenticacao.autenticacao import hashSenha
 from src.modelos.usuario.usuarioBD import UsuarioBD
 
 
-def ativaconta(id: str, email: str) -> dict:
+def ativaconta(id: str, email: str) -> None:
     """
     Recebe um id de usuário e um endereço de email e tenta
     mudar o estado da conta associada a esses dados para ativo.
@@ -19,34 +20,22 @@ def ativaconta(id: str, email: str) -> dict:
     - "mensagem" contém uma mensagem informacional indicando sucesso
       ou o motivo do erro, caso este ocorra.
     """
-    try:
-        conexao = UsuarioBD()
+    conexao = UsuarioBD()
 
-        # Recupera o id a partir do email
-        resp = conexao.getUsuario(id)
-        if resp["status"] != "200":
-            raise Exception(resp["mensagem"])
+    # Recupera o id a partir do email
+    usuario = conexao.getUsuario(id)
+    if usuario["email"] != email or usuario["estado da conta"] == "ativo":
+        raise NaoAutenticadoExcecao()
 
-        usuario = resp["mensagem"]
-        if usuario["email"] != email or usuario["estado da conta"] == "ativo":
-            return {"mensagem": "Token expirada.", "status": "400"}
+    # Atualiza a senha
+    usuario["estado da conta"] = "ativo"
+    del usuario["_id"]
+    conexao.atualizarUsuario(id, usuario)
 
-        # Atualiza a senha
-        usuario["estado da conta"] = "ativo"
-        del usuario["_id"]
-        resp = conexao.atualizarUsuario(id, usuario)
-        if resp["status"] != "200":
-            raise Exception(resp["mensagem"])
-
-        logging.info("Conta ativada para o usuário com ID: " + id)
-        return {"mensagem": "Conta Ativada.", "status": "200"}
-
-    except Exception as e:
-        logging.warning("Erro no banco de dados: " + str(e))
-        return {"mensagem": "Erro interno.", "status": "500"}
+    logging.info("Conta ativada para o usuário com ID: " + id)
 
 
-def verificaSeUsuarioExiste(email: str) -> dict:
+def verificaSeUsuarioExiste(email: str) -> str:
     """
     Verifica se existe usuário associado a um email.
 
@@ -62,34 +51,22 @@ def verificaSeUsuarioExiste(email: str) -> dict:
             - {"mensagem": "Erro interno", "status": "500"}: Problema no banco de dados.
     """
 
-    try:
-        conexao = UsuarioBD()
+    conexao = UsuarioBD()
 
-        # Verifica se existe usuário com esse email
-        if conexao.getIdUsuario(email)["status"] == "404":
-            return {"mensagem": False, "status": "404"}
-        return {"mensagem": True, "status": "200"}
-
-    except Exception as e:
-        logging.warning("Erro no banco de dados: " + str(e))
-        return {"mensagem": "Erro interno.", "status": "500"}
+    # Verifica se existe usuário com esse email
+    return conexao.getIdUsuario(email)
 
 
-def atualizaSenha(email: str, senha: str) -> dict:
-    try:
-        conexao = UsuarioBD()
+def atualizaSenha(email: str, senha: str) -> None:
+    conexao = UsuarioBD()
 
-        # Recupera os dados do usuário a partir do email
-        idUsuario = conexao.getIdUsuario(email)["mensagem"]
-        dadosUsuario = conexao.getUsuario(idUsuario)["mensagem"]
+    # Recupera os dados do usuário a partir do email
+    idUsuario = conexao.getIdUsuario(email)
+    dadosUsuario = conexao.getUsuario(idUsuario)
+    dadosUsuario.pop('_id')
 
-        # Atualiza a senha
-        dadosUsuario["senha"] = hashSenha(senha)
-        conexao.atualizarUsuario(idUsuario, dadosUsuario)
+    # Atualiza a senha
+    dadosUsuario["senha"] = hashSenha(senha)
+    conexao.atualizarUsuario(idUsuario, dadosUsuario)
 
-        logging.info("Senha atualizada para o usuário com ID: " + str(id))
-        return {"mensagem": "Usuário atualizado.", "status": "200"}
-
-    except Exception as e:
-        logging.warning("Erro no banco de dados: " + str(e))
-        return {"mensagem": "Erro interno.", "status": "500"}
+    logging.info("Senha atualizada para o usuário com ID: " + str(id))

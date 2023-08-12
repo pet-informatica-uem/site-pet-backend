@@ -2,15 +2,8 @@ from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Annotated, BinaryIO
 
-from fastapi import (
-    APIRouter,
-    Depends,
-    Form,
-    HTTPException,
-    Response,
-    UploadFile,
-    status,
-)
+from fastapi import (APIRouter, Depends, Form, HTTPException, Response,
+                     UploadFile, status)
 
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.evento.evento import DadosEvento
@@ -23,6 +16,7 @@ from src.rotas.evento.eventoControlador import (
     inscricaoEventoControlador,
 )
 from src.rotas.evento.eventoInscritosControlador import InscritosEventoController
+
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, tokenAcesso
 
 # Especifica o formato das datas para serem convertidos
@@ -165,7 +159,9 @@ def listarEventos() -> dict:
         Falha, caso o evento não exista o evento.
     """,
 )
-def getInscritosEvento(idEvento: str) -> dict:
+def getInscritosEvento(
+    idEvento: str, usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)]
+) -> dict:
     inscritosController = InscritosEventoController()
 
     inscritos = inscritosController.getInscritosEvento(idEvento)
@@ -184,16 +180,13 @@ def getInscritosEvento(idEvento: str) -> dict:
     status_code=status.HTTP_201_CREATED,
 )
 def getDadosInscricaoEvento(
-    token: Annotated[str, Depends(tokenAcesso)],
+    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
     idEvento: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
     pagamento: Annotated[bool, Form()],
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
 ):
-    conexaoAuthToken = AuthTokenBD()
-
-    resp: dict = conexaoAuthToken.getIdUsuarioDoToken(token)
-    idUsuario: str = resp["mensagem"]
+    idUsuario: usuario.id
 
     resposta: dict = inscricaoEventoControlador(
         idUsuario, idEvento, nivelConhecimento, tipoDeInscricao, pagamento
