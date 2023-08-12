@@ -83,7 +83,7 @@ class EventoControlador:
 
         # Caso alguma imagem tenha sido alterada, atualiza o evento novamente para adicionar o caminho para as imagens
         if imagens["arteEvento"] or imagens["arteQrcode"]:
-            self.__eventoConexao.atualizarEvento(idEvento, dadosEventoBanco.paraBD())
+            self.__eventoConexao.atualizarEvento(idEvento, dadosEventoBanco)
 
         return idEvento
 

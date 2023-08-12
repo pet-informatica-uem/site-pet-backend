@@ -1,6 +1,5 @@
 import logging
 from typing import Annotated
-import re
 
 from fastapi import (APIRouter, Depends, Form, HTTPException, Request,
                      Response, UploadFile, status)
@@ -14,7 +13,7 @@ from src.modelos.excecao import (APIExcecaoBase, NaoAutenticadoExcecao,
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.usuario.usuario import Usuario, UsuarioSenha
 from src.modelos.usuario.validacaoCadastro import (validaCpf, validaEmail,
-                                                   validaSenha, ValidacaoCadastro)
+                                                   validaSenha)
 from src.rotas.usuario.usuarioControlador import (
     ativaContaControlador, autenticaUsuarioControlador,
     cadastraUsuarioControlador, editaEmailControlador, editarFotoControlador,
@@ -54,17 +53,15 @@ def cadastrarUsuario(
     cpf: Annotated[str, Form(max_length=200)],
     email: Annotated[EmailStr, Form()],
     senha: Annotated[SecretStr, Form(max_length=200)],
-    confirmacaoSenha: Annotated[SecretStr, Form(max_length=200)],
     curso: Annotated[str | None, Form(max_length=200)] = None,
 ) -> str:
     # valida dados
-    validar = ValidacaoCadastro()
     if (
-        not validar.cpf(cpf)
-        or not validar.senha(
-            senha.get_secret_value(), confirmacaoSenha.get_secret_value()
+        not validaCpf(cpf)
+        or not validaSenha(
+            senha.get_secret_value(), senha.get_secret_value()
         )
-        or not validar.email(email)
+        or not validaEmail(email)
     ):
         logging.info(
             "Tentativa de cadastro de usuário com cpf, senha ou email inválido."
@@ -76,7 +73,7 @@ def cadastrarUsuario(
 
     # normaliza dados
     email = EmailStr(email.lower().strip())
-    cpf :str = re.sub(r"\D", "", cpf)
+    cpf = "".join(c for c in cpf if c in "0123456789")
 
     # despacha para controlador
     id: str = cadastraUsuarioControlador(
@@ -119,11 +116,10 @@ def confirmaEmail(token: str):
 def recuperaConta(
     email: Annotated[EmailStr, Form()], request: Request, response: Response
 ):
-    validar = ValidacaoCadastro()
     email = EmailStr(email.lower())
 
     # Verifica se o email é válido
-    if not validar.email(email):
+    if not validaEmail(email):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email inválido.",
@@ -142,13 +138,13 @@ def recuperaConta(
     status_code=status.HTTP_200_OK,
     responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
-def trocaSenha(token, senha: Annotated[str, Form()]):
+def trocaSenha(token, senha: Annotated[SecretStr, Form()]):
     # Validacao basica da senha
-    if not validaSenha(senha, senha):
+    if not validaSenha(senha.get_secret_value(), senha.get_secret_value()):
         raise HTTPException(status_code=400, detail="Senha inválida.")
 
     # Despacha o token para o controlador
-    trocaSenhaControlador(token, senha)
+    trocaSenhaControlador(token, senha.get_secret_value())
 
 
 @roteador.post(
@@ -282,8 +278,7 @@ def editarDados(
 @roteador.post(
     "/alterar-senha",
     name="Editar senha do usuário autenticado",
-    description="""O usuário é capaz de editar sua senha\n
-    Caso a opção deslogarAoTrocarSenha for ativada, todos as sessões serão deslogadas ao trocar a senha.""",
+    description="""O usuário é capaz de editar sua senha. Caso a opção deslogarAoTrocarSenha for ativada, todos as sessões serão deslogadas ao trocar a senha.""",
 )
 def editarSenha(
     senhaAtual: Annotated[SecretStr, Form(max_length=200)],
@@ -292,7 +287,6 @@ def editarSenha(
     usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
-    validar = ValidacaoCadastro()
     # verifica nova senha
     if not validaSenha(
         novaSenha.get_secret_value(), novaSenha.get_secret_value()
@@ -306,7 +300,8 @@ def editarSenha(
     editaSenhaControlador(
         senhaAtual=senhaAtual.get_secret_value(),
         novaSenha=novaSenha.get_secret_value(),
-        usuario=usuario,)
+        usuario=usuario,
+    )
 
     # efetua logout de todas as sessões, caso o usuário desejar
     if deslogarAoTrocarSenha:
@@ -327,8 +322,7 @@ def editarEmail(
     usuario: Annotated[UsuarioSenha, Depends(getUsuarioAutenticado)] = ...,
     token: Annotated[str, Depends(tokenAcesso)] = ...,
 ):
-    validar = ValidacaoCadastro()
-    if not validar.email(novoEmail):
+    if not validaEmail(novoEmail):
         logging.info("Erro. Novo email não foi validado com sucesso.")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
@@ -340,7 +334,8 @@ def editarEmail(
     editaEmailControlador(
         senhaAtual=senhaAtual.get_secret_value(),
         novoEmail=novoEmail,
-        usuario=usuario,)
+        usuario=usuario,
+    )
 
     gerenciarTokens: AuthTokenBD = AuthTokenBD()
     gerenciarTokens.deletarTokensUsuario(
