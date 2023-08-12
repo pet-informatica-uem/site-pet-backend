@@ -65,12 +65,11 @@ class UsuarioBD:
     def getTodosUsuarios(self) -> dict:
         return {"mensagem": list(self.__colecao.find()), "status": "200"}
 
-    def getListaPetianos(self) -> dict:
-        return {
-            "mensagem": list(self.__colecao.find({"tipo conta": "petiano"})),
-            "status": "200",
-        }
-
+    def getListaPetianos(self) -> list:
+        if resultado :=  self.__colecao.find({"tipo conta": "petiano"}):
+            return  list(resultado)    
+        raise APIExcecaoBase(message = "Erro no BD ao resgatar dados de usuario") 
+    
     def getListaPetianosEgressos(self) -> dict:
         return {
             "mensagem": list(self.__colecao.find({"tipo conta": "petiano egresso"})),

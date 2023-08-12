@@ -2,7 +2,7 @@ from src.modelos.usuario.usuarioBD import UsuarioBD
 
 
 def infoPetianos() -> list:
-    petianos = UsuarioBD().getListaPetianos()["mensagem"]
+    petianos = UsuarioBD().getListaPetianos()
     infoPetianos = []
 
     for petiano in petianos:
