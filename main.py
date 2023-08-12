@@ -20,10 +20,7 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
-origins = [
-    'http://localhost:3000',
-    'http://localhost'
-]
+origins = ["http://localhost:3000", "http://localhost"]
 
 # Caso não existam, cria as pastas para armazenar imagens.
 criaPastas()
@@ -40,7 +37,7 @@ petBack.add_middleware(
 )
 petBack.middleware("http")(middlewareExcecao)
 petBack.include_router(roteadorUsuario)
-petBack.include_router(roteadorPetianos)
-petBack.include_router(roteadorEvento)
+# petBack.include_router(roteadorPetianos)
+# petBack.include_router(roteadorEvento)
 
 logging.info("Backend inicializado")

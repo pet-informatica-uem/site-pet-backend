@@ -1,6 +1,6 @@
 import os
 
-from pydantic import BaseSettings
+from pydantic import BaseSettings, MongoDsn
 
 
 class Configuracoes(BaseSettings):
@@ -40,6 +40,16 @@ class Configuracoes(BaseSettings):
     )
     """
     Caminho onde serão armazenadas as imagens (.../img/). 
+    """
+
+    URI_BD: MongoDsn = MongoDsn("mongodb://localhost:27017/")
+    """
+    URI para o banco de dados MongoDB.
+    """
+
+    NOME_BD: str = "petBD"
+    """
+    Nome do banco de dados utilizado pela aplicação.
     """
 
     class Config:
