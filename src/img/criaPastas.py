@@ -3,6 +3,7 @@ import os
 
 
 def criaPastas():
+    """Cria a estrutura de pastas para armazenar as imagens, caso já não exista."""
     directories = [
         "img",
         "img/usuarios",

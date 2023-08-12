@@ -3,8 +3,12 @@ from typing import BinaryIO
 
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
-from src.img.operacoesImagem import (armazenaArteEvento, armazenaQrCodeEvento,
-                                     deletaImagem, validaImagem)
+from src.img.operacoesImagem import (
+    armazenaArteEvento,
+    armazenaQrCodeEvento,
+    deletaImagem,
+    validaImagem,
+)
 from src.modelos.evento.evento import DadosEvento
 from src.modelos.evento.eventoBD import EventoBD
 from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
