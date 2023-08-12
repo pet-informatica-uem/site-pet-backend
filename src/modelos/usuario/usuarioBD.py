@@ -3,9 +3,13 @@ from typing import Any
 from bson.objectid import ObjectId
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
+from bson.errors import InvalidId
 
-from src.modelos.excecao import (APIExcecaoBase, UsuarioJaExisteExcecao,
-                             UsuarioNaoEncontradoExcecao)
+from src.modelos.excecao import (
+    APIExcecaoBase,
+    UsuarioJaExisteExcecao,
+    UsuarioNaoEncontradoExcecao,
+)
 from src.modelos.usuario.usuarioValidator import ValidarUsuario
 
 
@@ -26,16 +30,22 @@ class UsuarioBD:
         else:
             raise APIExcecaoBase(message="Erro de validação")
 
-    def deletarUsuario(self, idUsuario: str) -> dict:
-        idUsuario = ObjectId(idUsuario)
+    def deletarUsuario(self, idUsuario: str):
+        try:
+            idUsuario = ObjectId(idUsuario)
+        except InvalidId:
+            raise UsuarioNaoEncontradoExcecao()
+
         resultado = self.__colecao.delete_one({"_id": idUsuario})
-        if resultado.deleted_count:
-            return True 
-        
-        raise UsuarioNaoEncontradoExcecao()
+        if resultado.deleted_count != 1:
+            raise UsuarioNaoEncontradoExcecao()
 
     def atualizarUsuario(self, idUsuario: str, dadoUsuario: object) -> None:
-        idUsuario = ObjectId(idUsuario)
+        try:
+            idUsuario = ObjectId(idUsuario)
+        except InvalidId:
+            raise UsuarioNaoEncontradoExcecao()
+
         if self.__validarDados.validate(dadoUsuario):
             try:
                 self.__colecao.update_one({"_id": idUsuario}, {"$set": dadoUsuario})
@@ -45,7 +55,11 @@ class UsuarioBD:
             raise APIExcecaoBase(message="Erro de validação")
 
     def getUsuario(self, idUsuario: str) -> dict[str, Any]:
-        idUsuario = ObjectId(idUsuario)
+        try:
+            idUsuario = ObjectId(idUsuario)
+        except InvalidId:
+            raise UsuarioNaoEncontradoExcecao()
+
         if resultado := self.__colecao.find_one({"_id": idUsuario}):
             return resultado
         else:
@@ -53,7 +67,11 @@ class UsuarioBD:
 
     # recebe uma lista de IDs de usuários
     def getListaUsuarios(self, listaIdUsuarios: list) -> dict:
-        listaIdUsuarios = [ObjectId(usuario) for usuario in listaIdUsuarios]
+        try:
+            listaIdUsuarios = [ObjectId(usuario) for usuario in listaIdUsuarios]
+        except InvalidId:
+            raise UsuarioNaoEncontradoExcecao()
+
         if resultado := self.__colecao.find({"_id": {"$in": listaIdUsuarios}}):
             return {
                 "mensagem": list(resultado),
@@ -62,14 +80,14 @@ class UsuarioBD:
         else:
             return {"mensagem": "Algum usuário não foi encontrado", "status": "404"}
 
-    def getTodosUsuarios(self) -> dict:
-        return {"mensagem": list(self.__colecao.find()), "status": "200"}
+    def getTodosUsuarios(self) -> list:
+        return list(self.__colecao.find())
 
     def getListaPetianos(self) -> list:
-        if resultado :=  self.__colecao.find({"tipo conta": "petiano"}):
-            return  list(resultado)    
-        raise APIExcecaoBase(message = "Erro no BD ao resgatar dados de usuario") 
-    
+        if resultado := self.__colecao.find({"tipo conta": "petiano"}):
+            return list(resultado)
+        raise APIExcecaoBase(message="Erro no BD ao resgatar dados de usuario")
+
     def getListaPetianosEgressos(self) -> dict:
         return {
             "mensagem": list(self.__colecao.find({"tipo conta": "petiano egresso"})),
