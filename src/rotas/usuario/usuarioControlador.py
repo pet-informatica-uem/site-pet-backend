@@ -1,13 +1,25 @@
 import logging
 import secrets
 from datetime import datetime, timedelta
+from bson import ObjectId
 
 from fastapi import UploadFile
+from pydantic import EmailStr, SecretStr
+from src.modelos.autenticacao.autenticacaoClad import TokenAutenticacaoClad
+from src.rotas.usuario.usuarioClad import (
+    UsuarioAtualizar,
+    UsuarioAtualizarEmail,
+    UsuarioAtualizarSenha,
+    UsuarioCriar,
+)
 
 from src.modelos.excecao import (
+    APIExcecaoBase,
     ImagemInvalidaExcecao,
     NaoAutenticadoExcecao,
     NaoEncontradoExcecao,
+    UsuarioJaExisteExcecao,
+    UsuarioNaoEncontradoExcecao,
 )
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
@@ -19,14 +31,9 @@ from src.autenticacao.jwtoken import (
 from src.config import config
 from src.email.operacoesEmail import resetarSenha, verificarEmail
 from src.img.operacoesImagem import deletaImagem, validaImagem, armazenaFotoUsuario
-from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
-from src.modelos.usuario.usuario import EstadoConta, TipoConta, UsuarioSenha
-from src.modelos.usuario.usuarioBD import UsuarioBD
-from src.rotas.usuario.usuarioUtil import (
-    ativaconta,
-    atualizaSenha,
-    verificaSeUsuarioExiste,
-)
+from src.modelos.usuario.usuario import TipoConta, Usuario
+from src.modelos.bd import colecaoUsuarios
+from pymongo.errors import DuplicateKeyError
 
 
 def ativaContaControlador(token: str) -> None:
@@ -44,12 +51,15 @@ def ativaContaControlador(token: str) -> None:
     id: str = msg["idUsuario"]
     email: str = msg["email"]
 
-    ativaconta(id, email)
+    usuario = getUsuarioControlador(id)
+    if usuario.email == email:
+        usuario.emailConfirmado = True
+        colecaoUsuarios.update_one(
+            {"_id": ObjectId(id)}, usuario.model_dump()
+        )
 
 
-def cadastraUsuarioControlador(
-    *, nomeCompleto: str, cpf: str, email: str, senha: str, curso: str | None
-) -> str:
+def cadastraUsuarioControlador(dadosUsuario: UsuarioCriar) -> Usuario:
     """
     Cria uma conta com os dados fornecidos, e envia um email
     de confirmação de criação de conta ao endereço fornecido.
@@ -57,44 +67,60 @@ def cadastraUsuarioControlador(
         A criação da conta pode não suceder por erro na validação de dados,
         por já haver uma conta cadastrada com tal CPF ou email ou por falha
         de conexão com o banco de dados.
-        """
+    """
 
-    # 3. verifico se o email já existe e crio o usuário
-    bd: UsuarioBD = UsuarioBD()
-    id: str = bd.criarUsuario(
-        {
-            "nome": nomeCompleto,
-            "email": email,
-            "cpf": cpf,
-            "curso": curso,
-            "estado da conta": EstadoConta.INATIVO,
-            "senha": hashSenha(senha),
-            "tipo conta": TipoConta.ESTUDANTE,
-            "data criacao": datetime.now(),
-        }
-    )
+    # normaliza dados
+    dadosUsuario.email = dadosUsuario.email.lower().strip()
+    dadosUsuario.cpf = "".join(c for c in dadosUsuario.cpf if c in "0123456789")
+    dadosUsuario.nome = dadosUsuario.nome.strip()
+    dadosUsuario.curso = dadosUsuario.curso.strip()
 
-    # 4. gera token de ativação válido por 24h
-    token: str = geraTokenAtivaConta(id, email, timedelta(days=1))
+    # hash senha
+    dadosUsuario.senha = hashSenha(dadosUsuario.senha.get_secret_value()) # type: ignore
 
-    # 5. manda email de ativação
+    d = {
+        "_id": secrets.token_hex(16),
+        "emailConfirmado": False,
+        "tipoConta": TipoConta.ESTUDANTE,
+        "dataCriacao": datetime.now(),
+    }
+
+    d.update(dadosUsuario.model_dump())
+
+    # cria instância de usuario
+    usuario: Usuario = Usuario(**d)
+
+    # cria usuario no bd
+    try:
+        id = colecaoUsuarios.insert_one(usuario.model_dump()).inserted_id
+        usuario._id = str(id)
+    except DuplicateKeyError:
+        logging.error("Usuário já existe no banco de dados")
+        raise UsuarioJaExisteExcecao()
+
+    # gera token de ativação válido por 24h
+    token: str = geraTokenAtivaConta(usuario._id, dadosUsuario.email, timedelta(days=1))
+
+    # manda email de ativação
     # não é necessário fazer urlencode pois jwt é url-safe
     linkConfirmacao: str = (
         config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token
     )
     # print(linkConfirmacao)
-    verificarEmail(config.EMAIL_SMTP, config.SENHA_SMTP, email, linkConfirmacao)
+    verificarEmail(
+        config.EMAIL_SMTP, config.SENHA_SMTP, dadosUsuario.email, linkConfirmacao
+    )
 
-    return id
+    return getUsuarioControlador(id)
 
 
 # Envia um email para trocar de senha se o email estiver cadastrado no bd
 def recuperaContaControlador(email: str) -> None:
     # Verifica se o usuário está cadastrado no bd
-    verificaSeUsuarioExiste(email)
+    if not colecaoUsuarios.find_one({"email": email}):
+        return
 
     # Gera o link e envia o email se o usuário estiver cadastrado
-
     link: str = geraLink(email)
     resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
 
@@ -103,8 +129,15 @@ def trocaSenhaControlador(token, senha: str) -> None:
     # Verifica o token e recupera o email
     email: str = processaTokenTrocaSenha(token)
 
-    # Atualiza a senha no bd
-    atualizaSenha(email, senha)
+    usuario: Usuario = Usuario(**colecaoUsuarios.find_one({"email": email}))  # type: ignore
+
+    usuario.senha = hashSenha(senha)
+
+    colecaoUsuarios.update_one(
+        {"_id": ObjectId(usuario._id)}, usuario.model_dump()
+    )
+
+    logging.info("Senha atualizada para o usuário com ID: " + str(usuario._id))
 
 
 def autenticaUsuarioControlador(email: str, senha: str) -> dict:
@@ -114,133 +147,120 @@ def autenticaUsuarioControlador(email: str, senha: str) -> dict:
     """
 
     # verifica senha
-    conexaoUsuario: UsuarioBD = UsuarioBD()
-
-    id: str = conexaoUsuario.getIdUsuario(email)
-
-    usuario: UsuarioSenha = UsuarioSenha.deBd(conexaoUsuario.getUsuario(id))
+    usuario: Usuario = Usuario(**colecaoUsuarios.find_one({"email": email}))  # type: ignore
 
     if not conferirHashSenha(senha, usuario.senha):
         raise NaoAutenticadoExcecao()
 
     # está ativo?
-    if usuario.estadoConta != EstadoConta.ATIVO:
+    if usuario.emailConfirmado != True:
         raise NaoAutenticadoExcecao()
 
     # cria token
     tk: str = secrets.token_urlsafe()
-    conexaoToken: AuthTokenBD = AuthTokenBD()
-    conexaoToken.criarToken(
-        {
-            "_id": tk,
-            "idUsuario": usuario.id,
-            "validade": datetime.now() + timedelta(days=2),
-        }
+    TokenAutenticacaoClad.criar(
+        tk,
+        usuario._id,
+        datetime.now() + timedelta(days=2),
     )
 
     # retorna token
     return {"access_token": tk, "token_type": "bearer"}
 
 
-def getUsuarioAutenticadoControlador(token: str) -> UsuarioSenha:
+def getUsuarioAutenticadoControlador(token: str) -> Usuario:
     """
     Obtém dados do usuário dono do token fornecido. Falha se o token estiver expirado
     ou for inválido.
     """
-    conexaoAuthToken: AuthTokenBD = AuthTokenBD()
 
     try:
-        id: str = conexaoAuthToken.getIdUsuarioDoToken(token)
+        id: str = TokenAutenticacaoClad.get(token).idUsuario
     except NaoEncontradoExcecao:
         raise NaoAutenticadoExcecao()
 
-    conexaoUsuario: UsuarioBD = UsuarioBD()
+    usuario: Usuario = Usuario(**colecaoUsuarios.find_one({"_id": ObjectId(id)}))  # type: ignore
 
-    usuario: UsuarioSenha = UsuarioSenha.deBd(conexaoUsuario.getUsuario(id))
     return usuario
 
 
-def getUsuarioControlador(id: str) -> UsuarioSenha:
+def getUsuarioControlador(id: str) -> Usuario:
     """
     Obtém dados do usuário com o id fornecido.
     """
-    conexaoUsuario: UsuarioBD = UsuarioBD()
-    return UsuarioSenha.deBd(conexaoUsuario.getUsuario(id))
+
+    if usuario := colecaoUsuarios.find_one({"_id": ObjectId(id)}):
+        return Usuario(**usuario)
+
+    raise UsuarioNaoEncontradoExcecao()
 
 
-def getTodosUsuariosControlador() -> list[UsuarioSenha]:
-    conexaoUsuario: UsuarioBD = UsuarioBD()
-    return [UsuarioSenha.deBd(u) for u in conexaoUsuario.getTodosUsuarios()]
+def getTodosUsuariosControlador() -> list[Usuario]:
+    return [Usuario(**u) for u in colecaoUsuarios.find()]
 
 
 def editaUsuarioControlador(
-    *,
-    usuario: UsuarioSenha,
-    nomeCompleto: str,
-    curso: str | None,
-    redesSociais: dict | None
-) -> None:
+    id: str,
+    dadosUsuario: UsuarioAtualizar,
+) -> Usuario:
     """
-    Atualiza os dados básicos (nome, curso, redes sociais) da conta de um usuário existente.
+    Atualiza os dados básicos (nome, curso, redes sociais, foto) da conta de um usuário existente.
 
     Este controlador assume que as redes sociais estejam no formato de links ou None.
 
     A atualização da conta pode não suceder por erro na validação de dados.
     """
-    bd: UsuarioBD = UsuarioBD()
-    usuarioDados: dict = usuario.paraBd()
 
-    if redesSociais:
-        usuarioDados.update(
-            {
-                "nome": nomeCompleto,
-                "curso": curso,
-                "redes sociais": redesSociais,
-            }
-        )
-    else:
-        usuarioDados.update(
-            {
-                "nome": nomeCompleto,
-                "curso": curso,
-            }
-        )
+    # obtém usuário
+    usuario: Usuario = getUsuarioControlador(id)
 
-    id: str = usuarioDados.pop("_id")
-    bd.atualizarUsuario(id, usuarioDados)
+    # verifica se o usuário é petiano
+    if usuario.tipoConta != TipoConta.PETIANO:
+        dadosUsuario.github = None
+        dadosUsuario.linkedin = None
+        dadosUsuario.instagram = None
+
+    # normaliza dados
+    if dadosUsuario.nome:
+        dadosUsuario.nome = dadosUsuario.nome.strip()
+    if dadosUsuario.curso:
+        dadosUsuario.curso = dadosUsuario.curso.strip()
+
+    # cria instância de usuario
+    usuario = Usuario(
+        **usuario.model_dump().update(dadosUsuario.model_dump(exclude_none=True))  # type: ignore
+    )
+
+    # altera o usuario no bd
+    colecaoUsuarios.update_one(
+        {"_id": ObjectId(usuario._id)}, {"$set": usuario.model_dump()}
+    )
+
+    return usuario
 
 
 def deletaUsuarioControlador(id: str):
-    bd: UsuarioBD = UsuarioBD()
-    bd.deletarUsuario(id)
+    getUsuarioControlador(id)
+
+    colecaoUsuarios.delete_one({"_id": ObjectId(id)})
 
 
-def editaSenhaControlador(
-    *, senhaAtual: str, novaSenha: str, usuario: UsuarioSenha
-) -> None:
+def editaSenhaControlador(dadosSenha: UsuarioAtualizarSenha, usuario: Usuario) -> None:
     """
-    Atualiza a senha de um usuário existente.
-
-        # Gera o link e envia o email se o usuário estiver cadastrado
-        if retorno.get("status") == "200":
-            link = geraLink(email)
-            resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
+    Atualiza a senha de um usuário existente caso a senha antiga seja correta.
 
     A atualização da conta pode não suceder por erro na validação de dados.
     """
-    bd: UsuarioBD = UsuarioBD()
-    usuarioDados: dict = usuario.paraBd()
-    if conferirHashSenha(senhaAtual, usuarioDados["senha"]):
-        usuarioDados.update({"senha": hashSenha(novaSenha)})
-        id = usuarioDados.pop("_id")
-        bd.atualizarUsuario(id, usuarioDados)
+    if conferirHashSenha(dadosSenha.senha.get_secret_value(), usuario.senha):
+        usuario.senha = hashSenha(dadosSenha.novaSenha.get_secret_value())
+        colecaoUsuarios.update_one(
+            {"_id": ObjectId(usuario._id)}, {"$set": usuario.model_dump()}
+        )
     else:
-        raise NaoAutenticadoExcecao()
+        raise APIExcecaoBase(mensagem="Senha incorreta")
 
 
-def editaEmailControlador(
-    *, senhaAtual: str, novoEmail: str, usuario: UsuarioSenha
-) -> None:
+def editaEmailControlador(dadosEmail: UsuarioAtualizarEmail, usuario: Usuario) -> None:
     """
     Atualiza o email de um usuário existente.
 
@@ -250,28 +270,16 @@ def editaEmailControlador(
 
     A atualização da conta pode não suceder por erro na validação de dados.
     """
-    bd: UsuarioBD = UsuarioBD()
-    usuarioDados: dict = usuario.paraBd()
-    if conferirHashSenha(senhaAtual, usuarioDados["senha"]):
-        usuarioDados.update({"email": novoEmail, "estado da conta": "inativo"})
-        id: str = usuarioDados.pop("_id")
-        bd.atualizarUsuario(id, usuarioDados)
-        token24h: str = geraTokenAtivaConta(id, novoEmail, timedelta(days=1))
-        linkConfirmacao: str = (
-            config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token24h
+    if conferirHashSenha(dadosEmail.senha.get_secret_value(), usuario.senha):
+        usuario.email = dadosEmail.novoEmail
+        colecaoUsuarios.update_one(
+            {"_id": ObjectId(usuario._id)}, {"$set": usuario.model_dump()}
         )
-        verificarEmail(
-            emailPet=config.EMAIL_SMTP,
-            senhaPet=config.SENHA_SMTP,
-            emailDestino=novoEmail,
-            link=linkConfirmacao,
-        )
-        logging.info("Dados do usuário atualizados, id: " + str(id))
     else:
-        raise NaoAutenticadoExcecao()
+        raise APIExcecaoBase(mensagem="Senha incorreta")
 
 
-def editarFotoControlador(*, usuario: UsuarioSenha, foto: UploadFile | None) -> None:
+def editarFotoControlador(usuario: Usuario, foto: UploadFile) -> None:
     """
     Atualiza a foto de perfil de um usuário existente.
 
@@ -279,14 +287,14 @@ def editarFotoControlador(*, usuario: UsuarioSenha, foto: UploadFile | None) -> 
 
     A atualização da conta pode não suceder por erro na validação de dados.
     """
-    bd: UsuarioBD = UsuarioBD()
-    usuarioDados: dict = usuario.paraBd()
-
-    if not validaImagem(foto.file):  # type: ignore
+    if not validaImagem(foto.file):
         raise ImagemInvalidaExcecao()
 
-    deletarImagem(usuarioDados["nome"], ["usuarios"])
-    caminhoFotoPerfil: str = armazenaFotoUsuario(usuarioDados["nome"], foto.file)  # type: ignore
-    usuarioDados["foto perfil"] = caminhoFotoPerfil
-    id: str = usuarioDados.pop("_id")
-    bd.atualizarUsuario(id, usuarioDados)
+    deletaImagem(usuario.nome, ["usuarios"])
+    caminhoFotoPerfil: str = armazenaFotoUsuario(usuario.nome, foto.file)  # type: ignore
+    usuario.foto = caminhoFotoPerfil  # type: ignore
+
+    # atualiza no bd
+    colecaoUsuarios.update_one(
+        {"_id": ObjectId(usuario._id)}, {"$set": usuario.model_dump()}
+    )

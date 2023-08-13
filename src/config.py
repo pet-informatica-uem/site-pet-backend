@@ -1,6 +1,7 @@
 import os
+from pydantic_core import Url
 
-from pydantic import BaseSettings, MongoDsn
+from pydantic_settings import BaseSettings
 
 
 class Configuracoes(BaseSettings):
@@ -42,7 +43,7 @@ class Configuracoes(BaseSettings):
     Caminho onde serão armazenadas as imagens (.../img/). 
     """
 
-    URI_BD: MongoDsn = MongoDsn("mongodb://localhost:27017/")
+    URI_BD: Url = Url("mongodb://localhost:27017/")
     """
     URI para o banco de dados MongoDB.
     """

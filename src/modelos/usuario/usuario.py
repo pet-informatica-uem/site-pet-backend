@@ -25,7 +25,7 @@ class Usuario(BaseModel):
     Classe que representa um usuário do sistema.
     """
 
-    id: str
+    _id: str
     "Identificador único."
 
     email: EmailStr
@@ -43,34 +43,34 @@ class Usuario(BaseModel):
     nome: str
     "Nome completo do usuário."
 
-    curso: str | None
+    curso: str | None = None
     "Curso do usuário."
 
     tipoConta: TipoConta
     "Tipo de conta. Representa permissões."
 
-    criado: datetime
+    dataCriacao: datetime
     "Data e hora de criação da conta."
 
     # campos exclusivos para petianos
 
-    inicioPet: date | None
+    inicioPet: date | None = None
     "Data de ingresso no PET-Informática."
 
-    fimPet: date | None
+    fimPet: date | None = None
     "Data de desligamento do PET-Informática."
 
-    github: HttpUrl | None
+    github: HttpUrl | None = None
     "Link para o Github pessoal."
 
-    linkedin: HttpUrl | None
+    linkedin: HttpUrl | None = None
     "Link para o LinkedIn pessoal."
 
-    instagram: HttpUrl | None
+    instagram: HttpUrl | None = None
     "Link para o Instagram pessoal."
 
-    twitter: HttpUrl | None
+    twitter: HttpUrl | None = None
     "Link para o Twitter pessoal."
 
-    foto: Path | None
+    foto: Path | None = None
     "Caminho para foto de perfil do petiano."

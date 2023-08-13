@@ -49,7 +49,7 @@ def armazenaFotoUsuario(nomeUsuario: str, arquivo: str | bytes) -> str | None:
     :return -- caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
     path = os.path.join(config.CAMINHO_IMAGEM, "usuarios")
-    retorno = __armazenaImagem(path, nomeUsuario, arquivo)  # type: ignore
+    retorno = __armazenaImagem(path, nomeUsuario, arquivo)
 
     return retorno
 
@@ -93,7 +93,7 @@ def procuraImagem(nomeImagem: str, searchPath: list[str] = []) -> list[str]:
     return matches
 
 
-def deletaImagem(nomeImagem: str, path: list[str] = []) -> list[str]:
+def deletaImagem(nomeImagem: str, path: list[str] = []) -> list[str] | None:
     """Deleta uma imagem. Caso seja encontrado mais de uma imagem com o termo de busca, todas serão deletadas.
 
     :param nomeImagem -- nome da imagem para ser removida
@@ -111,7 +111,7 @@ def deletaImagem(nomeImagem: str, path: list[str] = []) -> list[str]:
     return None
 
 
-def __armazenaImagem(path: str, nomeBase: str, imagem: bytes | BinaryIO) -> str | None:
+def __armazenaImagem(path: str, nomeBase: str, imagem: bytes | BinaryIO | str) -> str | None:
     """Armazena a imagem no path fornecido usando um nome base.
 
     :param path -- caminho onde será armazenado a imagem
@@ -123,7 +123,7 @@ def __armazenaImagem(path: str, nomeBase: str, imagem: bytes | BinaryIO) -> str 
 
     try:
         with Image.open(imagem, formats=["PNG", "JPEG"]) as img:
-            extensao = img.format.lower()  # type: ignore
+            extensao = img.format.lower() # type: ignore
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
             pathDefinitivo = os.path.join(path, nome)
             img.save(pathDefinitivo)

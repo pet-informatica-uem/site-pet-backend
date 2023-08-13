@@ -55,7 +55,8 @@ def geraLink(email: str) -> str:
     token = jwt.encode(token_info, config.SEGREDO_JWT, algorithm="HS256")
 
     # Gera o link para a troca de senha
-    url = config.CAMINHO_BASE + "usuarios/troca-senha/?token=" + token
+    # TODO ver com o front qual vai ser o link
+    url = config.CAMINHO_BASE + "esqueci-senha/?token=" + token
     return url
 
 
