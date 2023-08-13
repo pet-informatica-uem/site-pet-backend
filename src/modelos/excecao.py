@@ -1,15 +1,15 @@
+from typing import Any, Type
+
+from fastapi import status
 from fastapi.responses import JSONResponse
 
-from typing import Type
-from fastapi import status
-
 from src.modelos.erros import (
+    AcaoNaoCompletaErro,
     ErroBase,
     JaExisteErro,
     NaoAutenticadoErro,
     NaoAutorizadoErro,
     NaoEncontradoErro,
-    AcaoNaoCompletaErro,
 )
 
 
@@ -133,7 +133,9 @@ class TokenInvalidoExcecao(APIExcecaoBase):
     code = status.HTTP_400_BAD_REQUEST
 
 
-def listaRespostasExcecoes(*args: Type[APIExcecaoBase]) -> dict:
+def listaRespostasExcecoes(
+    *args: Type[APIExcecaoBase],
+) -> dict[int | str, dict[str, Any]]:
     """Given BaseAPIException classes, return a dict of responses used on FastAPI endpoint definition, with the format:
     {statuscode: schema, statuscode: schema, ...}"""
     respostas = dict()

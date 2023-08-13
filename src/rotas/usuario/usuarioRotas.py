@@ -4,17 +4,8 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
-from src.modelos.autenticacao.autenticacaoClad import TokenAutenticacaoClad
-from src.modelos.usuario.usuario import TipoConta, Usuario
-from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 
-from src.rotas.usuario.usuarioClad import (
-    UsuarioAtualizar,
-    UsuarioAtualizarEmail,
-    UsuarioAtualizarSenha,
-    UsuarioCriar,
-    UsuarioLer,
-)
+from src.modelos.autenticacao.autenticacaoClad import TokenAutenticacaoClad
 from src.modelos.excecao import (
     APIExcecaoBase,
     NaoAutenticadoExcecao,
@@ -22,6 +13,15 @@ from src.modelos.excecao import (
     UsuarioJaExisteExcecao,
     UsuarioNaoEncontradoExcecao,
     listaRespostasExcecoes,
+)
+from src.modelos.usuario.usuario import TipoConta, Usuario
+from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
+from src.rotas.usuario.usuarioClad import (
+    UsuarioAtualizar,
+    UsuarioAtualizarEmail,
+    UsuarioAtualizarSenha,
+    UsuarioCriar,
+    UsuarioLer,
 )
 from src.rotas.usuario.usuarioControlador import (
     ativaContaControlador,
@@ -57,7 +57,7 @@ tokenAcesso: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="/usuarios/log
 def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
     try:
         return getUsuarioAutenticadoControlador(token)
-    except NaoAutenticadoExcecao as e:
+    except NaoAutenticadoExcecao:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Não autenticado",
@@ -293,12 +293,6 @@ def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
     responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
 def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    exc = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Não autenticado",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
     # obtém dados
     email: str = dados.username
     senha: str = dados.password

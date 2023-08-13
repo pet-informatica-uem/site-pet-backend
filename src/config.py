@@ -1,6 +1,6 @@
 import os
-from pydantic_core import Url
 
+from pydantic_core import Url
 from pydantic_settings import BaseSettings
 
 
@@ -18,10 +18,10 @@ class Configuracoes(BaseSettings):
     ou acessar a instância global `config` declarada neste módulo.
     """
 
-    EMAIL_SMTP: str = "pet123"
+    EMAIL_SMTP: str = "EMAIL-NAO-MUDAR-AQUI-VEJA-O-COMENTÁRIO-ACIMA-!"
     """Email SMTP a ser utilizado pela aplicação"""
 
-    SENHA_SMTP: str = "pet123"
+    SENHA_SMTP: str = "SENHA-NÃO-MUDAR-AQUI-VEJA-O-COMENTÁRIO-ACIMA-!"
     """Senha SMTP a ser utilizada pela aplicação"""
 
     SEGREDO_JWT: str = "chave-super-secreta-me-mude-!"

@@ -1,8 +1,9 @@
 from datetime import datetime
+
 from pydantic import BaseModel, Field
-from src.modelos.excecao import NaoEncontradoExcecao
 
 from src.modelos.bd import colecaoTokens
+from src.modelos.excecao import NaoEncontradoExcecao
 
 
 class TokenAutenticacao(BaseModel):

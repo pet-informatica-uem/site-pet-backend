@@ -54,7 +54,7 @@ class ValidacaoCadastro:
         """
 
         # expressao regular do gmail:
-        regex: re = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b"
+        regex: str = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,7}\b"
 
         # vendo se o gmail esta na expressao regular:
         return bool(re.fullmatch(regex, email))
@@ -80,5 +80,3 @@ class ValidacaoCadastro:
         if senha.isalnum():  # nao tem caracteres especiais
             return False
         return True
-
-print(ValidacaoCadastro.cpf('529.982.247-25'))

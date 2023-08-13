@@ -1,6 +1,5 @@
 from pathlib import Path
-from typing import Annotated
-from fastapi import UploadFile
+
 from pydantic import BaseModel, EmailStr, SecretStr, field_validator
 
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
@@ -14,19 +13,19 @@ class UsuarioCriar(BaseModel):
     curso: str
 
     @field_validator("cpf")
-    def cpf_valido(cls, v):
+    def cpf_valido(cls, v: str):
         if not ValidacaoCadastro.cpf(v):
             raise ValueError("CPF inválido")
         return v
 
     @field_validator("email")
-    def email_valido(cls, v):
+    def email_valido(cls, v: EmailStr):
         if not ValidacaoCadastro.email(v):
             raise ValueError("Email inválido")
         return v
 
     @field_validator("senha")
-    def senha_valida(cls, v):
+    def senha_valida(cls, v: SecretStr):
         if not ValidacaoCadastro.senha(v.get_secret_value()):
             raise ValueError("Senha inválida")
         return v
@@ -59,7 +58,7 @@ class UsuarioAtualizarSenha(BaseModel):
     novaSenha: SecretStr
 
     @field_validator("novaSenha")
-    def novaSenha_valida(cls, v):
+    def novaSenha_valida(cls, v: SecretStr):
         if not ValidacaoCadastro.senha(v.get_secret_value()):
             raise ValueError("Senha inválida")
         return v
@@ -70,7 +69,7 @@ class UsuarioAtualizarEmail(BaseModel):
     novoEmail: EmailStr
 
     @field_validator("novoEmail")
-    def novoEmail_valido(cls, v):
+    def novoEmail_valido(cls, v: EmailStr):
         if not ValidacaoCadastro.email(v):
             raise ValueError("Email inválido")
         return v

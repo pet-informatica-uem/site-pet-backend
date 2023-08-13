@@ -7,7 +7,12 @@ from pymongo.errors import DuplicateKeyError
 
 from src.modelos.evento.dadosEvento import ValidarEvento
 from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
-from src.modelos.excecao import JaExisteExcecao, NaoEncontradoExcecao, NaoAtualizadaExcecao
+from src.modelos.excecao import (
+    JaExisteExcecao,
+    NaoAtualizadaExcecao,
+    NaoEncontradoExcecao,
+)
+
 
 class EventoBD:
     def __init__(self) -> None:
@@ -40,7 +45,7 @@ class EventoBD:
             try:
                 # criar documento com os dados do evento
                 resultado = self.__colecao.insert_one(dadosEvento)
-                
+
                 dadosListaInscritos["idEvento"] = resultado.inserted_id
                 # criar documento com os inscritos do evento
                 self.__insctirosEvento.criarListaInscritos(dadosListaInscritos)
@@ -52,30 +57,28 @@ class EventoBD:
             raise Exception(self.__validarEvento.errors)  # type: ignore
 
     def removerEvento(self, idEvento: str) -> bool:
-        idEvento :ObjectId = ObjectId(idEvento)
+        idEvento: ObjectId = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"_id": idEvento})
         if resultado:
             self.__insctirosEvento.deletarListaInscritos(resultado["_id"])
             self.__colecao.delete_one({"_id": idEvento})
             return True
         else:
-            return NaoEncontradoExcecao(messege = "Evento não encontrado. ")
+            return NaoEncontradoExcecao(messege="Evento não encontrado. ")
 
     def atualizarEvento(self, idEvento: str, dadosEvento: object) -> ObjectId:
-        idEvento :ObjectId = ObjectId(idEvento)
+        idEvento: ObjectId = ObjectId(idEvento)
 
-        dadosVagasOfertadas :dict = dadosEvento.pop("vagas ofertadas")
+        dadosVagasOfertadas: dict = dadosEvento.pop("vagas ofertadas")
 
-        evento :dict = self.__colecao.find_one({"_id": idEvento})
-        dadosEvento["data criação"] :dict = evento["data criação"]  
+        evento: dict = self.__colecao.find_one({"_id": idEvento})
+        dadosEvento["data criação"]: dict = evento["data criação"]
 
         if self.__validarEvento.validate(dadosEvento):  # type: ignore
-            try: 
-                self.__colecao.update_one(
-                    {"_id": idEvento}, {"$set": dadosEvento}
-                )
-                
-                idEvento :ObjectId = self.__insctirosEvento.atualizarVagasOfertadas(
+            try:
+                self.__colecao.update_one({"_id": idEvento}, {"$set": dadosEvento})
+
+                idEvento: ObjectId = self.__insctirosEvento.atualizarVagasOfertadas(
                     evento["_id"], dadosVagasOfertadas
                 )
 
@@ -88,17 +91,19 @@ class EventoBD:
     def listarEventos(self) -> list:
         return list(self.__colecao.find())
 
-    def getEvento(self, idEvento: str) -> dict:   #AQUI TA ERRADO, AQUI É getEvento O outro É PELO NOME.
+    def getEvento(
+        self, idEvento: str
+    ) -> dict:  # AQUI TA ERRADO, AQUI É getEvento O outro É PELO NOME.
         idEvento = ObjectId(idEvento)
         resultado = self.__colecao.find_one({"_id": idEvento})
         if resultado:
             return resultado
         else:
-            raise NaoEncontradoExcecao(messege = "Evento não encontrado!")
+            raise NaoEncontradoExcecao(messege="Evento não encontrado!")
 
     def getEventoID(self, nomeEvento: str) -> str:
         resultado = self.__colecao.find_one({"nome evento": nomeEvento})
         if resultado:
             return resultado["_id"]
         else:
-            raise NaoEncontradoExcecao(messege = "Evento não encontrado!")
+            raise NaoEncontradoExcecao(messege="Evento não encontrado!")

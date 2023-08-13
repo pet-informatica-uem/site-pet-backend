@@ -2,7 +2,7 @@ from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 
-from pydantic import BaseModel, EmailStr, Field, HttpUrl
+from pydantic import BaseModel, EmailStr, Field
 
 
 class TipoConta(str, Enum):

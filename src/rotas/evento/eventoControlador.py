@@ -1,5 +1,6 @@
 import logging
 from typing import BinaryIO
+
 from bson.objectid import ObjectId
 
 from src.config import config
@@ -13,9 +14,8 @@ from src.img.operacoesImagem import (
 from src.modelos.evento.evento import DadosEvento
 from src.modelos.evento.eventoBD import EventoBD
 from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
+from src.modelos.excecao import ErroInternoExcecao, ImagemInvalidaExcecao
 from src.modelos.usuario.usuarioBD import UsuarioBD
-
-from src.modelos.excecao import ImagemInvalidaExcecao, ErroInternoExcecao
 
 
 class EventoControlador:
@@ -35,17 +35,15 @@ class EventoControlador:
         # Verifica se o evento existe
         evento: dict = self.__eventoConexao.getEvento(idEvento)
 
-        removerEvento :bool = self.__eventoConexao.removerEvento(idEvento)
+        removerEvento: bool = self.__eventoConexao.removerEvento(idEvento)
 
         # precisa de outra branch TODO
         deletaImagem(evento["nome evento"])
         return removerEvento
 
-    def editarEvento(
-        self, idEvento, novosDadosEvento: DadosEvento, imagens: dict
-    ):
+    def editarEvento(self, idEvento, novosDadosEvento: DadosEvento, imagens: dict):
         # Verfica se o evento existe e recupera os dados dele
-        dadosEventoBanco :dict = self.__eventoConexao.getEvento(idEvento)
+        dadosEventoBanco: dict = self.__eventoConexao.getEvento(idEvento)
 
         # Valida as imagens (se existirem)
         # TODO depende da outra branch
@@ -59,9 +57,11 @@ class EventoControlador:
         novosDadosEvento.caminhoArteQrcode = dadosEventoBanco["arte qrcode"]
 
         # Verifica os dados e atualiza o evento
-        idEvento :ObjectId = self.__eventoConexao.atualizarEvento(idEvento, novosDadosEvento.paraBD())
+        idEvento: ObjectId = self.__eventoConexao.atualizarEvento(
+            idEvento, novosDadosEvento.paraBD()
+        )
 
-        print('\n\n\n')
+        print("\n\n\n")
         print(idEvento)
 
         # Deleta as imagens antigas e armazena as novas
@@ -87,7 +87,6 @@ class EventoControlador:
 
         return idEvento
 
-
     def novoEvento(
         self, dadosEvento: DadosEvento, imagens: dict[str, BinaryIO | None]
     ) -> ObjectId:
@@ -97,7 +96,7 @@ class EventoControlador:
 
         if imagens["arteQrcode"] and not validaImagem(imagens["arteQrcode"]):
             raise ImagemInvalidaExcecao(mesage="Imagem do qrCode inválida")
-        
+
         # Armazena as imagens
         caminhoArte = armazenaArteEvento(dadosEvento.nomeEvento, imagens["arteEvento"])  # type: ignore
         dadosEvento.caminhoArteEvento = caminhoArte  # type: ignore
@@ -110,7 +109,7 @@ class EventoControlador:
 
         # Valida os dados e registra o evento no bd
         conexao = EventoBD()
-        idEvento :ObjectId = conexao.cadastrarEvento(dadosEvento.paraBD())
+        idEvento: ObjectId = conexao.cadastrarEvento(dadosEvento.paraBD())
         deletaImagem(dadosEvento.nomeEvento)
         logging.info(f"Evento cadastrado com id: {idEvento}")
 

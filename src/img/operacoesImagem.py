@@ -84,9 +84,9 @@ def procuraImagem(nomeImagem: str, searchPath: list[str] = []) -> list[str]:
         path = os.path.join(config.CAMINHO_IMAGEM, *searchPath)
 
     ls = os.walk(path)
-    matches = []
+    matches: list[str] = []
     for grupo in ls:
-        root, dirs, files = grupo
+        root, _, files = grupo
         for file in files:
             if fnmatch.fnmatch(file, f"*{nomeImagem}*"):
                 matches.append(os.path.join(root, file))
@@ -111,7 +111,9 @@ def deletaImagem(nomeImagem: str, path: list[str] = []) -> list[str] | None:
     return None
 
 
-def __armazenaImagem(path: str, nomeBase: str, imagem: bytes | BinaryIO | str) -> str | None:
+def __armazenaImagem(
+    path: str, nomeBase: str, imagem: bytes | BinaryIO | str
+) -> str | None:
     """Armazena a imagem no path fornecido usando um nome base.
 
     :param path -- caminho onde será armazenado a imagem
@@ -123,7 +125,7 @@ def __armazenaImagem(path: str, nomeBase: str, imagem: bytes | BinaryIO | str) -
 
     try:
         with Image.open(imagem, formats=["PNG", "JPEG"]) as img:
-            extensao = img.format.lower() # type: ignore
+            extensao = img.format.lower()  # type: ignore
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
             pathDefinitivo = os.path.join(path, nome)
             img.save(pathDefinitivo)

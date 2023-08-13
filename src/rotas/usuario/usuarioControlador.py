@@ -3,23 +3,8 @@ import secrets
 from datetime import datetime, timedelta
 
 from fastapi import UploadFile
-from pydantic import EmailStr, SecretStr
-from src.modelos.autenticacao.autenticacaoClad import TokenAutenticacaoClad
-from src.rotas.usuario.usuarioClad import (
-    UsuarioAtualizar,
-    UsuarioAtualizarEmail,
-    UsuarioAtualizarSenha,
-    UsuarioCriar,
-)
+from pymongo.errors import DuplicateKeyError
 
-from src.modelos.excecao import (
-    APIExcecaoBase,
-    ImagemInvalidaExcecao,
-    NaoAutenticadoExcecao,
-    NaoEncontradoExcecao,
-    UsuarioJaExisteExcecao,
-    UsuarioNaoEncontradoExcecao,
-)
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
     geraLink,
@@ -29,10 +14,24 @@ from src.autenticacao.jwtoken import (
 )
 from src.config import config
 from src.email.operacoesEmail import resetarSenha, verificarEmail
-from src.img.operacoesImagem import deletaImagem, validaImagem, armazenaFotoUsuario
-from src.modelos.usuario.usuario import TipoConta, Usuario
+from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
+from src.modelos.autenticacao.autenticacaoClad import TokenAutenticacaoClad
 from src.modelos.bd import colecaoUsuarios
-from pymongo.errors import DuplicateKeyError
+from src.modelos.excecao import (
+    APIExcecaoBase,
+    ImagemInvalidaExcecao,
+    NaoAutenticadoExcecao,
+    NaoEncontradoExcecao,
+    UsuarioJaExisteExcecao,
+    UsuarioNaoEncontradoExcecao,
+)
+from src.modelos.usuario.usuario import TipoConta, Usuario
+from src.rotas.usuario.usuarioClad import (
+    UsuarioAtualizar,
+    UsuarioAtualizarEmail,
+    UsuarioAtualizarSenha,
+    UsuarioCriar,
+)
 
 
 def ativaContaControlador(token: str) -> None:
@@ -89,8 +88,6 @@ def cadastraUsuarioControlador(dadosUsuario: UsuarioCriar) -> str:
 
     # cria usuario no bd
     try:
-        print(usuario)
-        print(usuario.model_dump())
         colecaoUsuarios.insert_one(usuario.model_dump(by_alias=True))
     except DuplicateKeyError:
         logging.error("Usuário já existe no banco de dados")
@@ -123,7 +120,7 @@ def recuperaContaControlador(email: str) -> None:
     resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
 
 
-def trocaSenhaControlador(token, senha: str) -> None:
+def trocaSenhaControlador(token: str, senha: str) -> None:
     # Verifica o token e recupera o email
     email: str = processaTokenTrocaSenha(token)
 
@@ -136,7 +133,7 @@ def trocaSenhaControlador(token, senha: str) -> None:
     logging.info("Senha atualizada para o usuário com ID: " + str(usuario.id))
 
 
-def autenticaUsuarioControlador(email: str, senha: str) -> dict:
+def autenticaUsuarioControlador(email: str, senha: str) -> dict[str, str]:
     """
     Autentica e gera um token de autenticação para o usuário com email e senha
     indicados.
@@ -175,8 +172,7 @@ def getUsuarioAutenticadoControlador(token: str) -> Usuario:
     except NaoEncontradoExcecao:
         raise NaoAutenticadoExcecao()
 
-    d = colecaoUsuarios.find_one({"_id": id})
-    if d:
+    if d := colecaoUsuarios.find_one({"_id": id}):
         usuario: Usuario = Usuario(**d)  # type: ignore
 
         return usuario

@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 
 from jose import JWTError, jwt
 
-from src.modelos.excecao import NaoAutenticadoExcecao, TokenInvalidoExcecao
 from src.config import config
+from src.modelos.excecao import TokenInvalidoExcecao
 
 
 def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
@@ -60,7 +60,7 @@ def geraLink(email: str) -> str:
     return url
 
 
-def processaTokenTrocaSenha(token) -> str:
+def processaTokenTrocaSenha(token: str) -> str:
     """
     Verifica a validade do token e resgata o email nele contido.
     Falha, se o token for inválido (expirado ou corrompido).

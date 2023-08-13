@@ -1,15 +1,22 @@
 import logging
+from datetime import datetime  # nao apagar
 from typing import BinaryIO
-from datetime import datetime #nao apagar 
 
-
-from src.modelos.excecao import EmailNaoFoiEnviadoExcecao, NivelDeConhecimentoErradoExcecao, UsuarioNaoEncontradoExcecao, NaoEncontradoExcecao, TipoDeInscricaoErradoExcecao, ErroInternoExcecao
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
-from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
-from src.modelos.usuario.usuarioBD import UsuarioBD
 from src.modelos.evento.evento import DadosEvento
 from src.modelos.evento.eventoBD import EventoBD
+from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
+from src.modelos.excecao import (
+    EmailNaoFoiEnviadoExcecao,
+    ErroInternoExcecao,
+    NaoEncontradoExcecao,
+    NivelDeConhecimentoErradoExcecao,
+    TipoDeInscricaoErradoExcecao,
+    UsuarioNaoEncontradoExcecao,
+)
+from src.modelos.usuario.usuarioBD import UsuarioBD
+
 
 class InscritosEventoControlador:
     def __init__(self):
@@ -20,7 +27,7 @@ class InscritosEventoControlador:
 
         # lista de usuários inscritos no event
         idsUsuarios: list = [
-            usuario["idUsuario"] for usuario in inscritosEvento # type: ignore
+            usuario["idUsuario"] for usuario in inscritosEvento  # type: ignore
         ]
 
         usuarios: dict = UsuarioBD().getListaUsuarios(idsUsuarios)  # type: ignore
@@ -46,13 +53,9 @@ class InscritosEventoControlador:
 
         return dadosUsuario
 
-
-    def inscricaoEvento(   
-        self, inscrito: dict
-    ) -> bool:
-        
+    def inscricaoEvento(self, inscrito: dict) -> bool:
         situacaoInscricao: bool = self.__inscritosEvento.setInscricao(inscrito)
         if not situacaoInscricao:
-            raise ErroInternoExcecao(message = "Nao foi possivel realizar a inscricao")
+            raise ErroInternoExcecao(message="Nao foi possivel realizar a inscricao")
 
         return situacaoInscricao

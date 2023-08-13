@@ -4,8 +4,14 @@ from bson.objectid import ObjectId
 from pymongo import MongoClient
 
 from src.modelos.evento.inscritosEvento import ValidarInscritosEvento
-from src.modelos.excecao import JaExisteExcecao, NaoEncontradoExcecao, NaoAtualizadaExcecao, ErroNaAlteracaoExcecao, SemVagasDisponiveisExcecao, TipoVagaInvalidoExcecao
-
+from src.modelos.excecao import (
+    ErroNaAlteracaoExcecao,
+    JaExisteExcecao,
+    NaoAtualizadaExcecao,
+    NaoEncontradoExcecao,
+    SemVagasDisponiveisExcecao,
+    TipoVagaInvalidoExcecao,
+)
 
 
 class InscritosEventoBD:
@@ -18,12 +24,12 @@ class InscritosEventoBD:
     def criarListaInscritos(self, dadosListaInscritos: dict) -> bool:
         if self.__validarEvento.vagasEvento().validate(dadosListaInscritos):
             raise Exception(self.__validarEvento.vagasEvento().errors)
-        
+
         if (
             self.__colecao.find_one({"idEvento": dadosListaInscritos["idEvento"]})
             != None
         ):
-            raise JaExisteExcecao(messege = "Evento já cadastrado! ")
+            raise JaExisteExcecao(messege="Evento já cadastrado! ")
 
         self.__colecao.insert_one(dadosListaInscritos)
         return True
@@ -33,12 +39,12 @@ class InscritosEventoBD:
         if resultado.deleted_count == 1:
             return True
         else:
-            raise NaoEncontradoExcecao(messege = "Evento não encontrado!")
+            raise NaoEncontradoExcecao(messege="Evento não encontrado!")
 
     def atualizarVagasOfertadas(self, idEvento: str, dadosVagas: dict) -> ObjectId:
         idEvento = ObjectId(idEvento)
 
-        try: 
+        try:
             self.__colecao.update_one(
                 {"idEvento": idEvento},
                 {
@@ -52,7 +58,9 @@ class InscritosEventoBD:
             )
             return idEvento
         except:
-            raise NaoAtualizadaExcecao(message = "Não foi possível atualizar a quantidade de vagas. ")
+            raise NaoAtualizadaExcecao(
+                message="Não foi possível atualizar a quantidade de vagas. "
+            )
 
     def getListaInscritos(self, idEvento: str) -> list[dict]:
         idEvento = ObjectId(idEvento)
@@ -61,7 +69,7 @@ class InscritosEventoBD:
         if resultado:
             return resultado["inscritos"]
         else:
-            raise NaoEncontradoExcecao(messege = "Evento não encontrado! ")
+            raise NaoEncontradoExcecao(messege="Evento não encontrado! ")
 
     def setInscricao(self, dadosInscricao: dict) -> bool:
         if self.__validarEvento.inscricao().validate(dadosInscricao):
@@ -70,11 +78,14 @@ class InscritosEventoBD:
         idEvento = ObjectId(dadosInscricao["idEvento"])
 
         usuarioInscrito = self.__colecao.find_one(
-            {"idEvento": idEvento, "inscritos.idUsuario": str(dadosInscricao["idUsuario"])}
+            {
+                "idEvento": idEvento,
+                "inscritos.idUsuario": str(dadosInscricao["idUsuario"]),
+            }
         )
 
         if usuarioInscrito:
-            raise JaExisteExcecao(message = "Usuário já inscrito! ")
+            raise JaExisteExcecao(message="Usuário já inscrito! ")
 
         _ = self.__setVaga(idEvento, dadosInscricao["tipoInscricao"])
 
@@ -116,9 +127,11 @@ class InscritosEventoBD:
                 )
                 return True
             else:
-                raise NaoEncontradoExcecao(messege = "Pagamento não encontrado. ")
+                raise NaoEncontradoExcecao(messege="Pagamento não encontrado. ")
         else:
-            raise NaoEncontradoExcecao(messege = "Usuário não encontrado na lista de incritos. ")
+            raise NaoEncontradoExcecao(
+                messege="Usuário não encontrado na lista de incritos. "
+            )
 
     def setPagamento(self, idEvento: str, idUsuario: str) -> bool:
         idEvento = ObjectId(idEvento)
@@ -130,7 +143,9 @@ class InscritosEventoBD:
         if resultado.modified_count == 1:
             return True
         else:
-            return NaoEncontradoExcecao(messege = "Usuário não encontrado na lista de incritos. ")
+            return NaoEncontradoExcecao(
+                messege="Usuário não encontrado na lista de incritos. "
+            )
 
     def __setVaga(self, idEvento: str, tipoVaga: str) -> bool:
         idEvento = ObjectId(idEvento)
@@ -148,9 +163,11 @@ class InscritosEventoBD:
                 if resultado.modified_count > 0:
                     return True
                 else:
-                    raise NaoAtualizadaExcecao(messege = "Não foi possível adicionar a vaga.")
+                    raise NaoAtualizadaExcecao(
+                        messege="Não foi possível adicionar a vaga."
+                    )
             else:
-                raise NaoAtualizadaExcecao(messege = "Não há vagas disponíveis.")
+                raise NaoAtualizadaExcecao(messege="Não há vagas disponíveis.")
 
         else:
             raise TipoVagaInvalidoExcecao(messege="Tipo de vaga inválido.")
@@ -161,4 +178,4 @@ class InscritosEventoBD:
         if resultado:
             return resultado["vagas ofertadas"]
         else:
-            raise NaoEncontradoExcecao(messege = "Evento não encontrado! ")
+            raise NaoEncontradoExcecao(messege="Evento não encontrado! ")

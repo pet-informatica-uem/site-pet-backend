@@ -1,17 +1,23 @@
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Annotated, BinaryIO
-from bson.objectid import ObjectId
 
-from fastapi import (APIRouter, Depends, Form, HTTPException, Response,
-                     UploadFile, status)
+from bson.objectid import ObjectId
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Response,
+    UploadFile,
+    status,
+)
 
 from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
 from src.modelos.evento.evento import DadosEvento
-from src.modelos.usuario.usuario import UsuarioSenha, Usuario
+from src.modelos.usuario.usuario import Usuario, UsuarioSenha
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.evento.eventoInscritosControlador import InscritosEventoControlador
-
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
 
 # Especifica o formato das datas para serem convertidos
@@ -60,7 +66,7 @@ def criaEvento(
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
-    idEvento :ObjectId = eventoControlador.novoEvento(dadosEvento, imagens)
+    idEvento: ObjectId = eventoControlador.novoEvento(dadosEvento, imagens)
 
     return str(idEvento)
 
@@ -88,7 +94,7 @@ def editarEvento(
 
     # Passa os dados e as imagens do evento para o controlador
     dadosEvento = DadosEvento(**asdict(formEvento))
-    idEvento :ObjectId = eventoControlador.editarEvento(idEvento, dadosEvento, imagens)
+    idEvento: ObjectId = eventoControlador.editarEvento(idEvento, dadosEvento, imagens)
 
     return str(idEvento)
 
@@ -119,6 +125,7 @@ def deletarEvento(
 def listarEventos() -> list:
     return eventoControlador.listarEventos()
 
+
 # TODO conferir
 @roteador.get(
     "/recuperarInscritos",
@@ -133,9 +140,10 @@ def getInscritosEvento(
 ) -> list[dict]:
     inscritosController = InscritosEventoControlador()
 
-    inscritos:list[dict] = inscritosController.getInscritosEvento(idEvento)
+    inscritos: list[dict] = inscritosController.getInscritosEvento(idEvento)
 
     return inscritos
+
 
 @roteador.post(
     "/inscricaoUsuarioEmEvento",
@@ -143,23 +151,22 @@ def getInscritosEvento(
     description="Recebe o id do inscrito, o id do evento, o nivel do conhecimento do inscrito, o tipo de de inscrição e a situação de pagamento da inscricao em eventos do usuario autenticado.",
     status_code=status.HTTP_201_CREATED,
 )
-def getDadosInscricaoEvento( 
+def getDadosInscricaoEvento(
     idUsuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
     idEvento: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
     pagamento: Annotated[bool, Form()],
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
-):  
-
+):
     inscrito: dict = {
-            "idUsuario": idUsuario.paraBd()['_id'],
-            "idEvento": idEvento,
-            "nivelConhecimento": nivelConhecimento,
-            "tipoInscricao": tipoDeInscricao,
-            "pagamento": pagamento,
-        }
+        "idUsuario": idUsuario.paraBd()["_id"],
+        "idEvento": idEvento,
+        "nivelConhecimento": nivelConhecimento,
+        "tipoInscricao": tipoDeInscricao,
+        "pagamento": pagamento,
+    }
 
     inscritosControlador = InscritosEventoControlador()
-    situacaoInscricao :bool = inscritosControlador.inscricaoEvento(inscrito)
+    situacaoInscricao: bool = inscritosControlador.inscricaoEvento(inscrito)
 
     return situacaoInscricao

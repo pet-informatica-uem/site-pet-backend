@@ -1,4 +1,5 @@
 from pymongo import MongoClient
+
 from src.config import config
 
 cliente: MongoClient = MongoClient(str(config.URI_BD))
