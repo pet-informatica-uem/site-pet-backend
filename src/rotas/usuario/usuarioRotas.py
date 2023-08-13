@@ -29,7 +29,7 @@ from src.rotas.usuario.usuarioControlador import (
     cadastraUsuarioControlador,
     deletaUsuarioControlador,
     editaEmailControlador,
-    editarFotoControlador,
+    editaFotoControlador,
     editaSenhaControlador,
     editaUsuarioControlador,
     getTodosUsuariosControlador,
@@ -65,9 +65,7 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
         )
 
 
-def getPetianoAutenticado(
-    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]
-):
+def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     if usuario.tipoConta == "petiano":
         return usuario
     raise HTTPException(status_code=401, detail="Acesso negado.")
@@ -84,9 +82,8 @@ def getPetianoAutenticado(
     " - Deve ter ao menos um caractere não alfanumérico\n",
     status_code=status.HTTP_201_CREATED,
     responses=listaRespostasExcecoes(UsuarioJaExisteExcecao, APIExcecaoBase),
-    response_model=UsuarioLer,
 )
-def cadastrarUsuario(usuario: UsuarioCriar):
+def cadastrarUsuario(usuario: UsuarioCriar) -> str:
     # despacha para controlador
     usuarioCadastrado = cadastraUsuarioControlador(usuario)
 
@@ -98,7 +95,7 @@ def cadastrarUsuario(usuario: UsuarioCriar):
     "/",
     name="Recuperar usuários cadastrados",
     description="Lista todos os usuários cadastrados.",
-    response_model=list[Usuario],
+    response_model=list[UsuarioLer],
 )
 def listarUsuarios(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
@@ -117,7 +114,7 @@ def listarUsuarios(
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str):
-    if usuario._id == id:
+    if usuario.id == id:
         return usuario
     elif usuario.tipoConta == TipoConta.PETIANO:
         vitima: Usuario = getUsuarioControlador(id)
@@ -141,7 +138,7 @@ def patchUsuario(
     dados: UsuarioAtualizar,
     id: str,
 ):
-    if usuario._id == id or usuario.tipoConta == TipoConta.PETIANO:
+    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
         return editaUsuarioControlador(id, dados)
     else:
         raise NaoAutorizadoExcecao()
@@ -153,21 +150,25 @@ def patchUsuario(
     description="""O usuário é capaz de editar seu email""",
 )
 def editarEmail(
+    id: str,
     dadosEmail: UsuarioAtualizarEmail,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
 ):
-    if not ValidacaoCadastro.email(dadosEmail.novoEmail):
-        logging.info("Erro. Novo email não foi validado com sucesso.")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
-        )
+    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
+        if not ValidacaoCadastro.email(dadosEmail.novoEmail):
+            logging.info("Erro. Novo email não foi validado com sucesso.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
+            )
+        # normaliza dados
+        novoEmail = dadosEmail.novoEmail.lower().strip()
+        dadosEmail.novoEmail = novoEmail
 
-    # normaliza dados
-    novoEmail = EmailStr(dadosEmail.novoEmail.lower().strip())
+        editaEmailControlador(dadosEmail, id)
 
-    editaEmailControlador(dadosEmail, usuario)
-
-    TokenAutenticacaoClad.deletarTokensUsuario(usuario._id)
+        TokenAutenticacaoClad.deletarTokensUsuario(usuario.id)
+    else:
+        raise NaoAutenticadoExcecao()
 
 
 @roteador.put(
@@ -176,20 +177,21 @@ def editarEmail(
     description="""O usuário é capaz de editar sua senha. Caso a opção deslogarAoTrocarSenha for ativada, todos as sessões serão deslogadas ao trocar a senha.""",
 )
 def editarSenha(
+    id: str,
     dadosSenha: UsuarioAtualizarSenha,
-    deslogarAoTrocarSenha: Annotated[bool, Form()],
+    deslogarAoTrocarSenha: bool,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
 ):
-    # efetua troca de senha
-    editaSenhaControlador(
-        dadosSenha,
-        usuario,
-    )
+    if usuario.id == id:
+        # efetua troca de senha
+        editaSenhaControlador(
+            dadosSenha,
+            usuario,
+        )
 
-    # efetua logout de todas as sessões, caso o usuário desejar
-    if deslogarAoTrocarSenha:
-        TokenAutenticacaoClad.deletarTokensUsuario(usuario._id)
-
+        # efetua logout de todas as sessões, caso o usuário desejar
+        if deslogarAoTrocarSenha:
+            TokenAutenticacaoClad.deletarTokensUsuario(usuario.id)
 
 
 @roteador.put(
@@ -198,10 +200,12 @@ def editarSenha(
     description="O usuário petiano é capaz de editar sua foto de perfil",
 )
 def editarFoto(
+    id: str,
     foto: UploadFile,
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
 ) -> None:
-    editarFotoControlador(usuario=usuario, foto=foto)
+    if usuario.id == id:
+        editaFotoControlador(usuario=usuario, foto=foto)
 
 
 @roteador.delete(
@@ -215,7 +219,7 @@ def deletaUsuario(
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
     id: str,
 ):
-    if usuario._id == id or usuario.tipoConta == TipoConta.PETIANO:
+    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
         deletaUsuarioControlador(id)
     else:
         raise NaoAutorizadoExcecao()

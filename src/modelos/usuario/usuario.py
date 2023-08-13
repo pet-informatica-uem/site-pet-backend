@@ -2,7 +2,7 @@ from datetime import date, datetime
 from enum import Enum
 from pathlib import Path
 
-from pydantic import BaseModel, EmailStr, HttpUrl
+from pydantic import BaseModel, EmailStr, Field, HttpUrl
 
 
 class TipoConta(str, Enum):
@@ -25,7 +25,7 @@ class Usuario(BaseModel):
     Classe que representa um usuário do sistema.
     """
 
-    _id: str
+    id: str = Field(..., alias="_id")
     "Identificador único."
 
     email: EmailStr
@@ -60,16 +60,16 @@ class Usuario(BaseModel):
     fimPet: date | None = None
     "Data de desligamento do PET-Informática."
 
-    github: HttpUrl | None = None
+    github: str | None = None
     "Link para o Github pessoal."
 
-    linkedin: HttpUrl | None = None
+    linkedin: str | None = None
     "Link para o LinkedIn pessoal."
 
-    instagram: HttpUrl | None = None
+    instagram: str | None = None
     "Link para o Instagram pessoal."
 
-    twitter: HttpUrl | None = None
+    twitter: str | None = None
     "Link para o Twitter pessoal."
 
     foto: Path | None = None

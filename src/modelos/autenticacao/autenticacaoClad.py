@@ -1,13 +1,12 @@
 from datetime import datetime
-from bson import ObjectId
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from src.modelos.excecao import NaoEncontradoExcecao
 
 from src.modelos.bd import colecaoTokens
 
 
 class TokenAutenticacao(BaseModel):
-    _id: str
+    id: str = Field(..., alias="_id")
     idUsuario: str
     validade: datetime
 
@@ -29,7 +28,7 @@ class TokenAutenticacaoClad:
 
     @staticmethod
     def criar(id: str, idUsuario: str, validade: datetime) -> TokenAutenticacao:
-        documento = {"_id": id, "idUsuario": ObjectId(idUsuario), "validade": validade}
+        documento = {"_id": id, "idUsuario": idUsuario, "validade": validade}
 
         resultado = colecaoTokens.insert_one(documento)
         assert resultado.acknowledged

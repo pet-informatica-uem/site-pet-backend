@@ -1,6 +1,7 @@
+from pathlib import Path
 from typing import Annotated
 from fastapi import UploadFile
-from pydantic import BaseModel, EmailStr, HttpUrl, SecretStr, field_validator
+from pydantic import BaseModel, EmailStr, SecretStr, field_validator
 
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 
@@ -39,13 +40,18 @@ class UsuarioLer(BaseModel):
     curso: str
     tipoConta: str
 
+    foto: Path | None = None
+    github: str | None = None
+    linkedin: str | None = None
+    instagram: str | None = None
+
 
 class UsuarioAtualizar(BaseModel):
     nome: str | None = None
     curso: str | None = None
-    github: HttpUrl | None = None
-    linkedin: HttpUrl | None = None
-    instagram: HttpUrl | None = None
+    github: str | None = None
+    linkedin: str | None = None
+    instagram: str | None = None
 
 
 class UsuarioAtualizarSenha(BaseModel):
@@ -54,10 +60,10 @@ class UsuarioAtualizarSenha(BaseModel):
 
     @field_validator("novaSenha")
     def novaSenha_valida(cls, v):
-        if not ValidacaoCadastro.senha(v):
+        if not ValidacaoCadastro.senha(v.get_secret_value()):
             raise ValueError("Senha inválida")
         return v
-    
+
 
 class UsuarioAtualizarEmail(BaseModel):
     senha: SecretStr
@@ -68,7 +74,7 @@ class UsuarioAtualizarEmail(BaseModel):
         if not ValidacaoCadastro.email(v):
             raise ValueError("Email inválido")
         return v
-    
+
 
 class UsuarioDeletar(BaseModel):
     id: str
