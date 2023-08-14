@@ -18,7 +18,7 @@ colecaoUsuarios.create_index("cpf", unique=True)
 
 # operações banco de dados
 def buscar(colecao: type[Usuario], incice: str, chave: str) -> Usuario:
-    if type(colecao) is Usuario:
+    if colecao is Usuario:
         # Verifica se o usuário está cadastrado no bd
         if not colecaoUsuarios.find_one({incice: chave}):
             raise NaoEncontradoExcecao(mensagem="O Usuário não foi encontrado.")
@@ -51,11 +51,11 @@ def atualizar(modelo: Usuario):
 
 
 def deletar(colecao: type[Usuario], id: str):
-    if type(colecao) is Usuario:
+    if colecao is Usuario:
         colecaoUsuarios.delete_one({"_id": id})
 
 
 def listar(colecao: type[Usuario]) -> list[Usuario]:
-    if type(colecao) is Usuario:
+    if colecao is Usuario:
         return [Usuario(**u) for u in colecaoUsuarios.find()]
     raise NaoEncontradoExcecao(mensagem="Coleção não encontrada")
