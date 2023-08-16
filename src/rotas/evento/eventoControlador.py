@@ -15,7 +15,6 @@ from src.modelos.evento.evento import DadosEvento
 from src.modelos.evento.eventoBD import EventoBD
 from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
 from src.modelos.excecao import ErroInternoExcecao, ImagemInvalidaExcecao
-from src.modelos.usuario.usuarioBD import UsuarioBD
 
 
 class EventoControlador:

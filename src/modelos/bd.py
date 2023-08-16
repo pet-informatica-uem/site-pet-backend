@@ -1,8 +1,8 @@
 import logging
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from modelos.excecao import APIExcecaoBase, NaoEncontradoExcecao, UsuarioJaExisteExcecao
-from modelos.usuario.usuario import Usuario
+from src.modelos.excecao import APIExcecaoBase, NaoEncontradoExcecao, UsuarioJaExisteExcecao
+from src.modelos.usuario.usuario import Usuario
 
 
 from src.config import config
@@ -17,13 +17,13 @@ colecaoUsuarios.create_index("cpf", unique=True)
 
 
 # operações banco de dados
-def buscar(colecao: type[Usuario], incice: str, chave: str) -> Usuario:
+def buscar(colecao: type[Usuario], indice: str, chave: str) -> Usuario:
     if colecao is Usuario:
         # Verifica se o usuário está cadastrado no bd
-        if not colecaoUsuarios.find_one({incice: chave}):
+        if not colecaoUsuarios.find_one({indice: chave}):
             raise NaoEncontradoExcecao(mensagem="O Usuário não foi encontrado.")
         else:
-            return Usuario(**colecaoUsuarios.find_one({incice: chave}))  # type: ignore
+            return Usuario(**colecaoUsuarios.find_one({indice: chave}))  # type: ignore
     # elif type(colecao) is Evento:
     #     # Verifica se o evento está cadastrado no bd
     #     if not colecaoEventos.find_one({incice: chave}):
