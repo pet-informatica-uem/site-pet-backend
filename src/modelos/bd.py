@@ -20,6 +20,9 @@ colecaoUsuarios = cliente[config.NOME_BD]["usuarios"]
 colecaoUsuarios.create_index("email", unique=True)
 colecaoUsuarios.create_index("cpf", unique=True)
 
+colecaoEventos = cliente[config.NOME_BD]["eventos"]
+colecaoInscritos = cliente[config.NOME_BD]["inscritos"]
+
 
 # operações banco de dados
 def buscar(colecao: type[Usuario], indice: str, chave: str) -> Usuario:
