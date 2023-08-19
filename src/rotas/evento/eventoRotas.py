@@ -7,123 +7,95 @@ from fastapi import (
     APIRouter,
     Depends,
     Form,
-    HTTPException,
-    Response,
     UploadFile,
     status,
 )
+from src.modelos.evento.evento import Evento
+from src.rotas.evento.eventoClad import EventoAtualizar, EventoCriar
 
-from src.modelos.autenticacao.autenticacaoTokenBD import AuthTokenBD
-from src.modelos.evento.evento import DadosEvento
-from src.modelos.usuario.usuario import Usuario, UsuarioSenha
+from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
-from src.rotas.evento.eventoInscritosControlador import InscritosEventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"
 
-roteador = APIRouter(prefix="/evento", tags=["Eventos"])
-eventoControlador = EventoControlador()
+roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
 
-# Classe de dados para receber o formulário com as informações do evento
-@dataclass
-class FormEvento:
-    nomeEvento: str = Form(...)
-    resumo: str = Form(...)
-    preRequisitos: str = Form(...)
-    dataHoraEvento: datetime = Form(...)
-    inicioInscricao: datetime = Form(...)
-    fimInscricao: datetime = Form(...)
-    local: str = Form(...)
-    vagasComNote: int = Form(...)
-    vagasSemNote: int = Form(...)
-    cargaHoraria: int = Form(...)
-    valor: float = Form(...)
+#TODO conferir se é interessante retornar o id
+@roteador.get(
+    "/",
+    name="Recuperar todos os eventos",
+    description="Retorna todos os eventos cadastrados no banco de dados.",
+)
+def getEventos() -> list:
+    return EventoControlador.getEventos()
+
+
+#TODO conferir se é interessante retornar o id
+@roteador.get(
+    "/{id}",
+    name="Recuperar evento por ID",
+    description="""
+        Recupera um evento cadastrado no banco de dados.
+        Falha, caso o evento não exista.
+    """,
+)
+def getEvento(id: str) -> Evento:
+    evento: Evento = EventoControlador.getEvento(id)
+
+    return evento
 
 
 @roteador.post(
-    "/novo",
-    name="Novo evento",
-    description="Valida as informações e cria um novo evento.",
+    "/",
+    name=" Cadastrar evento.",
+    description="Cadastra um novo evento.",
     status_code=status.HTTP_201_CREATED,
 )
-def criaEvento(
-    response: Response,
-    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
-    arteEvento: UploadFile,
-    arteQrcode: UploadFile | None = None,
-    formEvento: FormEvento = Depends(),
-) -> str:
-    # Cria um dicionário para as imagens
-    imagens: dict[str, BinaryIO | None] = {
-        "arteEvento": arteEvento.file,
-        "arteQrcode": None,
-    }
-    if arteQrcode:
-        imagens["arteQrcode"] = arteQrcode.file
-
-    # Passa os dados e as imagens do evento para o controlador
-    dadosEvento = DadosEvento(**asdict(formEvento))
-    idEvento: ObjectId = eventoControlador.novoEvento(dadosEvento, imagens)
-
-    return str(idEvento)
+def cadastrarEvento(evento: EventoCriar, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]):
+    # Despacha para o controlador
+    EventoControlador.cadastrarEvento(evento)
 
 
-@roteador.post(
-    "/editar/{idEvento}",
+@roteador.patch(
+    "/{id}",
     name="Editar evento",
-    description="Valida as informações e edita um evento.",
-    status_code=status.HTTP_200_OK,
+    description="Edita um evento.",
 )
-def editarEvento(
-    idEvento: str,
-    response: Response,
-    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
-    formEvento: FormEvento = Depends(),
-    arteEvento: UploadFile | None = None,
-    arteQrcode: UploadFile | None = None,
-) -> str:
-    # Cria um dicionário para as imagens
-    imagens: dict[str, BinaryIO | None] = {"arteEvento": None, "arteQrcode": None}
-    if arteEvento:
-        imagens["arteEvento"] = arteEvento.file
-    if arteQrcode:
-        imagens["arteQrcode"] = arteQrcode.file
+def editarEvento(id: str, evento: EventoAtualizar, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]):
+    # Despacha para o controlador
+    EventoControlador.editarEvento(id, evento)
 
-    # Passa os dados e as imagens do evento para o controlador
-    dadosEvento = DadosEvento(**asdict(formEvento))
-    idEvento: ObjectId = eventoControlador.editarEvento(idEvento, dadosEvento, imagens)
 
-    return str(idEvento)
+@roteador.put(
+        "/{id}/imagens",
+        name="Atualizar imagens do evento",
+        description="Atualiza as imagens do evento.",
+)
+def atualizarImagensEvento(
+    id: str,
+    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+    arte: UploadFile | None = None,
+    cracha: UploadFile | None = None,
+):
+    # Despacha para o controlador
+    EventoControlador.atualizarImagensEvento(id, arte, cracha)
 
 
 @roteador.delete(
-    "/deletar/{idEvento}",
+    "/{id}",
     name="Deletar evento",
-    description="Um usuário petiano pode deletar um evento.",
-    status_code=status.HTTP_200_OK,
+    description="Deleta um evento.",
 )
 def deletarEvento(
-    idEvento: str,
-    usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)],
+    id: str,
+    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
 ):
     # Despacha para o controlador
-    retorno: bool = eventoControlador.deletarEvento(idEvento)
+    EventoControlador.deletarEvento(id)
 
-    return retorno
-
-
-@roteador.get(
-    "/listarTodosEventos",
-    name="Recuperar todos os eventos",
-    description="""
-        Recupera todos os eventos cadastrados no banco de dados.
-    """,
-)
-def listarEventos() -> list:
-    return eventoControlador.listarEventos()
 
 
 # TODO conferir
@@ -136,11 +108,11 @@ def listarEventos() -> list:
     """,
 )
 def getInscritosEvento(
-    idEvento: str, usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)]
+    id: str, usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)]
 ) -> list[dict]:
-    inscritosController = InscritosEventoControlador()
+    inscritosController = EnscritosEventoControlador()
 
-    inscritos: list[dict] = inscritosController.getInscritosEvento(idEvento)
+    inscritos: list[dict] = inscritosController.getInscritosEvento(id)
 
     return inscritos
 
@@ -153,20 +125,20 @@ def getInscritosEvento(
 )
 def getDadosInscricaoEvento(
     idUsuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
-    idEvento: Annotated[str, Form(max_length=200)],
+    id: Annotated[str, Form(max_length=200)],
     tipoDeInscricao: Annotated[str, Form(max_length=200)],
     pagamento: Annotated[bool, Form()],
     nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
 ):
     inscrito: dict = {
         "idUsuario": idUsuario.paraBd()["_id"],
-        "idEvento": idEvento,
+        "id": id,
         "nivelConhecimento": nivelConhecimento,
         "tipoInscricao": tipoDeInscricao,
         "pagamento": pagamento,
     }
 
-    inscritosControlador = InscritosEventoControlador()
+    inscritosControlador = EnscritosEventoControlador()
     situacaoInscricao: bool = inscritosControlador.inscricaoEvento(inscrito)
 
     return situacaoInscricao

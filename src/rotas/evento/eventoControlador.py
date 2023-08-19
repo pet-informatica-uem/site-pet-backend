@@ -1,7 +1,11 @@
 import logging
+import secrets
 from typing import BinaryIO
 
 from bson.objectid import ObjectId
+from fastapi import UploadFile
+from src.rotas.evento.eventoClad import EventoAtualizar, EventoCriar
+from src.modelos.bd import EventoBD, UsuarioBD
 
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
@@ -11,105 +15,91 @@ from src.img.operacoesImagem import (
     deletaImagem,
     validaImagem,
 )
-from src.modelos.evento.evento import DadosEvento
-from src.modelos.evento.eventoBD import EventoBD
-from src.modelos.evento.inscritosEventoBD import InscritosEventoBD
+from src.modelos.evento.evento import Evento
 from src.modelos.excecao import ErroInternoExcecao, ImagemInvalidaExcecao
 
 
 class EventoControlador:
-    def __init__(self):
-        self.__eventoConexao = EventoBD()
+    @staticmethod
+    def getEventos() -> list[Evento]:
+        return EventoBD.listar()
 
-    def listarEventos(self) -> list:
-        eventos: list = self.__eventoConexao.listarEventos()
+    @staticmethod
+    def getEvento(id: str) -> Evento:
+        return EventoBD.buscar("_id", id)
 
-        if eventos != []:
-            for evento in eventos:
-                evento["_id"] = str(evento["_id"])
+    @staticmethod
+    def deletarEvento(id: str):
+        EventoControlador.getEvento(id)
 
-        return eventos
+        EventoBD.deletar(id)
 
-    def deletarEvento(self, idEvento: str) -> bool:
-        # Verifica se o evento existe
-        evento: dict = self.__eventoConexao.getEvento(idEvento)
+    @staticmethod
+    def editarEvento(id: str, dadosEvento: EventoAtualizar) -> Evento:
+        # obtém evento
+        evento: Evento = EventoControlador.getEvento(id)
 
-        removerEvento: bool = self.__eventoConexao.removerEvento(idEvento)
+        # normaliza dados
+        dadosEvento.titulo = dadosEvento.titulo.strip()
+        dadosEvento.descricao = dadosEvento.descricao.strip()
+        dadosEvento.local = dadosEvento.local.strip()
 
-        # precisa de outra branch TODO
-        deletaImagem(evento["nome evento"])
-        return removerEvento
+        # atualiza dados
+        d = evento.model_dump(by_alias=True)
+        d.update(dadosEvento.model_dump(exclude_none=True))
+        evento = Evento(**d)  # type: ignore
 
-    def editarEvento(self, idEvento, novosDadosEvento: DadosEvento, imagens: dict):
-        # Verfica se o evento existe e recupera os dados dele
-        dadosEventoBanco: dict = self.__eventoConexao.getEvento(idEvento)
+        EventoBD.atualizar(evento)
 
-        # Valida as imagens (se existirem)
-        # TODO depende da outra branch
-        if imagens["arteEvento"] and not validaImagem(imagens["arteEvento"]):
-            raise ImagemInvalidaExcecao()
+        return evento
 
-        if imagens["arteQrcode"] and not validaImagem(imagens["arteQrcode"]):
-            raise ImagemInvalidaExcecao(message="Imagem do qrCode inválida.")
+    @staticmethod
+    def atualizarImagensEvento(
+        id: str, arte: UploadFile | None, cracha: UploadFile | None
+    ):
+        # obtém evento
+        evento: Evento = EventoControlador.getEvento(id)
 
-        novosDadosEvento.caminhoArteEvento = dadosEventoBanco["arte evento"]
-        novosDadosEvento.caminhoArteQrcode = dadosEventoBanco["arte qrcode"]
+        if arte:
+            if not validaImagem(arte.file):
+                raise ImagemInvalidaExcecao()
 
-        # Verifica os dados e atualiza o evento
-        idEvento: ObjectId = self.__eventoConexao.atualizarEvento(
-            idEvento, novosDadosEvento.paraBD()
-        )
+            deletaImagem(evento.titulo, ["eventos", "arte"])
+            caminhoArte: str = armazenaArteEvento(evento.titulo, arte.file)  # type: ignore
+            evento.arte = caminhoArte  # type: ignore
 
-        print("\n\n\n")
-        print(idEvento)
+            # atualiza no bd
+            EventoBD.atualizar(evento)
 
-        # Deleta as imagens antigas e armazena as novas
-        if imagens["arteEvento"]:
-            deletaImagem(dadosEventoBanco["nome evento"], ["eventos", "arte"])
-            novosDadosEvento.caminhoArteEvento = armazenaArteEvento(
-                novosDadosEvento.nomeEvento, imagens["arteEvento"]
-            )  # type: ignore
-        else:
-            novosDadosEvento.caminhoArteEvento = dadosEventoBanco["arte evento"]
+        if cracha:
+            if not validaImagem(cracha.file):
+                raise ImagemInvalidaExcecao()
 
-        if imagens["arteQrcode"]:
-            deletaImagem(dadosEventoBanco["nome evento"], ["eventos", "qrcode"])
-            novosDadosEvento.caminhoArteQrcode = armazenaQrCodeEvento(
-                novosDadosEvento.nomeEvento, imagens["arteQrcode"]
-            )  # type: ignore
-        else:
-            novosDadosEvento.caminhoArteQrcode = dadosEventoBanco["arte qrcode"]
+            deletaImagem(evento.titulo, ["eventos", "cracha"])
+            caminhoCracha: str = armazenaQrCodeEvento(evento.titulo, cracha.file)  # type: ignore
+            evento.cracha = caminhoCracha  # type: ignore
 
-        # Caso alguma imagem tenha sido alterada, atualiza o evento novamente para adicionar o caminho para as imagens
-        if imagens["arteEvento"] or imagens["arteQrcode"]:
-            self.__eventoConexao.atualizarEvento(idEvento, dadosEventoBanco)
+            # atualiza no bd
+            EventoBD.atualizar(evento)
 
-        return idEvento
+    @staticmethod
+    def cadastrarEvento(dadosEvento: EventoCriar):
+        """
+        Cria uma conta com os dados fornecidos, e envia um email
+        de confirmação de criação de conta ao endereço fornecido.
 
-    def novoEvento(
-        self, dadosEvento: DadosEvento, imagens: dict[str, BinaryIO | None]
-    ) -> ObjectId:
-        # Valida as imagens
-        if not validaImagem(imagens["arteEvento"]):  # type: ignore
-            raise ImagemInvalidaExcecao(mesage="Imagem do evento inválida")
+        A criação da conta pode não suceder por erro na validação de dados,
+        por já haver uma conta cadastrada com tal CPF ou email ou por falha
+        de conexão com o banco de dados.
+        """
 
-        if imagens["arteQrcode"] and not validaImagem(imagens["arteQrcode"]):
-            raise ImagemInvalidaExcecao(mesage="Imagem do qrCode inválida")
+        # normaliza dados
+        dadosEvento.titulo = dadosEvento.titulo.strip()
+        dadosEvento.descricao = dadosEvento.descricao.strip()
+        dadosEvento.local = dadosEvento.local.strip()
 
-        # Armazena as imagens
-        caminhoArte = armazenaArteEvento(dadosEvento.nomeEvento, imagens["arteEvento"])  # type: ignore
-        dadosEvento.caminhoArteEvento = caminhoArte  # type: ignore
+        # cria evento
+        evento: Evento = Evento(**dadosEvento.model_dump(), _id=secrets.token_hex(16))
+        EventoBD.criar(evento)
 
-        if imagens["arteQrcode"]:
-            caminhoQrCode = armazenaQrCodeEvento(
-                dadosEvento.nomeEvento, imagens["arteQrcode"]
-            )
-            dadosEvento.caminhoArteQrcode = caminhoQrCode  # type: ignore
-
-        # Valida os dados e registra o evento no bd
-        conexao = EventoBD()
-        idEvento: ObjectId = conexao.cadastrarEvento(dadosEvento.paraBD())
-        deletaImagem(dadosEvento.nomeEvento)
-        logging.info(f"Evento cadastrado com id: {idEvento}")
-
-        return idEvento
+        return evento.id

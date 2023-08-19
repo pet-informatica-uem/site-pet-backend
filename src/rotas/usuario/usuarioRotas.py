@@ -10,7 +10,7 @@ from src.modelos.excecao import (
     APIExcecaoBase,
     NaoAutenticadoExcecao,
     NaoAutorizadoExcecao,
-    UsuarioJaExisteExcecao,
+    JaExisteExcecao,
     UsuarioNaoEncontradoExcecao,
     listaRespostasExcecoes,
 )
@@ -23,22 +23,7 @@ from src.rotas.usuario.usuarioClad import (
     UsuarioCriar,
     UsuarioLer,
 )
-from src.rotas.usuario.usuarioControlador import (
-    ativaContaControlador,
-    autenticaUsuarioControlador,
-    cadastraUsuarioControlador,
-    deletaUsuarioControlador,
-    editaEmailControlador,
-    editaFotoControlador,
-    editaSenhaControlador,
-    editaUsuarioControlador,
-    getTodosUsuariosControlador,
-    getUsuarioAutenticadoControlador,
-    getUsuarioControlador,
-    recuperaContaControlador,
-    trocaSenhaControlador,
-)
-
+from src.rotas.usuario.usuarioControlador import UsuarioControlador
 
 class Token(BaseModel):
     access_token: str
@@ -56,7 +41,7 @@ tokenAcesso: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="/usuarios/log
 
 def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
     try:
-        return getUsuarioAutenticadoControlador(token)
+        return UsuarioControlador.getUsuarioAutenticado(token)
     except NaoAutenticadoExcecao:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -81,16 +66,17 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
     " - Deve ter ao menos um dígito\n"
     " - Deve ter ao menos um caractere não alfanumérico\n",
     status_code=status.HTTP_201_CREATED,
-    responses=listaRespostasExcecoes(UsuarioJaExisteExcecao, APIExcecaoBase),
+    responses=listaRespostasExcecoes(JaExisteExcecao, APIExcecaoBase),
 )
 def cadastrarUsuario(usuario: UsuarioCriar) -> str:
     # despacha para controlador
-    usuarioCadastrado = cadastraUsuarioControlador(usuario)
+    usuarioCadastrado = UsuarioControlador.cadastrarUsuario(usuario)
 
     # retorna os dados do usuario cadastrado
     return usuarioCadastrado
 
 
+#TODO resolver o response model para petiano ou usuario
 @roteador.get(
     "/",
     name="Recuperar usuários cadastrados",
@@ -99,8 +85,9 @@ def cadastrarUsuario(usuario: UsuarioCriar) -> str:
 )
 def listarUsuarios(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+    petiano: bool = False,
 ):
-    return getTodosUsuariosControlador()
+    return UsuarioControlador.getUsuarios(petiano)
 
 
 @roteador.get(
@@ -117,7 +104,7 @@ def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: 
     if usuario.id == id:
         return usuario
     elif usuario.tipoConta == TipoConta.PETIANO:
-        vitima: Usuario = getUsuarioControlador(id)
+        vitima: Usuario = UsuarioControlador.getUsuario(id)
         return vitima
     else:
         raise NaoAutorizadoExcecao()
@@ -139,7 +126,7 @@ def patchUsuario(
     id: str,
 ):
     if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
-        return editaUsuarioControlador(id, dados)
+        return UsuarioControlador.editarUsuario(id, dados)
     else:
         raise NaoAutorizadoExcecao()
 
@@ -164,7 +151,7 @@ def editarEmail(
         novoEmail = dadosEmail.novoEmail.lower().strip()
         dadosEmail.novoEmail = novoEmail
 
-        editaEmailControlador(dadosEmail, id)
+        UsuarioControlador.editarEmail(dadosEmail, id)
 
         TokenAutenticacaoClad.deletarTokensUsuario(usuario.id)
     else:
@@ -184,7 +171,7 @@ def editarSenha(
 ):
     if usuario.id == id:
         # efetua troca de senha
-        editaSenhaControlador(
+        UsuarioControlador.editaSenha(
             dadosSenha,
             usuario,
         )
@@ -205,7 +192,7 @@ def editarFoto(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
 ) -> None:
     if usuario.id == id:
-        editaFotoControlador(usuario=usuario, foto=foto)
+        UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
 
 
 @roteador.delete(
@@ -220,7 +207,7 @@ def deletaUsuario(
     id: str,
 ):
     if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
-        deletaUsuarioControlador(id)
+        UsuarioControlador.deletarUsuario(id)
     else:
         raise NaoAutorizadoExcecao()
 
@@ -234,11 +221,11 @@ def deletaUsuario(
         NaoAutenticadoExcecao,
         UsuarioNaoEncontradoExcecao,
         APIExcecaoBase,
-        UsuarioJaExisteExcecao,
+        JaExisteExcecao,
     ),
 )
 def confirmaEmail(token: str):
-    ativaContaControlador(token)
+    UsuarioControlador.ativarConta(token)
 
 
 @roteador.post(
@@ -261,7 +248,7 @@ def recuperaConta(email: Annotated[EmailStr, Form()]):
         )
 
     # Passa o email para o controlador
-    recuperaContaControlador(email)
+    UsuarioControlador.recuperarConta(email)
 
 
 @roteador.post(
@@ -279,7 +266,7 @@ def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
         raise HTTPException(status_code=400, detail="Senha inválida.")
 
     # Despacha o token para o controlador
-    trocaSenhaControlador(token, senha.get_secret_value())
+    UsuarioControlador.trocarSenha(token, senha.get_secret_value())
 
 
 @roteador.post(
@@ -301,4 +288,4 @@ def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
     email: str = email.lower().strip()
 
     # chama controlador
-    return autenticaUsuarioControlador(email, senha)
+    return UsuarioControlador.autenticarUsuario(email, senha)

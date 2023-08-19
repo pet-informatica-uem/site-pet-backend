@@ -74,3 +74,10 @@ class Usuario(BaseModel):
 
     foto: Path | None = None
     "Caminho para foto de perfil do petiano."
+
+class Petiano(BaseModel):
+    nome: str
+    github: str | None = None
+    linkedin: str | None = None
+    instagram: str | None = None
+    foto: Path | None = None

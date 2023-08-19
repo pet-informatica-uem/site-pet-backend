@@ -124,10 +124,6 @@ class NivelDeConhecimentoErradoExcecao(APIExcecaoBase):
     model = AcaoNaoCompletaErro
 
 
-class UsuarioJaExisteExcecao(APIExcecaoBase):
-    mensagem = "O usuário já existe."
-
-
 class TokenInvalidoExcecao(APIExcecaoBase):
     mensagem = "O token é inválido."
     code = status.HTTP_400_BAD_REQUEST

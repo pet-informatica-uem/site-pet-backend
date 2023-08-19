@@ -2,6 +2,8 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 
+from src.modelos.excecao import EmailNaoFoiEnviadoExcecao
+
 
 # Função para enviar email customizado
 def emailGenerico(
@@ -69,8 +71,11 @@ def emailConfirmacaoEvento(
 def enviarEmail(
     emailPet: str, senhaPet: str, emailDestino: str, mensagem: EmailMessage
 ) -> None:
-    contexto: ssl.SSLContext = ssl.create_default_context()
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto) as smtp:
-        smtp.login(emailPet, senhaPet)
-        smtp.sendmail(emailPet, emailDestino, mensagem.as_string())
+    try:
+        contexto: ssl.SSLContext = ssl.create_default_context()
+    
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto) as smtp:
+            smtp.login(emailPet, senhaPet)
+            smtp.sendmail(emailPet, emailDestino, mensagem.as_string())
+    except Exception as e:
+        raise EmailNaoFoiEnviadoExcecao()
