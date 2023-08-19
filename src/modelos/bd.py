@@ -1,8 +1,13 @@
 import logging
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from src.modelos.excecao import APIExcecaoBase, NaoEncontradoExcecao, UsuarioJaExisteExcecao
-from src.modelos.usuario.usuario import Usuario
+from src.rotas.petiano.petianoClad import Petiano
+from src.modelos.excecao import (
+    APIExcecaoBase,
+    NaoEncontradoExcecao,
+    UsuarioJaExisteExcecao,
+)
+from src.modelos.usuario.usuario import TipoConta, Usuario
 
 
 from src.config import config
@@ -55,7 +60,12 @@ def deletar(colecao: type[Usuario], id: str):
         colecaoUsuarios.delete_one({"_id": id})
 
 
-def listar(colecao: type[Usuario]) -> list[Usuario]:
+def listar(colecao: type[Usuario] | type[Petiano]) -> list[Usuario] | list[Petiano]:
     if colecao is Usuario:
         return [Usuario(**u) for u in colecaoUsuarios.find()]
+    if colecao is Petiano:
+        return [
+            Usuario(**u) for u in colecaoUsuarios.find({"tipoConta": TipoConta.PETIANO})
+        ]
+
     raise NaoEncontradoExcecao(mensagem="Coleção não encontrada")

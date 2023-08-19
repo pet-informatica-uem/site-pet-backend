@@ -1,23 +1,9 @@
-from pathlib import Path
-
-from pydantic import BaseModel
-
-from src.modelos.usuario.usuario import TipoConta, Usuario
-from src.modelos.bd import colecaoUsuarios
-
-
-class Petiano(BaseModel):
-    nome: str
-    github: str | None = None
-    linkedin: str | None = None
-    instagram: str | None = None
-    foto: Path | None = None
+from src.rotas.petiano.petianoClad import Petiano
+from src.modelos.bd import listar
 
 
 def infoPetianos() -> list[Petiano]:
-    petianos = [
-        Usuario(**u) for u in colecaoUsuarios.find({"tipoConta": TipoConta.PETIANO})
-    ]
+    petianos = listar(Petiano)
     infoPetianos: list[Petiano] = []
 
     for petiano in petianos:
