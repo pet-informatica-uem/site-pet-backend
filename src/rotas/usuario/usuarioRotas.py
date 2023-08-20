@@ -5,13 +5,6 @@ from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
 
-from modelos.usuario.usuarioClad import (
-    UsuarioAtualizar,
-    UsuarioAtualizarEmail,
-    UsuarioAtualizarSenha,
-    UsuarioCriar,
-    UsuarioLer,
-)
 from src.modelos.bd import TokenAutenticacaoBD
 from src.modelos.excecao import (
     APIExcecaoBase,
@@ -22,6 +15,13 @@ from src.modelos.excecao import (
     listaRespostasExcecoes,
 )
 from src.modelos.usuario.usuario import TipoConta, Usuario
+from src.modelos.usuario.usuarioClad import (
+    UsuarioAtualizar,
+    UsuarioAtualizarEmail,
+    UsuarioAtualizarSenha,
+    UsuarioCriar,
+    UsuarioLer,
+)
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
 

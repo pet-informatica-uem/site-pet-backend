@@ -2,13 +2,13 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 
-from modelos.inscrito.inscritoClad import (
+from src.modelos.excecao import NaoAutorizadoExcecao
+from src.modelos.inscrito.inscritoClad import (
     InscritoAtualizar,
     InscritoCriar,
     InscritoDeletar,
     InscritoLer,
 )
-from src.modelos.excecao import NaoAutorizadoExcecao
 from src.modelos.usuario.usuario import TipoConta, Usuario
 from src.rotas.inscrito.inscritoControlador import InscritosControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado

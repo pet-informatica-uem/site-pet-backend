@@ -2,6 +2,8 @@ import smtplib
 import ssl
 from email.message import EmailMessage
 
+from src.modelos.bd import EventoBD
+from src.modelos.evento.evento import Evento
 from src.modelos.excecao import EmailNaoFoiEnviadoExcecao
 
 
@@ -44,24 +46,40 @@ def emailConfirmacaoEvento(
     emailPet: str,
     senhaPet: str,
     emailDestino: str,
-    evento: dict,
+    idEvento: str,
+    tipoVaga: bool,
 ) -> None:
+    # Recupera o evento
+    evento: Evento = EventoBD.buscar("_id", idEvento)
+
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
-    mensagem["Subject"] = (
-        "PET-Info: Você foi cadastrado no evento " + evento["nome evento"]
-    )
+    mensagem["Subject"] = "PET-Info: Você foi cadastrado no evento " + evento.titulo
+
+    diasEvento: str = ""
+    for dia in evento.dias:
+        diasEvento += (
+            dia[0].strftime("%d/%m/%Y, %H:%M")
+            + " - "
+            + dia[1].strftime("%d/%m/%Y, %H:%M")
+            + "\n"
+        )
+
+    if tipoVaga:
+        vaga = "Utilizar seu notebook."
+    else:
+        vaga = "Sem notebook."
 
     mensagem.set_content(
         "Nome do evento: "
-        + evento["nome evento"]
+        + evento.titulo
         + "\nLocal do Evento: "
-        + evento["local"]
-        + "\nData do evento: "
-        + evento["data/hora evento"].strftime("%a %d %b %Y, %H:%M")
+        + evento.local
+        + "\nDias do evento: "
+        + diasEvento
         + "\nNesse evento você optou por: "
-        + evento["pré-requisitos"]
+        + vaga
     )
 
     return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)

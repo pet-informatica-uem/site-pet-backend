@@ -5,12 +5,6 @@ from datetime import datetime, timedelta
 from fastapi import UploadFile
 from pymongo.errors import DuplicateKeyError
 
-from modelos.usuario.usuarioClad import (
-    UsuarioAtualizar,
-    UsuarioAtualizarEmail,
-    UsuarioAtualizarSenha,
-    UsuarioCriar,
-)
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
     geraLink,
@@ -31,6 +25,12 @@ from src.modelos.excecao import (
     UsuarioNaoEncontradoExcecao,
 )
 from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
+from src.modelos.usuario.usuarioClad import (
+    UsuarioAtualizar,
+    UsuarioAtualizarEmail,
+    UsuarioAtualizarSenha,
+    UsuarioCriar,
+)
 
 
 class UsuarioControlador:

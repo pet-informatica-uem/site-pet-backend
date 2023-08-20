@@ -25,7 +25,8 @@ class Configuracoes(BaseSettings):
     Seus atributos podem ser substituídos declarando-se
     uma varíavel de ambiente com prefixo `PET_API_` seguido
     do nome do atributo, ou listando pares de valores e chaves
-    em um arquivo `.env` localizado na raiz da aplicação.
+    em um arquivo `.env` localizado na raiz da aplicação
+    (ex PET_API_EMAIL_SMTP=email@pet.com).
 
     Para acessar os membros dessa classe, basta criar uma instância
     ou acessar a instância global `config` declarada neste módulo.

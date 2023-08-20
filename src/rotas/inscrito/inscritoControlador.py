@@ -1,15 +1,17 @@
 from datetime import datetime
 
-from modelos.inscrito.inscritoClad import (
-    InscritoAtualizar,
-    InscritoCriar,
-    InscritoDeletar,
-)
-from modelos.usuario.usuario import Usuario
+from src.config import config
+from src.email.operacoesEmail import emailConfirmacaoEvento
 from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import APIExcecaoBase
 from src.modelos.inscrito.inscrito import Inscrito
+from src.modelos.inscrito.inscritoClad import (
+    InscritoAtualizar,
+    InscritoCriar,
+    InscritoDeletar,
+)
+from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 
 
@@ -53,6 +55,15 @@ class InscritosControlador:
 
         # Recupera o usuário
         usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
+
+        # Envia email de confirmação de inscrição
+        emailConfirmacaoEvento(
+            config.EMAIL_SMTP,
+            config.SENHA_SMTP,
+            usuario.email,
+            evento.titulo,
+            inscrito.tipoVaga,
+        )
 
         # Adiciona o evento na lista de eventos inscritos do usuário
         usuario.eventosInscrito.append((idEvento, True))

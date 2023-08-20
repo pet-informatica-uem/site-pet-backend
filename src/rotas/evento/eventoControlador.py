@@ -5,18 +5,17 @@ from typing import BinaryIO
 from bson.objectid import ObjectId
 from fastapi import UploadFile
 
-from modelos.evento.eventoClad import EventoAtualizar, EventoCriar
 from src.config import config
-from src.email.operacoesEmail import emailConfirmacaoEvento
 from src.img.operacoesImagem import (
     armazenaArteEvento,
     armazenaQrCodeEvento,
     deletaImagem,
     validaImagem,
 )
-from src.modelos.bd import EventoBD, UsuarioBD
+from src.modelos.bd import EventoBD
 from src.modelos.evento.evento import Evento
-from src.modelos.excecao import ErroInternoExcecao, ImagemInvalidaExcecao
+from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
+from src.modelos.excecao import ImagemInvalidaExcecao
 
 
 class EventoControlador:
