@@ -1,14 +1,15 @@
 import logging
+from datetime import datetime
 
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 
 from src.config import config
+from src.modelos.autenticacao.autenticacao import TokenAutenticacao
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import JaExisteExcecao, NaoEncontradoExcecao
 from src.modelos.inscrito.inscrito import Inscrito
 from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
-from src.rotas.inscrito.inscritoClad import InscritoLer
 
 cliente: MongoClient = MongoClient(str(config.URI_BD))
 
@@ -129,3 +130,32 @@ class InscritoBD:
     @staticmethod
     def listarInscritosEvento(id: str) -> list[Inscrito]:
         return [Inscrito(**e) for e in colecaoInscritos.find({"idEvento": id})]
+
+
+class TokenAutenticacaoBD:
+    @staticmethod
+    def buscar(id: str) -> TokenAutenticacao:
+        documento = colecaoTokens.find_one({"_id": id})
+        if not documento:
+            raise NaoEncontradoExcecao()
+
+        return TokenAutenticacao(**documento)
+
+    @staticmethod
+    def deletar(id: str):
+        resultado = colecaoTokens.delete_one({"_id": id})
+        if resultado.deleted_count != 1:
+            raise NaoEncontradoExcecao()
+
+    @staticmethod
+    def criar(id: str, idUsuario: str, validade: datetime) -> TokenAutenticacao:
+        documento = {"_id": id, "idUsuario": idUsuario, "validade": validade}
+
+        resultado = colecaoTokens.insert_one(documento)
+        assert resultado.acknowledged
+
+        return TokenAutenticacaoBD.buscar(str(resultado.inserted_id))
+
+    @staticmethod
+    def deletarTokensUsuario(idUsuario: str):
+        colecaoTokens.delete_many({"idUsuario": idUsuario})

@@ -2,9 +2,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, UploadFile, status
 
+from modelos.evento.eventoClad import EventoAtualizar, EventoCriar
 from src.modelos.evento.evento import Evento
 from src.modelos.usuario.usuario import Usuario
-from src.rotas.evento.eventoClad import EventoAtualizar, EventoCriar
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
 

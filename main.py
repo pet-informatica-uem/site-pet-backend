@@ -9,10 +9,9 @@ from rotinas import verificaEventosFinalizados
 from src.config import config
 from src.img.criaPastas import criaPastas
 from src.middlewareExcecao import requestHandler as middlewareExcecao
-
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
-from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
+from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
 
 logging.basicConfig(
     handlers=[

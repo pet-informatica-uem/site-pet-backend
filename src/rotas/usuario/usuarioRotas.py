@@ -5,7 +5,14 @@ from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
 
-from src.modelos.autenticacao.autenticacaoClad import TokenAutenticacaoClad
+from modelos.usuario.usuarioClad import (
+    UsuarioAtualizar,
+    UsuarioAtualizarEmail,
+    UsuarioAtualizarSenha,
+    UsuarioCriar,
+    UsuarioLer,
+)
+from src.modelos.bd import TokenAutenticacaoBD
 from src.modelos.excecao import (
     APIExcecaoBase,
     JaExisteExcecao,
@@ -16,13 +23,6 @@ from src.modelos.excecao import (
 )
 from src.modelos.usuario.usuario import TipoConta, Usuario
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
-from src.rotas.usuario.usuarioClad import (
-    UsuarioAtualizar,
-    UsuarioAtualizarEmail,
-    UsuarioAtualizarSenha,
-    UsuarioCriar,
-    UsuarioLer,
-)
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
 
 
@@ -154,7 +154,7 @@ def editarEmail(
 
         UsuarioControlador.editarEmail(dadosEmail, id)
 
-        TokenAutenticacaoClad.deletarTokensUsuario(usuario.id)
+        TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
     else:
         raise NaoAutenticadoExcecao()
 
@@ -179,7 +179,7 @@ def editarSenha(
 
         # efetua logout de todas as sessões, caso o usuário desejar
         if deslogarAoTrocarSenha:
-            TokenAutenticacaoClad.deletarTokensUsuario(usuario.id)
+            TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
 
 
 @roteador.put(

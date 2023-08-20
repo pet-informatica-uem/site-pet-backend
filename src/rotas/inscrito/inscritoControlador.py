@@ -1,16 +1,16 @@
 from datetime import datetime
 
+from modelos.inscrito.inscritoClad import (
+    InscritoAtualizar,
+    InscritoCriar,
+    InscritoDeletar,
+)
 from modelos.usuario.usuario import Usuario
 from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import APIExcecaoBase
 from src.modelos.inscrito.inscrito import Inscrito
 from src.rotas.evento.eventoControlador import EventoControlador
-from src.rotas.inscrito.inscritoClad import (
-    InscritoAtualizar,
-    InscritoCriar,
-    InscritoDeletar,
-)
 
 
 class InscritosControlador:

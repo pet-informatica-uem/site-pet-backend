@@ -5,6 +5,12 @@ from datetime import datetime, timedelta
 from fastapi import UploadFile
 from pymongo.errors import DuplicateKeyError
 
+from modelos.usuario.usuarioClad import (
+    UsuarioAtualizar,
+    UsuarioAtualizarEmail,
+    UsuarioAtualizarSenha,
+    UsuarioCriar,
+)
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
     geraLink,
@@ -15,8 +21,7 @@ from src.autenticacao.jwtoken import (
 from src.config import config
 from src.email.operacoesEmail import resetarSenha, verificarEmail
 from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
-from src.modelos.autenticacao.autenticacaoClad import TokenAutenticacaoClad
-from src.modelos.bd import UsuarioBD
+from src.modelos.bd import TokenAutenticacaoBD, UsuarioBD
 from src.modelos.excecao import (
     APIExcecaoBase,
     ImagemInvalidaExcecao,
@@ -26,12 +31,6 @@ from src.modelos.excecao import (
     UsuarioNaoEncontradoExcecao,
 )
 from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
-from src.rotas.usuario.usuarioClad import (
-    UsuarioAtualizar,
-    UsuarioAtualizarEmail,
-    UsuarioAtualizarSenha,
-    UsuarioCriar,
-)
 
 
 class UsuarioControlador:
@@ -145,7 +144,7 @@ class UsuarioControlador:
 
         # cria token
         tk: str = secrets.token_urlsafe()
-        TokenAutenticacaoClad.criar(
+        TokenAutenticacaoBD.criar(
             tk,
             usuario.id,
             datetime.now() + timedelta(days=2),
@@ -162,7 +161,7 @@ class UsuarioControlador:
         """
 
         try:
-            id: str = TokenAutenticacaoClad.get(token).idUsuario
+            id: str = TokenAutenticacaoBD.buscar(token).idUsuario
         except NaoEncontradoExcecao:
             raise NaoAutenticadoExcecao()
 
