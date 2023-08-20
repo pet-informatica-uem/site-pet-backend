@@ -185,7 +185,7 @@ class UsuarioControlador:
     @staticmethod
     def getUsuarios(petiano: bool) -> list[Usuario]:
         return UsuarioBD.listar(petiano)
-    
+
     @staticmethod
     def editarUsuario(
         id: str,
@@ -240,7 +240,7 @@ class UsuarioControlador:
             usuario.senha = hashSenha(dadosSenha.novaSenha.get_secret_value())
             UsuarioBD.atualizar(usuario)
         else:
-            raise APIExcecaoBase(mensagem="Senha incorreta")
+            raise APIExcecaoBase(message="Senha incorreta")
 
     @staticmethod
     def editarEmail(dadosEmail: UsuarioAtualizarEmail, id: str) -> None:
@@ -261,9 +261,11 @@ class UsuarioControlador:
 
             UsuarioBD.atualizar(usuario)
             mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
-            verificarEmail(config.EMAIL_SMTP, config.SENHA_SMTP, usuario.email, mensagemEmail)
+            verificarEmail(
+                config.EMAIL_SMTP, config.SENHA_SMTP, usuario.email, mensagemEmail
+            )
         else:
-            raise APIExcecaoBase(mensagem="Senha incorreta")
+            raise APIExcecaoBase(message="Senha incorreta")
 
     @staticmethod
     def editarFoto(usuario: Usuario, foto: UploadFile) -> None:

@@ -37,30 +37,30 @@ class EventoLer(Evento):
 
 
 class EventoAtualizar(BaseModel):
-    titulo: str
+    titulo: str | None = None
     "Título do evento."
 
-    descricao: str
+    descricao: str | None = None
     "Descrição do evento."
 
-    preRequisitos: list[str]
+    preRequisitos: list[str] | None = None
     "Pré requisitos para participar do evento."
 
-    inicioInscricao: datetime
+    inicioInscricao: datetime | None = None
 
-    fimInscricao: datetime
+    fimInscricao: datetime | None = None
 
-    dias: list[tuple[datetime, datetime]]
+    dias: list[tuple[datetime, datetime]] | None = None
 
-    local: str
+    local: str | None = None
 
-    vagasComNote: int
+    vagasComNote: int | None = None
 
-    vagasSemNote: int
-    
-    cargaHoraria: int
+    vagasSemNote: int | None = None
 
-    valor: float
+    cargaHoraria: int | None = None
+
+    valor: float | None = None
 
 
 class EventoDeletar(BaseModel):

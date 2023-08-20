@@ -34,19 +34,21 @@ class UsuarioBD:
             colecaoUsuarios.insert_one(modelo.model_dump(by_alias=True))
         except DuplicateKeyError:
             logging.error("Usuário já existe no banco de dados")
-            raise JaExisteExcecao(mensagem="Usuário já existe no banco de dados")
+            raise JaExisteExcecao(message="Usuário já existe no banco de dados")
 
     @staticmethod
     def buscar(indice: str, chave: str) -> Usuario:
         # Verifica se o usuário está cadastrado no bd
         if not colecaoUsuarios.find_one({indice: chave}):
-            raise NaoEncontradoExcecao(mensagem="O Usuário não foi encontrado.")
+            raise NaoEncontradoExcecao(message="O Usuário não foi encontrado.")
         else:
             return Usuario(**colecaoUsuarios.find_one({indice: chave}))  # type: ignore
 
     @staticmethod
     def atualizar(modelo: Usuario):
-        colecaoUsuarios.update_one({"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)})
+        colecaoUsuarios.update_one(
+            {"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)}
+        )
 
     @staticmethod
     def deletar(id: str):
@@ -70,19 +72,21 @@ class EventoBD:
             colecaoEventos.insert_one(modelo.model_dump(by_alias=True))
         except DuplicateKeyError:
             logging.error("Evento já existe no banco de dados")
-            raise JaExisteExcecao(mensagem="Evento já existe no banco de dados")
+            raise JaExisteExcecao(message="Evento já existe no banco de dados")
 
     @staticmethod
     def buscar(indice: str, chave: str) -> Evento:
         # Verifica se o evento está cadastrado no bd
         if not colecaoEventos.find_one({indice: chave}):
-            raise NaoEncontradoExcecao(mensagem="O evento não foi encontrado.")
+            raise NaoEncontradoExcecao(message="O evento não foi encontrado.")
         else:
             return Evento(**colecaoEventos.find_one({indice: chave}))  # type: ignore
 
     @staticmethod
     def atualizar(modelo: Evento):
-        colecaoEventos.update_one({"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)})
+        colecaoEventos.update_one(
+            {"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)}
+        )
 
     @staticmethod
     def deletar(id: str):
@@ -100,28 +104,29 @@ class InscritoBD:
             colecaoInscritos.insert_one(modelo.model_dump())
         except DuplicateKeyError:
             logging.error("Inscrito já existe no banco de dados")
-            raise JaExisteExcecao(mensagem="Inscrito já existe no banco de dados")
+            raise JaExisteExcecao(message="Inscrito já existe no banco de dados")
 
     @staticmethod
-    def buscar(idUsuario: str, idEvento: str) -> Inscrito:
+    def buscar(idEvento: str, idUsuario: str) -> Inscrito:
         # Verifica se o inscrito está cadastrado no bd
-        if not colecaoInscritos.find_one(
-            {"idUsuario": idUsuario, "idEvento": idEvento}
+        if inscrito := colecaoInscritos.find_one(
+            {"idEvento": idEvento, "idUsuario": idUsuario}
         ):
-            raise NaoEncontradoExcecao(mensagem="O inscrito não foi encontrado.")
+            return Inscrito(**inscrito)  # type: ignore
         else:
-            return Inscrito(**colecaoInscritos.find_one({"idUsuario": idUsuario, "idEvento": idEvento}))  # type: ignore
+            print(inscrito)
+            raise NaoEncontradoExcecao(message="O inscrito não foi encontrado.")
 
     @staticmethod
     def atualizar(modelo: Inscrito):
         colecaoInscritos.update_one(
-            {"idUsuario": modelo.idUsuario, "idEvento": modelo.idEvento},
+            {"idEvento": modelo.idEvento, "idUsuario": modelo.idUsuario},
             {"$set": modelo.model_dump()},
         )
 
     @staticmethod
-    def deletar(idUsuario: str, idEvento: str):
-        colecaoInscritos.delete_one({"idUsuario": idUsuario, "idEvento": idEvento})
+    def deletar(idEvento: str, idUsuario: str):
+        colecaoInscritos.delete_one({"idEvento": idEvento, "idUsuario": idUsuario})
 
     @staticmethod
     def listarEventosUsuario(id: str) -> list[Inscrito]:

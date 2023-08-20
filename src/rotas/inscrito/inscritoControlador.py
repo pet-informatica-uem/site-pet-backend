@@ -1,8 +1,9 @@
+import time
 from datetime import datetime
 
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
-from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD
+from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, colecaoInscritos
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import APIExcecaoBase
 from src.modelos.inscrito.inscrito import Inscrito
@@ -22,21 +23,25 @@ class InscritosControlador:
         evento: Evento = EventoControlador.getEvento(idEvento)
 
         # Verifica se está no período de inscrição
-        if not (evento.inicioInscricao <= datetime.now() <= evento.fimInscricao):
-            raise APIExcecaoBase(mensagem="Fora do período de inscrição")
+        if (
+            evento.inicioInscricao > datetime.now()
+            or evento.fimInscricao < datetime.now()
+        ):
+            raise APIExcecaoBase(message="Fora do período de inscrição")
 
         # Verifica se há vagas disponíveis
         if inscrito.tipoVaga:
             if evento.vagasDisponiveisComNote == 0:
-                raise APIExcecaoBase(mensagem="Não há vagas disponíveis com note")
+                print("passou aqui")
+                raise APIExcecaoBase(message="Não há vagas disponíveis com note")
         else:
             if evento.vagasDisponiveisSemNote == 0:
-                raise APIExcecaoBase(mensagem="Não há vagas disponíveis sem note")
+                raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
 
         d = {
             "idEvento": idEvento,
             "idUsuario": idUsuario,
-            "dataHora": datetime.now(),
+            "dataInscricao": datetime.now(),
         }
 
         d.update(**inscrito.model_dump())
@@ -61,7 +66,7 @@ class InscritosControlador:
             config.EMAIL_SMTP,
             config.SENHA_SMTP,
             usuario.email,
-            evento.titulo,
+            evento.id,
             inscrito.tipoVaga,
         )
 
@@ -86,16 +91,18 @@ class InscritosControlador:
             evento: Evento = EventoControlador.getEvento(idEvento)
 
             if inscrito.tipoVaga:
-                evento.vagasDisponiveisSemNote += 1
-            else:
-                evento.vagasDisponiveisComNote += 1
-
-            if inscrito.tipoVaga:
                 if evento.vagasDisponiveisComNote == 0:
-                    raise APIExcecaoBase(mensagem="Não há vagas disponíveis com note")
+                    raise APIExcecaoBase(message="Não há vagas disponíveis com note")
+                evento.vagasDisponiveisSemNote += 1
+                evento.vagasDisponiveisComNote -= 1
             else:
                 if evento.vagasDisponiveisSemNote == 0:
-                    raise APIExcecaoBase(mensagem="Não há vagas disponíveis sem note")
+                    raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
+                evento.vagasDisponiveisComNote += 1
+                evento.vagasDisponiveisSemNote -= 1
+
+            # Atualiza o evento no bd
+            EventoBD.atualizar(evento)
 
         d = inscritoOld.model_dump(by_alias=True)
         d.update(**inscrito.model_dump(exclude_none=True))
@@ -110,8 +117,11 @@ class InscritosControlador:
         evento: Evento = EventoControlador.getEvento(inscrito.idEvento)
 
         # Verifica se está no período de inscrição
-        if not (evento.inicioInscricao <= datetime.now() <= evento.fimInscricao):
-            raise APIExcecaoBase(mensagem="Fora do período de inscrição")
+        if (
+            evento.inicioInscricao > datetime.now()
+            or evento.fimInscricao < datetime.now()
+        ):
+            raise APIExcecaoBase(message="Fora do período de inscrição")
 
         # Recupera o inscrito
         inscritoRecuperado: Inscrito = InscritoBD.buscar(
@@ -123,8 +133,11 @@ class InscritosControlador:
         else:
             evento.vagasDisponiveisSemNote += 1
 
+        # Atualiza o evento no bd
+        EventoBD.atualizar(evento)
+
         # Remove o inscrito do bd
-        InscritoBD.deletar(InscritoDeletar.idEvento, InscritoDeletar.idUsuario)
+        InscritoBD.deletar(inscrito.idEvento, inscrito.idUsuario)
 
         # Recupera o usuário
         usuario: Usuario = UsuarioBD.buscar("_id", inscrito.idUsuario)

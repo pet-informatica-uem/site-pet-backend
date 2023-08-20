@@ -5,11 +5,10 @@ from typing import BinaryIO
 from bson.objectid import ObjectId
 from fastapi import UploadFile
 
-from src.modelos.inscrito.inscrito import Inscrito
 from src.config import config
 from src.img.operacoesImagem import (
     armazenaArteEvento,
-    armazenaQrCodeEvento,
+    armazenaCrachaEvento,
     deletaImagem,
     validaImagem,
 )
@@ -17,6 +16,7 @@ from src.modelos.bd import EventoBD, InscritoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
 from src.modelos.excecao import APIExcecaoBase, ImagemInvalidaExcecao
+from src.modelos.inscrito.inscrito import Inscrito
 
 
 class EventoControlador:
@@ -37,16 +37,21 @@ class EventoControlador:
     @staticmethod
     def editarEvento(id: str, dadosEvento: EventoAtualizar) -> Evento:
         # obtém evento
-        evento: Evento = EventoControlador.getEvento(id)
-        qtdInscritosNote: int = evento.vagasComNote - evento.vagasDisponiveisComNote
-        qtdInscritosSemNote: int = evento.vagasSemNote - evento.vagasDisponiveisSemNote
+        eventoOld: Evento = EventoControlador.getEvento(id)
+
+        qtdInscritosNote: int = (
+            eventoOld.vagasComNote - eventoOld.vagasDisponiveisComNote
+        )
+        qtdInscritosSemNote: int = (
+            eventoOld.vagasSemNote - eventoOld.vagasDisponiveisSemNote
+        )
 
         if (
             dadosEvento.vagasComNote != None
             and dadosEvento.vagasComNote < qtdInscritosNote
         ):
             raise APIExcecaoBase(
-                mensagem="Erro ao alterar vagas com note: numero de inscritos superior ao total de vagas com note."
+                message="Erro ao alterar vagas com note: numero de inscritos superior ao total de vagas com note."
             )
 
         if (
@@ -54,20 +59,29 @@ class EventoControlador:
             and dadosEvento.vagasSemNote < qtdInscritosSemNote
         ):
             raise APIExcecaoBase(
-                mensagem="Erro ao alterar vagas sem note: numero de inscritos superior ao total de vagas sem note."
+                message="Erro ao alterar vagas sem note: numero de inscritos superior ao total de vagas sem note."
             )
 
         # normaliza dados
-        dadosEvento.titulo = dadosEvento.titulo.strip()
-        dadosEvento.descricao = dadosEvento.descricao.strip()
-        dadosEvento.local = dadosEvento.local.strip()
+        if dadosEvento.titulo:
+            dadosEvento.titulo = dadosEvento.titulo.strip()
+        if dadosEvento.descricao:
+            dadosEvento.descricao = dadosEvento.descricao.strip()
+        if dadosEvento.local:
+            dadosEvento.local = dadosEvento.local.strip()
 
         # atualiza dados
-        d = evento.model_dump(by_alias=True)
-        d.update(
-            vagasDisponiveisComNote=dadosEvento.vagasComNote - qtdInscritosNote,
-            vagasDisponiveisSemNote=dadosEvento.vagasSemNote - qtdInscritosSemNote,
-        )
+        d = eventoOld.model_dump(by_alias=True)
+        if dadosEvento.vagasComNote:
+            d.update(
+                vagasDisponiveisComNote=dadosEvento.vagasComNote - qtdInscritosNote
+            )
+
+        if dadosEvento.vagasSemNote:
+            d.update(
+                vagasDisponiveisSemNote=dadosEvento.vagasSemNote - qtdInscritosSemNote
+            )
+
         d.update(dadosEvento.model_dump(exclude_none=True))
         evento = Evento(**d)
 
@@ -88,7 +102,7 @@ class EventoControlador:
 
             deletaImagem(evento.titulo, ["eventos", "arte"])
             caminhoArte: str = armazenaArteEvento(evento.titulo, arte.file)  # type: ignore
-            evento.arte = caminhoArte  # type: ignore
+            evento.imagemCapa = caminhoArte  # type: ignore
 
             # atualiza no bd
             EventoBD.atualizar(evento)
@@ -98,8 +112,8 @@ class EventoControlador:
                 raise ImagemInvalidaExcecao()
 
             deletaImagem(evento.titulo, ["eventos", "cracha"])
-            caminhoCracha: str = armazenaQrCodeEvento(evento.titulo, cracha.file)  # type: ignore
-            evento.cracha = caminhoCracha  # type: ignore
+            caminhoCracha: str = armazenaCrachaEvento(evento.titulo, cracha.file)  # type: ignore
+            evento.imagemCracha = caminhoCracha  # type: ignore
 
             # atualiza no bd
             EventoBD.atualizar(evento)

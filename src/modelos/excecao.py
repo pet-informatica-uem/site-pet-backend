@@ -14,13 +14,13 @@ from src.modelos.erros import (
 
 
 class APIExcecaoBase(Exception):
-    mensagem = "Erro genérico."
+    message = "Erro genérico."
     code = status.HTTP_500_INTERNAL_SERVER_ERROR
     model = ErroBase
 
     def __init__(self, **kwargs):
-        kwargs.setdefault("message", self.mensagem)
-        self.mensagem = kwargs["message"]
+        kwargs.setdefault("message", self.message)
+        self.message = kwargs["message"]
         self.data = self.model(**kwargs)
 
     def response(self):

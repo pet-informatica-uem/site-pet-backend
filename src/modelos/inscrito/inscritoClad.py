@@ -12,9 +12,6 @@ class InscritoCriar(BaseModel):
     nivelConhecimento: int
     "Nível de conhecimento do usuário (1 a 5)."
 
-    comprovante: Path | None = None
-    "Comprovante de pagamento da inscrição."
-
 
 class InscritoLer(Inscrito):
     pass
@@ -23,9 +20,6 @@ class InscritoLer(Inscrito):
 class InscritoAtualizar(BaseModel):
     tipoVaga: bool | None = None
     "Tipo de vaga: True para com notebook e False para sem notebook."
-
-    comprovante: Path | None = None
-    "Comprovante de pagamento da inscrição."
 
 
 class InscritoDeletar(BaseModel):

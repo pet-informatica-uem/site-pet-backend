@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Request
 
 from src.modelos.excecao import APIExcecaoBase

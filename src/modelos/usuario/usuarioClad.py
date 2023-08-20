@@ -38,11 +38,13 @@ class UsuarioLerAdmin(BaseModel):
     cpf: str
     curso: str
     tipoConta: str
+    eventosInscrito: list[tuple[str, bool]] = []
 
     foto: Path | None = None
     github: str | None = None
     linkedin: str | None = None
     instagram: str | None = None
+
 
 class UsuarioLer(BaseModel):
     nome: str

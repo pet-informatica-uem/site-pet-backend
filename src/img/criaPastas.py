@@ -9,7 +9,7 @@ def criaPastas():
         "img/usuarios",
         "img/eventos",
         "img/eventos/arte",
-        "img/eventos/qrcode",
+        "img/eventos/cracha",
     ]
 
     for directory in directories:

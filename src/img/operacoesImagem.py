@@ -54,15 +54,15 @@ def armazenaFotoUsuario(nomeUsuario: str, arquivo: str | bytes) -> str | None:
     return retorno
 
 
-def armazenaQrCodeEvento(nomeEvento: str, arquivo: bytes | BinaryIO) -> str | None:
-    """Armazena a imagem em "images/eventos/qrcode" usando um nome base para o arquivo.
+def armazenaCrachaEvento(nomeEvento: str, arquivo: bytes | BinaryIO) -> str | None:
+    """Armazena a imagem em "images/eventos/cracha" usando um nome base para o arquivo.
 
     :param nomeEvento -- nome do evento relacionado a imagem
     :param arquivo -- a imagem em si
 
     :return -- caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
-    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", "qrcode")
+    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", "cracha")
     retorno = __armazenaImagem(path, nomeEvento, arquivo)
 
     return retorno

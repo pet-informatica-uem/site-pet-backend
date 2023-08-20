@@ -1,5 +1,4 @@
 from datetime import datetime
-from pathlib import Path
 
 from pydantic import BaseModel, Field
 
@@ -51,10 +50,10 @@ class Evento(BaseModel):
     valor: float
     "Valor da inscrição."
 
-    imagemCapa: Path | None = None
+    imagemCapa: str | None = None
     "Caminho para a imagem de capa do evento."
 
-    imagemCracha: Path | None = None
+    imagemCracha: str | None = None
     "Caminho para a imagem do crachá do evento."
 
     ativo: bool = True

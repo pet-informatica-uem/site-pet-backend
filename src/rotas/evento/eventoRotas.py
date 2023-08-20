@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
@@ -66,6 +66,7 @@ def editarEvento(
     EventoControlador.editarEvento(id, evento)
 
 
+# TODO tem que ser opcional
 @roteador.put(
     "/{id}/imagens",
     name="Atualizar imagens do evento",
@@ -74,8 +75,8 @@ def editarEvento(
 def atualizarImagensEvento(
     id: str,
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
-    arte: UploadFile | None = None,
-    cracha: UploadFile | None = None,
+    arte: UploadFile,
+    cracha: UploadFile,
 ):
     # Despacha para o controlador
     EventoControlador.atualizarImagensEvento(id, arte, cracha)

@@ -25,9 +25,6 @@ logging.basicConfig(
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 origins = ["http://localhost:3000", "http://localhost"]
 
-# Caso não existam, cria as pastas para armazenar imagens.
-criaPastas()
-
 origins = ["http://localhost:3000", "http://localhost"]
 
 petBack = FastAPI()
@@ -43,7 +40,11 @@ petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
 
+# Caso não existam, cria as pastas para armazenar imagens.
+criaPastas()
+
 logging.info("Backend inicializado")
+
 
 # Inicializa o scheduler
 scheduler = BackgroundScheduler()

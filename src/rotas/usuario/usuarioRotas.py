@@ -83,7 +83,7 @@ def cadastrarUsuario(usuario: UsuarioCriar) -> str:
     "/",
     name="Recuperar usuários cadastrados",
     description="Lista todos os usuários cadastrados.",
-    response_model = list[UsuarioLerAdmin]
+    response_model=list[UsuarioLerAdmin],
 )
 def listarUsuarios(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
@@ -96,7 +96,7 @@ def listarUsuarios(
     "/petiano",
     name="Recuperar petianos cadastrados",
     description="Lista todos os petianos cadastrados.",
-    response_model=list[UsuarioLer]
+    response_model=list[UsuarioLer],
 )
 def listarPetianos():
     return UsuarioControlador.getUsuarios(petiano=True)
@@ -109,7 +109,7 @@ def listarPetianos():
     Retorna detalhes do usuário com id fornecido.
     """,
     status_code=status.HTTP_200_OK,
-    response_model=UsuarioLer,
+    response_model=UsuarioLerAdmin,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str):
