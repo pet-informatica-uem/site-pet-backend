@@ -99,7 +99,12 @@ class EventoControlador:
         dadosEvento.local = dadosEvento.local.strip()
 
         # cria evento
-        evento: Evento = Evento(**dadosEvento.model_dump(), _id=secrets.token_hex(16))
+        evento: Evento = Evento(
+            **dadosEvento.model_dump(),
+            _id=secrets.token_hex(16),
+            vagasDisponiveisComNote=dadosEvento.vagasComNote,
+            vagasDisponiveisSemNote=dadosEvento.vagasSemNote
+        )
         EventoBD.criar(evento)
 
         return evento.id

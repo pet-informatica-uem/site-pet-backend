@@ -49,6 +49,9 @@ class Usuario(BaseModel):
     tipoConta: TipoConta
     "Tipo de conta. Representa permissões."
 
+    eventosInscrito: list[tuple[str, bool]] = []
+    "Lista de tuplas de id de evento e se o evento está ativo."
+
     dataCriacao: datetime
     "Data e hora de criação da conta."
 
@@ -75,9 +78,19 @@ class Usuario(BaseModel):
     foto: Path | None = None
     "Caminho para foto de perfil do petiano."
 
+
 class Petiano(BaseModel):
     nome: str
+    "Nome completo do usuário."
+
     github: str | None = None
+    "Link para o Github pessoal."
+
     linkedin: str | None = None
+    "Link para o LinkedIn pessoal."
+
     instagram: str | None = None
+    "Link para o Instagram pessoal."
+
     foto: Path | None = None
+    "Caminho para foto de perfil do petiano."

@@ -1,12 +1,8 @@
-from dataclasses import asdict, dataclass
-from datetime import datetime
-from typing import Annotated, BinaryIO
+from typing import Annotated
 
-from bson.objectid import ObjectId
 from fastapi import (
     APIRouter,
     Depends,
-    Form,
     UploadFile,
     status,
 )
@@ -23,7 +19,7 @@ formatoString = "%d/%m/%Y %H:%M"
 roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
 
-#TODO conferir se é interessante retornar o id
+# TODO conferir se é interessante retornar o id
 @roteador.get(
     "/",
     name="Recuperar todos os eventos",
@@ -33,7 +29,7 @@ def getEventos() -> list:
     return EventoControlador.getEventos()
 
 
-#TODO conferir se é interessante retornar o id
+# TODO conferir se é interessante retornar o id
 @roteador.get(
     "/{id}",
     name="Recuperar evento por ID",
@@ -54,7 +50,9 @@ def getEvento(id: str) -> Evento:
     description="Cadastra um novo evento.",
     status_code=status.HTTP_201_CREATED,
 )
-def cadastrarEvento(evento: EventoCriar, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]):
+def cadastrarEvento(
+    evento: EventoCriar, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]
+):
     # Despacha para o controlador
     EventoControlador.cadastrarEvento(evento)
 
@@ -64,15 +62,19 @@ def cadastrarEvento(evento: EventoCriar, usuario: Annotated[Usuario, Depends(get
     name="Editar evento",
     description="Edita um evento.",
 )
-def editarEvento(id: str, evento: EventoAtualizar, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]):
+def editarEvento(
+    id: str,
+    evento: EventoAtualizar,
+    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+):
     # Despacha para o controlador
     EventoControlador.editarEvento(id, evento)
 
 
 @roteador.put(
-        "/{id}/imagens",
-        name="Atualizar imagens do evento",
-        description="Atualiza as imagens do evento.",
+    "/{id}/imagens",
+    name="Atualizar imagens do evento",
+    description="Atualiza as imagens do evento.",
 )
 def atualizarImagensEvento(
     id: str,
@@ -95,50 +97,3 @@ def deletarEvento(
 ):
     # Despacha para o controlador
     EventoControlador.deletarEvento(id)
-
-
-
-# TODO conferir
-@roteador.get(
-    "/recuperarInscritos",
-    name="Recuperar os inscritos de um determinado evento por ID",
-    description="""
-        Recupera os dados dos inscritos de um determinado evento, como pagamento, nome, email..
-        Falha, caso o evento não exista o evento.
-    """,
-)
-def getInscritosEvento(
-    id: str, usuario: Annotated[UsuarioSenha, Depends(getPetianoAutenticado)]
-) -> list[dict]:
-    inscritosController = EnscritosEventoControlador()
-
-    inscritos: list[dict] = inscritosController.getInscritosEvento(id)
-
-    return inscritos
-
-
-@roteador.post(
-    "/inscricaoUsuarioEmEvento",
-    name="Recebe dados da inscrição e realiza a inscrição no evento.",
-    description="Recebe o id do inscrito, o id do evento, o nivel do conhecimento do inscrito, o tipo de de inscrição e a situação de pagamento da inscricao em eventos do usuario autenticado.",
-    status_code=status.HTTP_201_CREATED,
-)
-def getDadosInscricaoEvento(
-    idUsuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
-    id: Annotated[str, Form(max_length=200)],
-    tipoDeInscricao: Annotated[str, Form(max_length=200)],
-    pagamento: Annotated[bool, Form()],
-    nivelConhecimento: Annotated[str | None, Form(max_length=200)] = None,
-):
-    inscrito: dict = {
-        "idUsuario": idUsuario.paraBd()["_id"],
-        "id": id,
-        "nivelConhecimento": nivelConhecimento,
-        "tipoInscricao": tipoDeInscricao,
-        "pagamento": pagamento,
-    }
-
-    inscritosControlador = EnscritosEventoControlador()
-    situacaoInscricao: bool = inscritosControlador.inscricaoEvento(inscrito)
-
-    return situacaoInscricao
