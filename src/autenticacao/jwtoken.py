@@ -41,7 +41,7 @@ def processaTokenAtivaConta(token: str) -> dict[str, str]:
     return {"idUsuario": idUsuario, "email": email}
 
 
-def geraLink(email: str) -> str:
+def geraLinkEsqueciSenha(email: str) -> str:
     """
     Gera um link contendo o email do usuário, na forma de um token, (com
     prazo de validade) para a troca de senha.
@@ -56,7 +56,7 @@ def geraLink(email: str) -> str:
 
     # Gera o link para a troca de senha
     # TODO ver com o front qual vai ser o link
-    url = config.CAMINHO_BASE + "esqueci-senha/?token=" + token
+    url = config.CAMINHO_BASE + "/esqueci-senha/?token=" + token
     return url
 
 

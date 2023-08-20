@@ -12,7 +12,7 @@ class EventoCriar(BaseModel):
     descricao: str
     "Descrição do evento."
 
-    preRequisitos: list[str]
+    preRequisitos: list[str] = []
     "Pré requisitos para participar do evento."
 
     inicioInscricao: datetime
@@ -30,10 +30,6 @@ class EventoCriar(BaseModel):
     cargaHoraria: int
 
     valor: float
-
-    imagemCapa: str = ""
-
-    imagemCracha: str = ""
 
 
 class EventoLer(Evento):
@@ -61,7 +57,7 @@ class EventoAtualizar(BaseModel):
     vagasComNote: int
 
     vagasSemNote: int
-
+    
     cargaHoraria: int
 
     valor: float

@@ -5,6 +5,7 @@ from typing import BinaryIO
 from bson.objectid import ObjectId
 from fastapi import UploadFile
 
+from src.modelos.inscrito.inscrito import Inscrito
 from src.config import config
 from src.img.operacoesImagem import (
     armazenaArteEvento,
@@ -12,10 +13,10 @@ from src.img.operacoesImagem import (
     deletaImagem,
     validaImagem,
 )
-from src.modelos.bd import EventoBD
+from src.modelos.bd import EventoBD, InscritoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
-from src.modelos.excecao import ImagemInvalidaExcecao
+from src.modelos.excecao import APIExcecaoBase, ImagemInvalidaExcecao
 
 
 class EventoControlador:
@@ -37,6 +38,24 @@ class EventoControlador:
     def editarEvento(id: str, dadosEvento: EventoAtualizar) -> Evento:
         # obtém evento
         evento: Evento = EventoControlador.getEvento(id)
+        qtdInscritosNote: int = evento.vagasComNote - evento.vagasDisponiveisComNote
+        qtdInscritosSemNote: int = evento.vagasSemNote - evento.vagasDisponiveisSemNote
+
+        if (
+            dadosEvento.vagasComNote != None
+            and dadosEvento.vagasComNote < qtdInscritosNote
+        ):
+            raise APIExcecaoBase(
+                mensagem="Erro ao alterar vagas com note: numero de inscritos superior ao total de vagas com note."
+            )
+
+        if (
+            dadosEvento.vagasSemNote != None
+            and dadosEvento.vagasSemNote < qtdInscritosSemNote
+        ):
+            raise APIExcecaoBase(
+                mensagem="Erro ao alterar vagas sem note: numero de inscritos superior ao total de vagas sem note."
+            )
 
         # normaliza dados
         dadosEvento.titulo = dadosEvento.titulo.strip()
@@ -45,8 +64,12 @@ class EventoControlador:
 
         # atualiza dados
         d = evento.model_dump(by_alias=True)
+        d.update(
+            vagasDisponiveisComNote=dadosEvento.vagasComNote - qtdInscritosNote,
+            vagasDisponiveisSemNote=dadosEvento.vagasSemNote - qtdInscritosSemNote,
+        )
         d.update(dadosEvento.model_dump(exclude_none=True))
-        evento = Evento(**d)  # type: ignore
+        evento = Evento(**d)
 
         EventoBD.atualizar(evento)
 

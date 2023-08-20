@@ -46,14 +46,14 @@ class UsuarioBD:
 
     @staticmethod
     def atualizar(modelo: Usuario):
-        colecaoUsuarios.update_one({"_id": modelo.id}, modelo.model_dump(by_alias=True))
+        colecaoUsuarios.update_one({"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)})
 
     @staticmethod
     def deletar(id: str):
         colecaoUsuarios.delete_one({"_id": id})
 
     @staticmethod
-    def listar(petiano: bool = False) -> list[Usuario] | list[Petiano]:
+    def listar(petiano: bool = False) -> list[Usuario]:
         if not petiano:
             return [Usuario(**u) for u in colecaoUsuarios.find()]
         else:
@@ -82,7 +82,7 @@ class EventoBD:
 
     @staticmethod
     def atualizar(modelo: Evento):
-        colecaoEventos.update_one({"_id": modelo.id}, modelo.model_dump(by_alias=True))
+        colecaoEventos.update_one({"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)})
 
     @staticmethod
     def deletar(id: str):
@@ -116,7 +116,7 @@ class InscritoBD:
     def atualizar(modelo: Inscrito):
         colecaoInscritos.update_one(
             {"idUsuario": modelo.idUsuario, "idEvento": modelo.idEvento},
-            modelo.model_dump(),
+            {"$set": modelo.model_dump()},
         )
 
     @staticmethod

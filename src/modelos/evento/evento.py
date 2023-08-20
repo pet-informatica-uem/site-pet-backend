@@ -18,7 +18,7 @@ class Evento(BaseModel):
     descricao: str
     "Descrição do evento."
 
-    preRequisitos: list[str]
+    preRequisitos: list[str] = []
     "Pré requisitos para participar do evento."
 
     inicioInscricao: datetime

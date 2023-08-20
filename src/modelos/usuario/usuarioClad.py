@@ -31,13 +31,23 @@ class UsuarioCriar(BaseModel):
         return v
 
 
-class UsuarioLer(BaseModel):
+class UsuarioLerAdmin(BaseModel):
     id: str
     nome: str
     email: EmailStr
     cpf: str
     curso: str
     tipoConta: str
+
+    foto: Path | None = None
+    github: str | None = None
+    linkedin: str | None = None
+    instagram: str | None = None
+
+class UsuarioLer(BaseModel):
+    nome: str
+    email: EmailStr
+    curso: str
 
     foto: Path | None = None
     github: str | None = None

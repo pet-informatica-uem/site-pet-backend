@@ -7,7 +7,7 @@ from pymongo.errors import DuplicateKeyError
 
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
-    geraLink,
+    geraLinkEsqueciSenha,
     geraTokenAtivaConta,
     processaTokenAtivaConta,
     processaTokenTrocaSenha,
@@ -30,6 +30,7 @@ from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizarEmail,
     UsuarioAtualizarSenha,
     UsuarioCriar,
+    UsuarioLer,
 )
 
 
@@ -109,7 +110,7 @@ class UsuarioControlador:
     def recuperarConta(email: str) -> None:
         UsuarioBD.buscar("email", email)
         # Gera o link e envia o email se o usuário estiver cadastrado
-        link: str = geraLink(email)
+        link: str = geraLinkEsqueciSenha(email)
         resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
 
     @staticmethod
@@ -182,25 +183,9 @@ class UsuarioControlador:
         raise UsuarioNaoEncontradoExcecao()
 
     @staticmethod
-    def getUsuarios(petiano: bool) -> list[Usuario] | list[Petiano]:
-        if petiano:
-            petianos = UsuarioBD.listar(petiano=True)
-            infoPetianos: list[Petiano] = []
-
-            for i in petianos:
-                infoPetianos.append(
-                    Petiano(
-                        nome=i.nome,
-                        github=i.github,
-                        linkedin=i.linkedin,
-                        instagram=i.instagram,
-                    )
-                )
-
-            return infoPetianos
-        else:
-            return UsuarioBD.listar(petiano)
-
+    def getUsuarios(petiano: bool) -> list[Usuario]:
+        return UsuarioBD.listar(petiano)
+    
     @staticmethod
     def editarUsuario(
         id: str,
@@ -272,7 +257,11 @@ class UsuarioControlador:
 
         if conferirHashSenha(dadosEmail.senha.get_secret_value(), usuario.senha):
             usuario.email = dadosEmail.novoEmail
+            usuario.emailConfirmado = False
+
             UsuarioBD.atualizar(usuario)
+            mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            verificarEmail(config.EMAIL_SMTP, config.SENHA_SMTP, usuario.email, mensagemEmail)
         else:
             raise APIExcecaoBase(mensagem="Senha incorreta")
 

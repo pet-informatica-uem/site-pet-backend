@@ -86,6 +86,11 @@ class InscritosControlador:
             evento: Evento = EventoControlador.getEvento(idEvento)
 
             if inscrito.tipoVaga:
+                evento.vagasDisponiveisSemNote += 1
+            else:
+                evento.vagasDisponiveisComNote += 1
+
+            if inscrito.tipoVaga:
                 if evento.vagasDisponiveisComNote == 0:
                     raise APIExcecaoBase(mensagem="Não há vagas disponíveis com note")
             else:

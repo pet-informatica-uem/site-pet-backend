@@ -21,6 +21,7 @@ from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizarSenha,
     UsuarioCriar,
     UsuarioLer,
+    UsuarioLerAdmin,
 )
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
@@ -82,13 +83,23 @@ def cadastrarUsuario(usuario: UsuarioCriar) -> str:
     "/",
     name="Recuperar usuários cadastrados",
     description="Lista todos os usuários cadastrados.",
-    response_model=list[UsuarioLer],
+    response_model = list[UsuarioLerAdmin]
 )
 def listarUsuarios(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
     petiano: bool = False,
 ):
     return UsuarioControlador.getUsuarios(petiano)
+
+
+@roteador.get(
+    "/petiano",
+    name="Recuperar petianos cadastrados",
+    description="Lista todos os petianos cadastrados.",
+    response_model=list[UsuarioLer]
+)
+def listarPetianos():
+    return UsuarioControlador.getUsuarios(petiano=True)
 
 
 @roteador.get(
@@ -239,8 +250,6 @@ def confirmaEmail(token: str):
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def recuperaConta(email: Annotated[EmailStr, Form()]):
-    email = EmailStr(email.lower())
-
     # Verifica se o email é válido
     if not ValidacaoCadastro.email(email):
         raise HTTPException(
