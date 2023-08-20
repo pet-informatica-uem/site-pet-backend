@@ -1,4 +1,5 @@
 from datetime import datetime
+
 from pydantic import BaseModel
 
 from src.modelos.evento.evento import Evento
@@ -38,6 +39,7 @@ class EventoCriar(BaseModel):
 class EventoLer(Evento):
     pass
 
+
 class EventoAtualizar(BaseModel):
     titulo: str
     "Título do evento."
@@ -63,6 +65,7 @@ class EventoAtualizar(BaseModel):
     cargaHoraria: int
 
     valor: float
+
 
 class EventoDeletar(BaseModel):
     id: str

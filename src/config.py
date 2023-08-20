@@ -1,7 +1,20 @@
 import os
+from datetime import datetime, timedelta
 
 from pydantic_core import Url
 from pydantic_settings import BaseSettings
+
+
+# Horario inicio para as rotinas
+def horarioInicio():
+    hoje = datetime.now()
+    amanha = hoje + timedelta(days=1)
+    amanhaMeiaNoite = datetime.combine(
+        amanha, datetime.min.time()
+    )  # Meia noite de amanhã
+    amanha3daManha = amanhaMeiaNoite + timedelta(hours=3)  # 3 da manhã de amanhã
+
+    return amanha3daManha
 
 
 class Configuracoes(BaseSettings):
@@ -51,6 +64,11 @@ class Configuracoes(BaseSettings):
     NOME_BD: str = "petBD"
     """
     Nome do banco de dados utilizado pela aplicação.
+    """
+
+    HORARIO_INICIO_ROTINAS: datetime = horarioInicio()
+    """
+    Horário de início das rotinas.
     """
 
     class Config:

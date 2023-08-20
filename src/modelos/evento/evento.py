@@ -29,7 +29,7 @@ class Evento(BaseModel):
 
     dias: list[tuple[datetime, datetime]]
     "Lista de tuplas de data e hora de início e fim de cada dia do evento."
-      
+
     local: str
     "Local do evento."
 

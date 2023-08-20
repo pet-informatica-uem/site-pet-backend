@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from pydantic import BaseModel
 
 from src.modelos.inscrito.inscrito import Inscrito

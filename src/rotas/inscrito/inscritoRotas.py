@@ -1,18 +1,17 @@
 from typing import Annotated
+
 from fastapi import APIRouter, Depends, status
 
 from src.modelos.excecao import NaoAutorizadoExcecao
-from src.rotas.inscrito.inscritoControlador import InscritosControlador
 from src.modelos.usuario.usuario import TipoConta, Usuario
-from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
-
 from src.rotas.inscrito.inscritoClad import (
-    InscritoCriar,
-    InscritoLer,
     InscritoAtualizar,
+    InscritoCriar,
     InscritoDeletar,
+    InscritoLer,
 )
-
+from src.rotas.inscrito.inscritoControlador import InscritosControlador
+from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
 
 roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
@@ -21,7 +20,7 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
     "/{idEvento}/inscritos",
     name="Cadastrar inscrito",
     description="Cadastra um novo inscrito.",
-    status_code= status.HTTP_201_CREATED,
+    status_code=status.HTTP_201_CREATED,
 )
 def cadastrarInscrito(
     idEvento: str,

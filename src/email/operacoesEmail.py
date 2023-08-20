@@ -73,7 +73,7 @@ def enviarEmail(
 ) -> None:
     try:
         contexto: ssl.SSLContext = ssl.create_default_context()
-    
+
         with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto) as smtp:
             smtp.login(emailPet, senhaPet)
             smtp.sendmail(emailPet, emailDestino, mensagem.as_string())

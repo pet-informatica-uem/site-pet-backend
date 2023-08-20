@@ -8,9 +8,9 @@ from pydantic import BaseModel, EmailStr, SecretStr
 from src.modelos.autenticacao.autenticacaoClad import TokenAutenticacaoClad
 from src.modelos.excecao import (
     APIExcecaoBase,
+    JaExisteExcecao,
     NaoAutenticadoExcecao,
     NaoAutorizadoExcecao,
-    JaExisteExcecao,
     UsuarioNaoEncontradoExcecao,
     listaRespostasExcecoes,
 )
@@ -24,6 +24,7 @@ from src.rotas.usuario.usuarioClad import (
     UsuarioLer,
 )
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
+
 
 class Token(BaseModel):
     access_token: str
@@ -76,7 +77,7 @@ def cadastrarUsuario(usuario: UsuarioCriar) -> str:
     return usuarioCadastrado
 
 
-#TODO resolver o response model para petiano ou usuario
+# TODO resolver o response model para petiano ou usuario
 @roteador.get(
     "/",
     name="Recuperar usuários cadastrados",

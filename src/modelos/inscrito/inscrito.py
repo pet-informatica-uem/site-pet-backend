@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
-from pydantic import BaseModel
 
+from pydantic import BaseModel
 
 
 class Inscrito(BaseModel):

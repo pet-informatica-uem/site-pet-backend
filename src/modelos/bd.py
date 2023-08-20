@@ -1,17 +1,14 @@
 import logging
+
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
-from src.modelos.inscrito.inscrito import Inscrito
-from src.rotas.inscrito.inscritoClad import InscritoLer
-from src.modelos.evento.evento import Evento
-from src.modelos.excecao import (
-    NaoEncontradoExcecao,
-    JaExisteExcecao,
-)
-from src.modelos.usuario.usuario import TipoConta, Usuario, Petiano
-
 
 from src.config import config
+from src.modelos.evento.evento import Evento
+from src.modelos.excecao import JaExisteExcecao, NaoEncontradoExcecao
+from src.modelos.inscrito.inscrito import Inscrito
+from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
+from src.rotas.inscrito.inscritoClad import InscritoLer
 
 cliente: MongoClient = MongoClient(str(config.URI_BD))
 

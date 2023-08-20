@@ -1,12 +1,16 @@
 from datetime import datetime
-from modelos.usuario.usuario import Usuario
 
-from src.modelos.excecao import APIExcecaoBase
-from src.modelos.evento.evento import Evento
-from src.rotas.evento.eventoControlador import EventoControlador
+from modelos.usuario.usuario import Usuario
 from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD
+from src.modelos.evento.evento import Evento
+from src.modelos.excecao import APIExcecaoBase
 from src.modelos.inscrito.inscrito import Inscrito
-from src.rotas.inscrito.inscritoClad import InscritoAtualizar, InscritoCriar, InscritoDeletar
+from src.rotas.evento.eventoControlador import EventoControlador
+from src.rotas.inscrito.inscritoClad import (
+    InscritoAtualizar,
+    InscritoCriar,
+    InscritoDeletar,
+)
 
 
 class InscritosControlador:
@@ -17,15 +21,15 @@ class InscritosControlador:
 
         # Verifica se está no período de inscrição
         if not (evento.inicioInscricao <= datetime.now() <= evento.fimInscricao):
-            raise APIExcecaoBase(mensagem = "Fora do período de inscrição")
+            raise APIExcecaoBase(mensagem="Fora do período de inscrição")
 
         # Verifica se há vagas disponíveis
         if inscrito.tipoVaga:
             if evento.vagasDisponiveisComNote == 0:
-                raise APIExcecaoBase(mensagem = "Não há vagas disponíveis com note")
+                raise APIExcecaoBase(mensagem="Não há vagas disponíveis com note")
         else:
             if evento.vagasDisponiveisSemNote == 0:
-                raise APIExcecaoBase(mensagem = "Não há vagas disponíveis sem note")
+                raise APIExcecaoBase(mensagem="Não há vagas disponíveis sem note")
 
         d = {
             "idEvento": idEvento,
@@ -35,7 +39,6 @@ class InscritosControlador:
 
         d.update(**inscrito.model_dump())
         d = Inscrito(**d)
-        
 
         # Cria o inscrito no bd
         InscritoBD.criar(d)
@@ -60,7 +63,7 @@ class InscritosControlador:
     @staticmethod
     def getInscritos(idEvento: str):
         return InscritoBD.listarInscritosEvento(idEvento)
-    
+
     @staticmethod
     def editarInscrito(idEvento: str, idInscrito: str, inscrito: InscritoAtualizar):
         # Recupera o inscrito
@@ -70,18 +73,17 @@ class InscritosControlador:
         if inscrito.tipoVaga != None and inscrito.tipoVaga != inscritoOld.tipoVaga:
             # Recupera o evento
             evento: Evento = EventoControlador.getEvento(idEvento)
-    
+
             if inscrito.tipoVaga:
                 if evento.vagasDisponiveisComNote == 0:
-                    raise APIExcecaoBase(mensagem = "Não há vagas disponíveis com note")
+                    raise APIExcecaoBase(mensagem="Não há vagas disponíveis com note")
             else:
                 if evento.vagasDisponiveisSemNote == 0:
-                    raise APIExcecaoBase(mensagem = "Não há vagas disponíveis sem note")
-
+                    raise APIExcecaoBase(mensagem="Não há vagas disponíveis sem note")
 
         d = inscritoOld.model_dump(by_alias=True)
         d.update(**inscrito.model_dump(exclude_none=True))
-        d = Inscrito(**d) # type: ignore
+        d = Inscrito(**d)  # type: ignore
 
         # Atualiza o inscrito no bd
         InscritoBD.atualizar(d)
@@ -93,10 +95,12 @@ class InscritosControlador:
 
         # Verifica se está no período de inscrição
         if not (evento.inicioInscricao <= datetime.now() <= evento.fimInscricao):
-            raise APIExcecaoBase(mensagem = "Fora do período de inscrição")
+            raise APIExcecaoBase(mensagem="Fora do período de inscrição")
 
         # Recupera o inscrito
-        inscritoRecuperado: Inscrito = InscritoBD.buscar(inscrito.idEvento, inscrito.idUsuario)
+        inscritoRecuperado: Inscrito = InscritoBD.buscar(
+            inscrito.idEvento, inscrito.idUsuario
+        )
 
         if inscritoRecuperado.tipoVaga:
             evento.vagasDisponiveisComNote += 1

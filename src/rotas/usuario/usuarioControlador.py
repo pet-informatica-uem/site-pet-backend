@@ -20,18 +20,19 @@ from src.modelos.bd import UsuarioBD
 from src.modelos.excecao import (
     APIExcecaoBase,
     ImagemInvalidaExcecao,
+    JaExisteExcecao,
     NaoAutenticadoExcecao,
     NaoEncontradoExcecao,
-    JaExisteExcecao,
     UsuarioNaoEncontradoExcecao,
 )
-from src.modelos.usuario.usuario import TipoConta, Usuario, Petiano
+from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
 from src.rotas.usuario.usuarioClad import (
     UsuarioAtualizar,
     UsuarioAtualizarEmail,
     UsuarioAtualizarSenha,
     UsuarioCriar,
 )
+
 
 class UsuarioControlador:
     @staticmethod
@@ -54,7 +55,6 @@ class UsuarioControlador:
         if usuario.email == email:
             usuario.emailConfirmado = True
             UsuarioBD.atualizar(usuario)
-
 
     @staticmethod
     def cadastrarUsuario(dadosUsuario: UsuarioCriar) -> str:
@@ -89,7 +89,9 @@ class UsuarioControlador:
         UsuarioBD.criar(usuario)
 
         # gera token de ativação válido por 24h
-        token: str = geraTokenAtivaConta(usuario.id, dadosUsuario.email, timedelta(days=1))
+        token: str = geraTokenAtivaConta(
+            usuario.id, dadosUsuario.email, timedelta(days=1)
+        )
 
         # manda email de ativação
         # não é necessário fazer urlencode pois jwt é url-safe
@@ -103,7 +105,6 @@ class UsuarioControlador:
 
         return usuario.id
 
-
     # Envia um email para trocar de senha se o email estiver cadastrado no bd
     @staticmethod
     def recuperarConta(email: str) -> None:
@@ -111,7 +112,6 @@ class UsuarioControlador:
         # Gera o link e envia o email se o usuário estiver cadastrado
         link: str = geraLink(email)
         resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
-
 
     @staticmethod
     def trocarSenha(token: str, senha: str) -> None:
@@ -125,7 +125,6 @@ class UsuarioControlador:
         UsuarioBD.atualizar(usuario)
 
         logging.info("Senha atualizada para o usuário com ID: " + str(usuario.id))
-
 
     @staticmethod
     def autenticarUsuario(email: str, senha: str) -> dict[str, str]:
@@ -155,7 +154,6 @@ class UsuarioControlador:
         # retorna token
         return {"access_token": tk, "token_type": "bearer"}
 
-
     @staticmethod
     def getUsuarioAutenticado(token: str) -> Usuario:
         """
@@ -173,7 +171,6 @@ class UsuarioControlador:
         else:
             raise NaoAutenticadoExcecao()
 
-
     @staticmethod
     def getUsuario(id: str) -> Usuario:
         """
@@ -184,7 +181,6 @@ class UsuarioControlador:
             return usuario
 
         raise UsuarioNaoEncontradoExcecao()
-
 
     @staticmethod
     def getUsuarios(petiano: bool) -> list[Usuario] | list[Petiano]:
@@ -205,7 +201,6 @@ class UsuarioControlador:
             return infoPetianos
         else:
             return UsuarioBD.listar(petiano)
-
 
     @staticmethod
     def editarUsuario(
@@ -244,13 +239,11 @@ class UsuarioControlador:
 
         return usuario
 
-
     @staticmethod
     def deletarUsuario(id: str):
         UsuarioControlador.getUsuario(id)
 
         UsuarioBD.deletar(id)
-
 
     @staticmethod
     def editaSenha(dadosSenha: UsuarioAtualizarSenha, usuario: Usuario) -> None:
@@ -264,7 +257,6 @@ class UsuarioControlador:
             UsuarioBD.atualizar(usuario)
         else:
             raise APIExcecaoBase(mensagem="Senha incorreta")
-
 
     @staticmethod
     def editarEmail(dadosEmail: UsuarioAtualizarEmail, id: str) -> None:
@@ -284,7 +276,6 @@ class UsuarioControlador:
             UsuarioBD.atualizar(usuario)
         else:
             raise APIExcecaoBase(mensagem="Senha incorreta")
-
 
     @staticmethod
     def editarFoto(usuario: Usuario, foto: UploadFile) -> None:
