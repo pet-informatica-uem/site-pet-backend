@@ -20,6 +20,12 @@ Após instalar, abra um terminal na pasta-raiz do projeto e digite o comando:
 ```
 O servidor poderá ser acessado em http://localhost:8000/
 
+## Executar testes
+Abra um terminal na pasta-raiz do projeto e digite o comando
+```sh
+ poetry run pytest mainTeste.py
+ ```
+
 ## Documentação
 
 Execute o comando acima e navegue para http://localhost:8000/docs
