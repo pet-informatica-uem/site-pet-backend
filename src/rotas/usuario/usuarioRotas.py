@@ -72,7 +72,7 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
 )
 def cadastrarUsuario(usuario: UsuarioCriar) -> str:
     # despacha para controlador
-    usuarioCadastrado = UsuarioControlador.cadastrarUsuario(usuario)
+    usuarioCadastrado :str = UsuarioControlador.cadastrarUsuario(usuario)
 
     # retorna os dados do usuario cadastrado
     return usuarioCadastrado

@@ -1,41 +1,41 @@
 from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
-from src.modelos.usuario.usuario import TipoConta, Usuario, Petiano
 from src.modelos.usuario.usuarioClad import UsuarioCriar
+from main import petBack
 
 
-app = FastAPI()
-client = TestClient(app)
+client = TestClient(petBack)
 
-def test_cadastroUsuario():
-    usuario = UsuarioCriar(
-        email='ra120113@uem.br',
-        senha='Alvaro123456!',
-        cpf='09934465744',
-        nome='Álvaro de Araújo',
-        curso='Ciência da Computação',)
+_idUsuario = None
+dadosUsuario = {
+    'email': 'ra120113@uem.br',
+    'senha': 'Alvaro123456!',
+    'cpf': '09934465744',
+    'nome': 'Álvaro de Araújo',
+    'curso': 'Ciência da Computação'
+}
 
-    response = client.post("/usuarios", json={'nome': 'Álvaro de Araújo', 
-                                             'cpf': '09934465744', 
-                                             'email': 'ra120113@uem.br',
-                                             'curso': 'Ciência da Computação',
-                                             'senha': 'Alvaro123456!'})
+def test_cadastrarUsuario():
+    global _idUsuario
+
+    response = client.post("/usuarios", json=dadosUsuario)
+
     assert response.status_code == 201
-    assert "access_token" in response.json()
+    assert type(response.json()) is str
+    _idUsuario = response.json()
 
 
-    # id :str = cadastrarUsuario(nomeCompleto, cpf, email, senha, curso)
-    # assert id is not None
+def test_usuarioJaCadastrado():
 
-# verificar como esse testclient funciona, talvez tenha mais funções que usem ele
-# def test_autenticar():
-#     client = testclient.TestClient(app)
-#     response = client.post("/token", data={"username": "ra120113@uem.br", "password": "Alvaro123456!!"})
-#     assert response.status_code == 200
-# #     assert "access_token" in response.json()
+    response = client.post("/usuarios", json=dadosUsuario)
 
-# def test_listarUsuarios():
-#     response = client.get("/")
-#     usuarios :list = listarUsuarios()
-#     assert usuarios is list
+    assert response.status_code == 409
+    assert response.json() == {'message': 'Usuário já existe no banco de dados'}
+
+def test_deletarUsuarioNaoAutenticado():
+
+    response = client.delete(f"/usuarios/{_idUsuario}")
+
+    assert response.status_code == 401
+    assert response.json() == {'detail': 'Not authenticated'}
