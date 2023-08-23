@@ -39,3 +39,10 @@ def test_deletarUsuarioNaoAutenticado():
 
     assert response.status_code == 401
     assert response.json() == {'detail': 'Not authenticated'}
+
+def test_loginSemConfirmacao():
+    response = client.post("/usuarios/login", data={'username': 'ra120113@uem.br',
+                                                    'password': 'Alvaro123456!'})
+    
+    assert response.status_code == 401
+    assert response.json() == {"message": "Erro genérico."}
