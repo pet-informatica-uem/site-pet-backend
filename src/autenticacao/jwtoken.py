@@ -87,9 +87,3 @@ def processaTokenTrocaSenha(token: str) -> str:
 
     # Retorna o email
     return email
-
-
-# função para teste de autenticação
-def recuperarToken(idUsuario: str, emailUsuario: str, expiracao: timedelta) -> str:
-    token = gerarTokenAtivaConta(idUsuario, emailUsuario, expiracao)
-    return token

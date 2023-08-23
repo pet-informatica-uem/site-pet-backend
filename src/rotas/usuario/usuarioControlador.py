@@ -263,7 +263,7 @@ class UsuarioControlador:
             usuario.emailConfirmado = False
 
             UsuarioBD.atualizar(usuario)
-            mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={gerarTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
             verificarEmail(
                 config.EMAIL_SMTP, config.SENHA_SMTP, usuario.email, mensagemEmail
             )
