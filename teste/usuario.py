@@ -94,7 +94,7 @@ def test_confirmarEmail(mocker):
         _idUsuario, dadosUsuario["email"], timedelta(days=1)
     )
 
-    response = client.get(f"/usuarios/confirmar-email/{token}")
+    response = client.get(f"/usuarios/confirmar-email/{token[0]}")
 
     assert response.status_code == 200
     assert response.json() is _idUsuario
