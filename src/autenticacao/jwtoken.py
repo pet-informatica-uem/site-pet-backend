@@ -6,7 +6,7 @@ from src.config import config
 from src.modelos.excecao import TokenInvalidoExcecao
 
 
-def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
+def gerarTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
     """Gera e retorna um token JWT que pode ser usado para confirmar um email."""
     afirmacoes = {"sub": idUsuario, "email": email, "exp": datetime.now() + duracao}
 
@@ -87,3 +87,9 @@ def processaTokenTrocaSenha(token: str) -> str:
 
     # Retorna o email
     return email
+
+
+# função para teste de autenticação
+def recuperarToken(idUsuario: str, emailUsuario: str, expiracao: timedelta) -> str:
+    token = gerarTokenAtivaConta(idUsuario, emailUsuario, expiracao)
+    return token

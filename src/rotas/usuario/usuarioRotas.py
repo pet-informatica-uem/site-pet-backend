@@ -225,7 +225,7 @@ def deletaUsuario(
 
 
 @roteador.post(
-    "/confirma-email",
+    "/confirmar-email",
     name="Confirmação de email",
     description="Confirma o email de uma conta através do token suprido.",
     status_code=status.HTTP_200_OK,
@@ -236,8 +236,9 @@ def deletaUsuario(
         JaExisteExcecao,
     ),
 )
-def confirmaEmail(token: str):
-    UsuarioControlador.ativarConta(token)
+def confirmarEmail(token: str) -> str|None:
+    id :str|None = UsuarioControlador.ativarConta(token)
+    return id
 
 
 @roteador.post(

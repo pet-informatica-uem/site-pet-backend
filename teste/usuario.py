@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from fastapi import FastAPI
 
 from src.modelos.usuario.usuarioClad import UsuarioCriar
+from src.autenticacao.jwtoken import recuperarToken
 from main import petBack
 
 
@@ -46,3 +47,15 @@ def test_loginSemConfirmacao():
     
     assert response.status_code == 401
     assert response.json() == {"message": "Erro genérico."}
+
+
+# https://github.com/mongomock/mongomock
+# https://pypi.org/project/pytest-mock/
+# não conecta de verdade com o banco, talvez melhore os testes
+def test_confirmarEmail():
+    token = recuperarToken(idUsuario=_idUsuario, emailUsuario=dadosUsuario['email'], expiracao=1)
+
+    response = client.get(f"/usuarios/confirmar-email/{token}")
+    print(response)
+    print(response.json())
+    print(response.status_code)

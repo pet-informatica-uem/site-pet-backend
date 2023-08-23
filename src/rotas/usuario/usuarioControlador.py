@@ -8,7 +8,7 @@ from pymongo.errors import DuplicateKeyError
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
     geraLinkEsqueciSenha,
-    geraTokenAtivaConta,
+    gerarTokenAtivaConta,
     processaTokenAtivaConta,
     processaTokenTrocaSenha,
 )
@@ -36,7 +36,7 @@ from src.modelos.usuario.usuarioClad import (
 
 class UsuarioControlador:
     @staticmethod
-    def ativarConta(token: str) -> None:
+    def ativarConta(token: str) -> str|None:
         """
         Recebe um token JWT de ativação de conta.
 
@@ -55,6 +55,9 @@ class UsuarioControlador:
         if usuario.email == email:
             usuario.emailConfirmado = True
             UsuarioBD.atualizar(usuario)
+            return id
+        
+        return None
 
     @staticmethod
     def cadastrarUsuario(dadosUsuario: UsuarioCriar) -> str:
@@ -89,7 +92,7 @@ class UsuarioControlador:
         UsuarioBD.criar(usuario)
 
         # gera token de ativação válido por 24h
-        token: str = geraTokenAtivaConta(
+        token: str = gerarTokenAtivaConta(
             usuario.id, dadosUsuario.email, timedelta(days=1)
         )
 
