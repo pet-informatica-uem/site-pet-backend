@@ -101,6 +101,19 @@ def listarUsuarios(
 def listarPetianos():
     return UsuarioControlador.getUsuarios(petiano=True)
 
+@roteador.get(
+    "/eu",
+    name="Obter detalhes do usuário autenticado",
+    description="""
+    Retorna detalhes do usuário autenticado.
+    """,
+    status_code=status.HTTP_200_OK,
+    response_model=UsuarioLerAdmin,
+    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
+)
+def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
+    return usuario
+
 
 @roteador.get(
     "/{id}",
