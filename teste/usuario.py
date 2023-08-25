@@ -28,7 +28,7 @@ def test_cadastrarUsuario(mocker):
     response = client.post("/usuarios", json=dadosUsuario)
 
     assert response.status_code == 201
-    assert type(response.json()) is str
+    assert isinstance(response.json(), str)
     _idUsuario = response.json()
 
 
