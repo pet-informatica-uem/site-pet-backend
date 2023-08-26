@@ -25,8 +25,6 @@ logging.basicConfig(
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 origins = ["http://localhost:3000", "http://localhost"]
 
-origins = ["http://localhost:3000", "http://localhost"]
-
 petBack = FastAPI()
 petBack.add_middleware(
     CORSMiddleware,

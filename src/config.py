@@ -67,6 +67,11 @@ class Configuracoes(BaseSettings):
     Nome do banco de dados utilizado pela aplicação.
     """
 
+    NOME_BD_TESTE: str = "petBDTeste"
+    """
+    Nome do banco de dados utilizado nos testes.
+    """
+
     HORARIO_INICIO_ROTINAS: datetime = horarioInicio()
     """
     Horário de início das rotinas.

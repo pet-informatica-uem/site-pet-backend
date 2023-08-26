@@ -93,7 +93,7 @@ def listarUsuarios(
 
 
 @roteador.get(
-    "/petiano",
+    "/petianos",
     name="Recuperar petianos cadastrados",
     description="Lista todos os petianos cadastrados.",
     response_model=list[UsuarioLer],
