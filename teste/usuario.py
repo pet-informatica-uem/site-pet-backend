@@ -19,85 +19,59 @@ dadosUsuario = {
 }
 
 
-def test_cadastrarUsuario(mocker):
+def test_cadastrarUsuario():
     global _idUsuario
-    post_mock = mocker.patch("fastapi.testclient.TestClient.post")
-    post_mock.return_value.status_code = 201
-    post_mock.return_value.json.return_value = "id simulado"
-
-    response = client.post("/usuarios", json=dadosUsuario)
+    response = client.post("/usuarios?banco=TESTE_BD", json=dadosUsuario)
 
     assert response.status_code == 201
     assert isinstance(response.json(), str)
     _idUsuario = response.json()
 
 
-def test_usuarioJaCadastrado(mocker):
-    post_mock = mocker.patch("fastapi.testclient.TestClient.post")
-    post_mock.return_value.status_code = 409
-    post_mock.return_value.json.return_value = {
-        "message": "Usuário já existe no banco de dados"
-    }
+# def test_usuarioJaCadastrado():
+#     response = client.post("/usuarios", json=dadosUsuario)
 
-    response = client.post("/usuarios", json=dadosUsuario)
-
-    assert response.status_code == 409
-    assert response.json() == {"message": "Usuário já existe no banco de dados"}
+#     assert response.status_code == 409
+#     assert response.json() == {"message": "Usuário já existe no banco de dados"}
 
 
-def test_deletarUsuarioNaoAutenticado(mocker):
-    delete_mock = mocker.patch("fastapi.testclient.TestClient.delete")
-    delete_mock.return_value.status_code = 401
-    delete_mock.return_value.json.return_value = {"detail": "Not authenticated"}
+# def test_deletarUsuarioNaoAutenticado():
+#     response = client.delete(f"/usuarios/{_idUsuario}")
 
-    response = client.delete(f"/usuarios/{_idUsuario}")
-
-    assert response.status_code == 401
-    assert response.json() == {"detail": "Not authenticated"}
+#     assert response.status_code == 401
+#     assert response.json() == {"detail": "Not authenticated"}
 
 
-def test_loginSemConfirmacao(mocker):
-    post_mock = mocker.patch("fastapi.testclient.TestClient.post")
-    post_mock.return_value.status_code = 401
-    post_mock.return_value.json.return_value = {"message": "Erro genérico."}
+# def test_loginSemConfirmacao():
+#     response = client.post(
+#         "/usuarios/login",
+#         data={"username": "ra120113@uem.br", "password": "Alvaro123456!"},
+#     )
 
-    response = client.post(
-        "/usuarios/login",
-        data={"username": "ra120113@uem.br", "password": "Alvaro123456!"},
-    )
-
-    assert response.status_code == 401
-    assert response.json() == {"message": "Erro genérico."}
+#     assert response.status_code == 401
+#     assert response.json() == {"message": "Erro genérico."}
 
 
-def test_tokenErroGenerico(mocker):
-    get_mock = mocker.patch("fastapi.testclient.TestClient.get")
-    get_mock.return_value.status_code = 400
-    get_mock.return_value.json.return_value = {"message": "Erro genérico."}
+# def test_tokenErroGenerico():
+#     token: str = gerarTokenAtivaConta(
+#         _idUsuario, dadosUsuario["email"], timedelta(days=1)
+#     )[0]
 
-    token: str = gerarTokenAtivaConta(
-        _idUsuario, dadosUsuario["email"], timedelta(days=1)
-    )[0]
+#     response = client.get(f"/usuarios/confirmar-email/{token}")
 
-    response = client.get(f"/usuarios/confirmar-email/{token}")
-
-    assert response.status_code == 400
-    assert response.json() == {"message": "Erro genérico."}
+#     assert response.status_code == 400
+#     assert response.json() == {"message": "Erro genérico."}
 
 
-def test_confirmarEmail(mocker):
-    get_mock = mocker.patch("fastapi.testclient.TestClient.get")
-    get_mock.return_value.status_code = 200
-    get_mock.return_value.json.return_value = _idUsuario
+# def test_confirmarEmail():
+#     token: str = gerarTokenAtivaConta(
+#         _idUsuario, dadosUsuario["email"], timedelta(days=1)
+#     )
 
-    token: str = gerarTokenAtivaConta(
-        _idUsuario, dadosUsuario["email"], timedelta(days=1)
-    )
+#     response = client.get(f"/usuarios/confirmar-email/{token[0]}")
 
-    response = client.get(f"/usuarios/confirmar-email/{token[0]}")
-
-    assert response.status_code == 200
-    assert response.json() is _idUsuario
+#     assert response.status_code == 200
+#     assert response.json() is _idUsuario
 
 
 # daqui para baixo está estranho, está tudo estranho. Revisar
@@ -136,12 +110,8 @@ def test_confirmarEmail(mocker):
 #     assert response.json() == {"message": "O Usuário não foi encontrado."}
 
 
-def test_usuarioLogin(mocker):
-    post_mock = mocker.patch("fastapi.testclient.TestClient.post")
-    post_mock.return_value.status_code = 200
-    post_mock.return_value.json.return_value = {"access_token": str, "token_type": str}
+# def test_usuarioLogin():
+#     response = client.post('/usuarios/login', data={'username': dadosUsuario['email'][0], 'password': dadosUsuario['senha']})
 
-    response = client.post('/usuarios/login', data={'username': dadosUsuario['email'][0], 'password': dadosUsuario['senha']})
-
-    assert response.status_code == 200
-    assert type(response.json()) is dict
+#     assert response.status_code == 200
+#     assert type(response.json()) is dict

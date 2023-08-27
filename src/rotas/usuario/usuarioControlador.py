@@ -3,7 +3,6 @@ import secrets
 from datetime import datetime, timedelta
 
 from fastapi import UploadFile
-from pymongo.errors import DuplicateKeyError
 
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
@@ -34,7 +33,7 @@ from src.modelos.usuario.usuarioClad import (
 )
 
 
-class UsuarioControlador:
+class UsuarioControlador(UsuarioBD):
     @staticmethod
     def ativarConta(token: str) -> str|None:
         """
@@ -89,7 +88,7 @@ class UsuarioControlador:
         d.update(dadosUsuario.model_dump(by_alias=True))
         # cria usuario
         usuario: Usuario = Usuario(**d)
-        UsuarioBD.criar(usuario)
+        UsuarioBD().criar(usuario)
 
         # gera token de ativação válido por 24h
         token: str = gerarTokenAtivaConta(
@@ -111,7 +110,7 @@ class UsuarioControlador:
     # Envia um email para trocar de senha se o email estiver cadastrado no bd
     @staticmethod
     def recuperarConta(email: str) -> None:
-        UsuarioBD.buscar("email", email)
+        UsuarioBD().buscar("email", email)
         # Gera o link e envia o email se o usuário estiver cadastrado
         link: str = geraLinkEsqueciSenha(email)
         resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
@@ -121,11 +120,11 @@ class UsuarioControlador:
         # Verifica o token e recupera o email
         email: str = processaTokenTrocaSenha(token)
 
-        usuario: Usuario = UsuarioBD.buscar("email", email)
+        usuario: Usuario = UsuarioBD().buscar("email", email)
 
         usuario.senha = hashSenha(senha)
 
-        UsuarioBD.atualizar(usuario)
+        UsuarioBD().atualizar(usuario)
 
         logging.info("Senha atualizada para o usuário com ID: " + str(usuario.id))
 

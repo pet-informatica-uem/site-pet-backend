@@ -1,9 +1,8 @@
-import time
 from datetime import datetime
 
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
-from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, colecaoInscritos
+from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import APIExcecaoBase
 from src.modelos.inscrito.inscrito import Inscrito
@@ -16,7 +15,7 @@ from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 
 
-class InscritosControlador:
+class InscritosControlador(InscritoBD, UsuarioBD):
     @staticmethod
     def cadastrarInscrito(idEvento: str, idUsuario: str, inscrito: InscritoCriar):
         # Recupera o evento

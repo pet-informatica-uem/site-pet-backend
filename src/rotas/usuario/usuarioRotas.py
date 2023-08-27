@@ -1,7 +1,7 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status, requests, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
 
@@ -25,6 +25,8 @@ from src.modelos.usuario.usuarioClad import (
 )
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
+
+from src.config import config
 
 
 class Token(BaseModel):
@@ -57,6 +59,12 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
         return usuario
     raise HTTPException(status_code=401, detail="Acesso negado.")
 
+def getBD(parametro :str) -> str | type(...):
+    if parametro == 'TESTE_BD':
+        return config.NOME_BD_TESTE
+    else:
+        return ...
+
 
 @roteador.post(
     "/",
@@ -70,7 +78,11 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
     status_code=status.HTTP_201_CREATED,
     responses=listaRespostasExcecoes(JaExisteExcecao, APIExcecaoBase),
 )
-def cadastrarUsuario(usuario: UsuarioCriar) -> str:
+def cadastrarUsuario(request: Request, usuario: UsuarioCriar) -> str:
+    # se houver na URL o parametro banco tiver TESTE_BD, irá usar o banco de testes
+    # parametro = request.query_params.get('banco')
+    # BD: str = getBD(parametro)
+
     # despacha para controlador
     usuarioCadastrado :str = UsuarioControlador.cadastrarUsuario(usuario)
 

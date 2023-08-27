@@ -1,8 +1,6 @@
 import logging
 import secrets
-from typing import BinaryIO
 
-from bson.objectid import ObjectId
 from fastapi import UploadFile
 
 from src.config import config
@@ -12,14 +10,13 @@ from src.img.operacoesImagem import (
     deletaImagem,
     validaImagem,
 )
-from src.modelos.bd import EventoBD, InscritoBD
+from src.modelos.bd import EventoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
 from src.modelos.excecao import APIExcecaoBase, ImagemInvalidaExcecao
-from src.modelos.inscrito.inscrito import Inscrito
 
 
-class EventoControlador:
+class EventoControlador(EventoBD):
     @staticmethod
     def getEventos() -> list[Evento]:
         return EventoBD.listar()

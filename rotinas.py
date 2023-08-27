@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, colecaoEventos
+from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, ConexaoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.inscrito.inscrito import Inscrito
 from src.modelos.usuario.usuario import Usuario
@@ -10,7 +10,7 @@ from src.modelos.usuario.usuario import Usuario
 def verificaEventosFinalizados():
     logging.info("Verificando eventos finalizados...")
     # Recupera eventos ativos
-    eventos: list[Evento] = [Evento(**e) for e in colecaoEventos.find({"ativo": True})]
+    eventos: list[Evento] = [Evento(**e) for e in ConexaoBD().colecaoEventos.find({"ativo": True})]
 
     for evento in eventos:
         # Verifica se o último dia do evento já passou
