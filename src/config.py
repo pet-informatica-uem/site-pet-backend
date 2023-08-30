@@ -62,12 +62,12 @@ class Configuracoes(BaseSettings):
     URI para o banco de dados MongoDB.
     """
 
-    NOME_BD: str = "petBD"
+    # NOME_BD: str = "petBD"
     """
     Nome do banco de dados utilizado pela aplicação.
     """
 
-    NOME_BD_TESTE: str = "petBDTeste"
+    NOME_BD: str = "petBDTeste"
     """
     Nome do banco de dados utilizado nos testes.
     """

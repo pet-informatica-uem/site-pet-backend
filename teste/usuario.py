@@ -6,6 +6,7 @@ from src.modelos.usuario.usuarioClad import UsuarioCriar
 from src.autenticacao.jwtoken import gerarTokenAtivaConta
 from main import petBack
 
+MONGODB_TEST_URL = "mongodb+srv://<username>:<password>@<url>/<db>?retryWrites=true&w=majority"
 
 client = TestClient(petBack)
 
@@ -28,39 +29,47 @@ def test_cadastrarUsuario():
     _idUsuario = response.json()
 
 
-# def test_usuarioJaCadastrado():
-#     response = client.post("/usuarios", json=dadosUsuario)
+def test_usuarioJaCadastrado():
+    response = client.post("/usuarios", json=dadosUsuario)
 
-#     assert response.status_code == 409
-#     assert response.json() == {"message": "Usuário já existe no banco de dados"}
-
-
-# def test_deletarUsuarioNaoAutenticado():
-#     response = client.delete(f"/usuarios/{_idUsuario}")
-
-#     assert response.status_code == 401
-#     assert response.json() == {"detail": "Not authenticated"}
+    assert response.status_code == 409
+    assert response.json() == {"message": "Usuário já existe no banco de dados"}
 
 
-# def test_loginSemConfirmacao():
-#     response = client.post(
-#         "/usuarios/login",
-#         data={"username": "ra120113@uem.br", "password": "Alvaro123456!"},
-#     )
+# não pode deletar usuário pois o usuário não está autenticado
+def test_deletarUsuarioNaoAutenticado():
+    response = client.delete(f"/usuarios/{_idUsuario}")
 
-#     assert response.status_code == 401
-#     assert response.json() == {"message": "Erro genérico."}
+    assert response.status_code == 401
+    assert response.json() == {"detail": "Not authenticated"}
 
 
-# def test_tokenErroGenerico():
-#     token: str = gerarTokenAtivaConta(
-#         _idUsuario, dadosUsuario["email"], timedelta(days=1)
-#     )[0]
+# o email não foi confirmado, por isso não consegue logar
+def test_loginSemConfirmacao():
+    response = client.post(
+        "/usuarios/login",
+        data={"username": "ra120113@uem.br", "password": "Alvaro123456!"},
+    )
 
-#     response = client.get(f"/usuarios/confirmar-email/{token}")
+    assert response.status_code == 401
+    assert response.json() == {"message": "Erro genérico."}
 
-#     assert response.status_code == 400
-#     assert response.json() == {"message": "Erro genérico."}
+
+# como passar esse token?
+# o caminho que chega no email é estranho, não é igual o que passo aqui
+def test_tokenErroGenerico():
+    token: str = gerarTokenAtivaConta(
+        _idUsuario, dadosUsuario["email"], timedelta(days=1)
+    )
+    print('\n\n\n', token)
+
+    response = client.get(f"/usuarios/confirmar-email/?token={token}")
+
+    print(response)
+    print(response.json())
+
+    assert response.status_code == 404
+    assert response.json() == {"message": "O Usuário não foi encontrado."}
 
 
 # def test_confirmarEmail():

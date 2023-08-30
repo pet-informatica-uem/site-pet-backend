@@ -13,8 +13,8 @@ from src.modelos.conexao import ConexaoBD
 
 
 class UsuarioBD(ConexaoBD):
-    def __init__(self, nomeBanco: str = config.NOME_BD) -> None:
-        super().__init__(nomeBanco)
+    def __init__(self) -> None:
+        super().__init__(config.NOME_BD)
 
     # cria usuario no bd
     def criar(self, modelo: Usuario):
@@ -50,8 +50,8 @@ class UsuarioBD(ConexaoBD):
 
 
 class EventoBD(ConexaoBD):
-    def __init__(self, nomeBanco: str = config.NOME_BD) -> None:
-        super().__init__(nomeBanco)
+    def __init__(self) -> None:
+        super().__init__(config.NOME_BD)
 
     def criar(self, modelo: Evento):
         try:
@@ -80,8 +80,8 @@ class EventoBD(ConexaoBD):
 
 
 class InscritoBD(ConexaoBD):
-    def __init__(self, nomeBanco: str = config.NOME_BD) -> None:
-        super().__init__(nomeBanco)
+    def __init__(self) -> None:
+        super().__init__(config.NOME_BD)
 
     def criar(self, modelo: Inscrito):
         try:
@@ -117,8 +117,8 @@ class InscritoBD(ConexaoBD):
 
 
 class TokenAutenticacaoBD(ConexaoBD):
-    def __init__(self, nomeBanco: str = config.NOME_BD) -> None:
-        super().__init__(nomeBanco)
+    def __init__(self) -> None:
+        super().__init__(config.NOME_BD)
 
     def buscar(self, id: str) -> TokenAutenticacao:
         documento = self.colecaoTokens.find_one({"_id": id})

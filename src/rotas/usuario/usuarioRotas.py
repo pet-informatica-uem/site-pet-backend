@@ -78,11 +78,7 @@ def getBD(parametro :str) -> str | type(...):
     status_code=status.HTTP_201_CREATED,
     responses=listaRespostasExcecoes(JaExisteExcecao, APIExcecaoBase),
 )
-def cadastrarUsuario(request: Request, usuario: UsuarioCriar) -> str:
-    # se houver na URL o parametro banco tiver TESTE_BD, irá usar o banco de testes
-    # parametro = request.query_params.get('banco')
-    # BD: str = getBD(parametro)
-
+def cadastrarUsuario(usuario: UsuarioCriar) -> str:
     # despacha para controlador
     usuarioCadastrado :str = UsuarioControlador.cadastrarUsuario(usuario)
 

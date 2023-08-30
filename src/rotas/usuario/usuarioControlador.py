@@ -33,7 +33,8 @@ from src.modelos.usuario.usuarioClad import (
 )
 
 
-class UsuarioControlador(UsuarioBD):
+class UsuarioControlador():
+
     @staticmethod
     def ativarConta(token: str) -> str|None:
         """
@@ -53,7 +54,7 @@ class UsuarioControlador(UsuarioBD):
         usuario = UsuarioControlador.getUsuario(id)
         if usuario.email == email:
             usuario.emailConfirmado = True
-            UsuarioBD.atualizar(usuario)
+            UsuarioBD().atualizar(usuario)
             return id
         
         return None
@@ -110,7 +111,7 @@ class UsuarioControlador(UsuarioBD):
     # Envia um email para trocar de senha se o email estiver cadastrado no bd
     @staticmethod
     def recuperarConta(email: str) -> None:
-        UsuarioBD().buscar("email", email)
+        UsuarioBD.buscar("email", email)
         # Gera o link e envia o email se o usuário estiver cadastrado
         link: str = geraLinkEsqueciSenha(email)
         resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
@@ -136,7 +137,7 @@ class UsuarioControlador(UsuarioBD):
         """
 
         # verifica senha
-        usuario: Usuario = UsuarioBD.buscar("email", email)
+        usuario: Usuario = UsuarioBD().buscar("email", email)
 
         if not conferirHashSenha(senha, usuario.senha):
             raise NaoAutenticadoExcecao()
@@ -168,7 +169,7 @@ class UsuarioControlador(UsuarioBD):
         except NaoEncontradoExcecao:
             raise NaoAutenticadoExcecao()
 
-        if usuario := UsuarioBD.buscar("_id", id):
+        if usuario := UsuarioBD().buscar("_id", id):
             return usuario
         else:
             raise NaoAutenticadoExcecao()
@@ -179,14 +180,14 @@ class UsuarioControlador(UsuarioBD):
         Obtém dados do usuário com o id fornecido.
         """
 
-        if usuario := UsuarioBD.buscar("_id", id):
+        if usuario := UsuarioBD().buscar("_id", id):
             return usuario
 
         raise UsuarioNaoEncontradoExcecao()
 
     @staticmethod
     def getUsuarios(petiano: bool) -> list[Usuario]:
-        return UsuarioBD.listar(petiano)
+        return UsuarioBD().listar(petiano)
 
     @staticmethod
     def editarUsuario(
@@ -249,7 +250,7 @@ class UsuarioControlador(UsuarioBD):
         """
         Atualiza o email de um usuário existente.
 
-        Para UsuarioBD.atualizar o email, o usuário deve digitar sua senha atual.
+        Para usuarioBD.atualizar o email, o usuário deve digitar sua senha atual.
 
         O usuário sempre é deslogado quando troca seu email, pois sua conta deve ser reativada.
 
@@ -261,7 +262,7 @@ class UsuarioControlador(UsuarioBD):
             usuario.email = dadosEmail.novoEmail
             usuario.emailConfirmado = False
 
-            UsuarioBD.atualizar(usuario)
+            UsuarioBD().atualizar(usuario)
             mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={gerarTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
             verificarEmail(
                 config.EMAIL_SMTP, config.SENHA_SMTP, usuario.email, mensagemEmail
@@ -274,7 +275,7 @@ class UsuarioControlador(UsuarioBD):
         """
         Atualiza a foto de perfil de um usuário existente.
 
-        Para UsuarioBD.atualizar a foto, o usuário deve inserir uma foto.
+        Para usuarioBD.atualizar a foto, o usuário deve inserir uma foto.
 
         A atualização da conta pode não suceder por erro na validação de dados.
         """
@@ -286,4 +287,4 @@ class UsuarioControlador(UsuarioBD):
         usuario.foto = caminhoFotoPerfil  # type: ignore
 
         # atualiza no bd
-        UsuarioBD.atualizar(usuario)
+        UsuarioBD().atualizar(usuario)
