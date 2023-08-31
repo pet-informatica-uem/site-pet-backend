@@ -11,6 +11,7 @@ from src.modelos.inscrito.inscritoClad import (
     InscritoAtualizar,
     InscritoCriar,
     InscritoDeletar,
+    TipoVaga,
 )
 from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
@@ -50,7 +51,7 @@ class InscritosControlador:
         # Cria o inscrito no bd
         InscritoBD.criar(d)
 
-        if inscrito.tipoVaga:
+        if inscrito.tipoVaga == TipoVaga.COM_NOTE:
             evento.vagasDisponiveisComNote -= 1
         else:
             evento.vagasDisponiveisSemNote -= 1
