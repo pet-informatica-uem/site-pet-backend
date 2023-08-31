@@ -32,100 +32,100 @@ class APIExcecaoBase(Exception):
 
 
 class ImagemInvalidaExcecao(APIExcecaoBase):
-    mensagem = "A foto não é válida."
+    message = "A foto não é válida."
     code = status.HTTP_400_BAD_REQUEST
 
 
 class NaoAutenticadoExcecao(APIExcecaoBase):
-    mensagem = "Usuário não autenticado."
+    message = "Usuário não autenticado."
     code = status.HTTP_401_UNAUTHORIZED
     model = NaoAutenticadoErro
 
 
 class NaoAutorizadoExcecao(APIExcecaoBase):
-    mensagem = "Acesso negado."
+    message = "Acesso negado."
     code = status.HTTP_403_FORBIDDEN
     model = NaoAutorizadoErro
 
 
 class NaoEncontradoExcecao(APIExcecaoBase):
-    mensagem = "A entidade não foi encontrada."
+    message = "A entidade não foi encontrada."
     code = status.HTTP_404_NOT_FOUND
     model = ErroBase
 
 
 class UsuarioNaoEncontradoExcecao(NaoEncontradoExcecao):
-    mensagem = "O usuário não foi encontrado."
+    message = "O usuário não foi encontrado."
 
 
 class JaExisteExcecao(APIExcecaoBase):
-    mensagem = "A entidade já existe."
+    message = "A entidade já existe."
     code = status.HTTP_409_CONFLICT
     model = JaExisteErro
 
 
 class ErroInternoExcecao(APIExcecaoBase):
-    mensagem = "Ocorreu um erro interno."
+    message = "Ocorreu um erro interno."
     code = status.HTTP_500_INTERNAL_SERVER_ERROR
     model = ErroBase
 
 
 class ErroValidacaoExcecao(APIExcecaoBase):
-    mensagem = "Ocorreu um erro de validação."
+    message = "Ocorreu um erro de validação."
     code = status.HTTP_400_BAD_REQUEST
     model = ErroBase
 
 
 class ErroAutenticacaoExcecao(APIExcecaoBase):
-    mensagem = "Ocorreu um erro de autenticação."
+    message = "Ocorreu um erro de autenticação."
     code = status.HTTP_401_UNAUTHORIZED
     model = ErroBase
 
 
 class NaoAtualizadaExcecao(APIExcecaoBase):  # conflito
-    mensagem = "Não foi possível atualizar."
+    message = "Não foi possível atualizar."
     code = status.HTTP_404_NOT_FOUND
     model = AcaoNaoCompletaErro
 
 
 class ErroNaAlteracaoExcecao(APIExcecaoBase):  # conflito
-    mensagem = "Não foi possível fazer a alteração."
+    message = "Não foi possível fazer a alteração."
     code = status.HTTP_404_NOT_FOUND
     model = AcaoNaoCompletaErro
 
 
 class SemVagasDisponiveisExcecao(APIExcecaoBase):  # conflito
-    mensagem = "Não há vagas disponíveis."
+    message = "Não há vagas disponíveis."
     code = status.HTTP_410_GONE
     model = AcaoNaoCompletaErro
 
 
 class TipoVagaInvalidoExcecao(APIExcecaoBase):  # conflito
-    mensagem = "Tipo de vaga inválido."
+    message = "Tipo de vaga inválido."
     code = status.HTTP_404_NOT_FOUND
     model = NaoEncontradoErro
 
 
 class EmailNaoFoiEnviadoExcecao(APIExcecaoBase):
-    mensagem = "Não foi possível enviar o E-mail"
+    message = "Não foi possível enviar o E-mail"
     code = status.HTTP_500_INTERNAL_SERVER_ERROR
     model = AcaoNaoCompletaErro
 
 
 class TipoDeInscricaoErradoExcecao(APIExcecaoBase):
-    mensagem = "Tipo de inscricao errada, deveria ser <com notebook> ou <sem notebook>"
+    message = "Tipo de inscricao errada, deveria ser <com notebook> ou <sem notebook>"
     code = status.HTTP_400_BAD_REQUEST
     model = AcaoNaoCompletaErro
 
 
 class NivelDeConhecimentoErradoExcecao(APIExcecaoBase):
-    mensagem = "Nivel de conhecimento erradao, deveria ser 1,2,3,4 ou 5"
+    message = "Nivel de conhecimento erradao, deveria ser 1,2,3,4 ou 5"
     code = status.HTTP_400_BAD_REQUEST
     model = AcaoNaoCompletaErro
 
 
 class TokenInvalidoExcecao(APIExcecaoBase):
-    mensagem = "O token é inválido."
+    message = "O token é inválido."
     code = status.HTTP_400_BAD_REQUEST
 
 
