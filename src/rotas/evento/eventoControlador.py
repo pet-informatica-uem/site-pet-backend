@@ -139,7 +139,8 @@ class EventoControlador:
             **dadosEvento.model_dump(),
             _id=secrets.token_hex(16),
             vagasDisponiveisComNote=dadosEvento.vagasComNote,
-            vagasDisponiveisSemNote=dadosEvento.vagasSemNote
+            vagasDisponiveisSemNote=dadosEvento.vagasSemNote,
+            fimEvento=dadosEvento.dias[-1][1],
         )
         EventoBD.criar(evento)
 
