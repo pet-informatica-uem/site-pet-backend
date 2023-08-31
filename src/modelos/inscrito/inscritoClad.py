@@ -4,9 +4,14 @@ from pydantic import BaseModel
 
 from src.modelos.inscrito.inscrito import Inscrito
 
+from enum import Enum
+
+class TipoVaga(str, Enum):
+    COM_NOTE = "comNotebook"
+    SEM_NOTE = "semNotebook"
 
 class InscritoCriar(BaseModel):
-    tipoVaga: bool
+    tipoVaga: TipoVaga
     "Tipo de vaga: True para com notebook e False para sem notebook."
 
     nivelConhecimento: int
