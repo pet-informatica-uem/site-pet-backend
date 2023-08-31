@@ -20,7 +20,7 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
     name="Recuperar todos os eventos",
     description="Retorna todos os eventos cadastrados no banco de dados.",
 )
-def getEventos() -> list:
+def getEventos() -> list[Evento]:
     return EventoControlador.getEventos()
 
 
