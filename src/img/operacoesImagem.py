@@ -7,7 +7,6 @@ from PIL import Image
 
 from src.config import config
 
-
 def validaImagem(imagem: bytes | BinaryIO | str) -> bool:
     """Retorna se 'imagem' é válida.
 
@@ -26,44 +25,79 @@ def validaImagem(imagem: bytes | BinaryIO | str) -> bool:
     return eh_valida
 
 
-def armazenaArteEvento(nomeEvento: str, arquivo: bytes | BinaryIO) -> str | None:
-    """Armazena a imagem em "images/eventos/arte" usando um nome base para o arquivo.
+def validaComprovante(comprovante: bytes | BinaryIO | str) -> bool:
+    """Retorna se 'comprovante' é válido.
 
-    :param nomeEvento -- nome do evento relacionada a imagem
-    :param arquivo -- a imagem em si
+    :param comprovante -- o comprovante em si ou o caminho do comprovante
 
-    :return -- caminho para a imagem salva -> str. None, se a imagem for inválida.
+    :return -- valor booleano
     """
-    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", "arte")
-    retorno = __armazenaImagem(path, nomeEvento, arquivo)
+    eh_valida = True
+    try:
+        with Image.open(comprovante) as img:
+            if img.format not in ["PNG", "JPEG", "PDF"]:
+                eh_valida = False
+    except IOError:
+        return False
 
-    return retorno
+    return eh_valida
 
 
-def armazenaFotoUsuario(nomeUsuario: str, arquivo: str | bytes) -> str | None:
+def armazenaFotoUsuario(idUsuario: str, arquivo: str | bytes) -> str | None:
     """Armazena a imagem em "images/usuario" usando um nome base para o arquivo.
 
-    :param nomeUsuario -- nome do usuario relacionado a imagem
+    :param idUsuario -- nome do usuario relacionado a imagem
     :param arquivo -- a imagem em si
 
     :return -- caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
     path = os.path.join(config.CAMINHO_IMAGEM, "usuarios")
-    retorno = __armazenaImagem(path, nomeUsuario, arquivo)
+    retorno = __armazenaImagem(path, idUsuario, arquivo)
 
     return retorno
 
 
-def armazenaCrachaEvento(nomeEvento: str, arquivo: bytes | BinaryIO) -> str | None:
-    """Armazena a imagem em "images/eventos/cracha" usando um nome base para o arquivo.
+def armazenaArteEvento(idEvento: str, arquivo: bytes | BinaryIO) -> str | None:
+    """Armazena a imagem em "images/eventos/{evento}/arte" usando um nome base para o arquivo.
 
-    :param nomeEvento -- nome do evento relacionado a imagem
+    :param idEvento -- nome do evento relacionada a imagem
     :param arquivo -- a imagem em si
 
     :return -- caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
-    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", "cracha")
-    retorno = __armazenaImagem(path, nomeEvento, arquivo)
+    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", idEvento, "arte")
+    retorno = __armazenaImagem(path, idEvento, arquivo)
+
+    return retorno
+
+
+def armazenaCrachaEvento(idEvento: str, arquivo: bytes | BinaryIO) -> str | None:
+    """Armazena a imagem em "images/eventos/{evento}/cracha" usando um nome base para o arquivo.
+
+    :param idEvento -- nome do evento relacionado a imagem
+    :param arquivo -- a imagem em si
+
+    :return -- caminho para a imagem salva -> str. None, se a imagem for inválida.
+    """
+    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", idEvento, "cracha")
+    retorno = __armazenaImagem(path, idEvento, arquivo)
+
+    return retorno
+
+
+def armazenaComprovante(
+    idEvento: str, idUsuario: str, arquivo: bytes | BinaryIO
+) -> str | None:
+    """Armazena a imagem em "images/eventos/{evento}/comprovantes" usando um nome base para o arquivo.
+
+    :param idEvento -- nome do evento relacionado ao comprovante
+    :param idUsuario -- id do usuário relacionado ao comprovante
+    :param arquivo -- o comprovante em si
+
+    :return -- caminho para o comprovante salvo -> str. None, se o comprovante for inválido.
+    """
+    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", idEvento, "comprovantes")
+    retorno = __armazenaComprovante(path, idUsuario, arquivo)
 
     return retorno
 
@@ -129,6 +163,28 @@ def __armazenaImagem(
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
             pathDefinitivo = os.path.join(path, nome)
             img.save(pathDefinitivo)
+        return pathDefinitivo
+    except IOError:
+        return None
+
+
+def __armazenaComprovante(
+    path: str, nomeBase: str, imagem: bytes | BinaryIO | str
+) -> str | None:
+    """Armazena o comprovante no path fornecido usando um nome base.
+
+    :param path -- caminho onde será armazenado o comprovante
+    :param nomeBase -- nome como será salvo o comprovante
+    :param imagem -- o comprovante em si que será salvo
+
+    :return -- caminho para o comprovante salvo : str. None, se o comprovante for inválido.
+    """
+    try:
+        with Image.open(imagem, formats=["PNG", "JPEG", "PDF"]) as img:
+            extensao = img.format.lower()  # type: ignore
+            nome = __geraNomeImagem(nomeBase, extensao=extensao)
+            pathDefinitivo = os.path.join(path, nome)
+            img.save(pathDefinitivo, save_all=True)
         return pathDefinitivo
     except IOError:
         return None

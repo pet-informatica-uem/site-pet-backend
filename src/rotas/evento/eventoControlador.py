@@ -4,6 +4,7 @@ from typing import BinaryIO
 
 from bson.objectid import ObjectId
 from fastapi import UploadFile
+from src.img.criaPastas import criaPastaEvento
 
 from src.config import config
 from src.img.operacoesImagem import (
@@ -100,9 +101,9 @@ class EventoControlador:
             if not validaImagem(arte.file):
                 raise ImagemInvalidaExcecao()
 
-            deletaImagem(evento.titulo, ["eventos", "arte"])
-            caminhoArte: str = armazenaArteEvento(evento.titulo, arte.file)  # type: ignore
-            evento.imagemCapa = caminhoArte  # type: ignore
+            deletaImagem(evento.id, ["eventos", evento.id, "arte"])
+            caminhoArte: str | None = armazenaArteEvento(evento.id, arte.file)
+            evento.imagemCapa = caminhoArte
 
             # atualiza no bd
             EventoBD.atualizar(evento)
@@ -111,9 +112,9 @@ class EventoControlador:
             if not validaImagem(cracha.file):
                 raise ImagemInvalidaExcecao()
 
-            deletaImagem(evento.titulo, ["eventos", "cracha"])
-            caminhoCracha: str = armazenaCrachaEvento(evento.titulo, cracha.file)  # type: ignore
-            evento.imagemCracha = caminhoCracha  # type: ignore
+            deletaImagem(evento.id, ["eventos", evento.id, "cracha"])
+            caminhoCracha: str | None = armazenaCrachaEvento(evento.id, cracha.file)
+            evento.imagemCracha = caminhoCracha
 
             # atualiza no bd
             EventoBD.atualizar(evento)
@@ -143,5 +144,8 @@ class EventoControlador:
             fimEvento=dadosEvento.dias[-1][1],
         )
         EventoBD.criar(evento)
+
+        # cria pastas evento
+        criaPastaEvento(evento.id)
 
         return evento.id

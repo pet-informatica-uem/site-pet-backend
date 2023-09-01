@@ -1,6 +1,10 @@
 import time
 from datetime import datetime
+from PIL import Image
 
+from fastapi import UploadFile
+
+from src.img.operacoesImagem import deletaImagem, validaComprovante, armazenaComprovante
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
 from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, colecaoInscritos
@@ -19,7 +23,9 @@ from src.rotas.evento.eventoControlador import EventoControlador
 
 class InscritosControlador:
     @staticmethod
-    def cadastrarInscrito(idEvento: str, idUsuario: str, inscrito: InscritoCriar):
+    def cadastrarInscrito(
+        idEvento: str, idUsuario: str, inscrito: InscritoCriar, comprovante: UploadFile
+    ):
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
 
@@ -31,18 +37,29 @@ class InscritosControlador:
             raise APIExcecaoBase(message="Fora do período de inscrição")
 
         # Verifica se há vagas disponíveis
-        if inscrito.tipoVaga:
+        if inscrito.tipoVaga == TipoVaga.COM_NOTE:
             if evento.vagasDisponiveisComNote == 0:
-                print("passou aqui")
                 raise APIExcecaoBase(message="Não há vagas disponíveis com note")
         else:
             if evento.vagasDisponiveisSemNote == 0:
                 raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
-
+        
+        if evento.valor != 0:
+            if comprovante:
+                if not validaComprovante(comprovante.file):
+                    raise APIExcecaoBase(message="Comprovante inválido.")
+                
+                deletaImagem(idUsuario, ["eventos", evento.id, "comprovantes"])
+                caminhoComprovante: str | None = armazenaComprovante(evento.id, idUsuario, comprovante.file)
+            else:
+                raise APIExcecaoBase(message="Falha ao registrar comprovante")
+        else: caminhoComprovante: str| None = None
+                                     
         d = {
             "idEvento": idEvento,
             "idUsuario": idUsuario,
             "dataInscricao": datetime.now(),
+            "comprovante" : caminhoComprovante, 
         }
 
         d.update(**inscrito.model_dump())
@@ -76,6 +93,7 @@ class InscritosControlador:
 
         # Atualiza o usuário no bd
         UsuarioBD.atualizar(usuario)
+
 
     @staticmethod
     def getInscritos(idEvento: str):

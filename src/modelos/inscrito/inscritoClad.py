@@ -2,13 +2,8 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from src.modelos.inscrito.inscrito import Inscrito
+from src.modelos.inscrito.inscrito import Inscrito, TipoVaga
 
-from enum import Enum
-
-class TipoVaga(str, Enum):
-    COM_NOTE = "comNotebook"
-    SEM_NOTE = "semNotebook"
 
 class InscritoCriar(BaseModel):
     tipoVaga: TipoVaga
@@ -23,7 +18,7 @@ class InscritoLer(Inscrito):
 
 
 class InscritoAtualizar(BaseModel):
-    tipoVaga: bool | None = None
+    tipoVaga: TipoVaga | None = None
     "Tipo de vaga: True para com notebook e False para sem notebook."
 
 

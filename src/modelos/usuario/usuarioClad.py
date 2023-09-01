@@ -30,6 +30,7 @@ class UsuarioCriar(BaseModel):
             raise ValueError("Senha inválida")
         return v
 
+
 class UsuarioLer(BaseModel):
     nome: str
     email: EmailStr
@@ -39,16 +40,14 @@ class UsuarioLer(BaseModel):
     github: str | None = None
     linkedin: str | None = None
     instagram: str | None = None
-    
+
 
 class UsuarioLerAdmin(UsuarioLer):
     id: str
     cpf: str
-    
+
     tipoConta: str
     eventosInscrito: list[tuple[str, bool]] = []
-
-
 
 
 class UsuarioAtualizar(BaseModel):

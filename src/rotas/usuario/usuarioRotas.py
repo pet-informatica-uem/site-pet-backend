@@ -101,6 +101,7 @@ def listarUsuarios(
 def listarPetianos():
     return UsuarioControlador.getUsuarios(petiano=True)
 
+
 @roteador.get(
     "/eu",
     name="Obter detalhes do usuário autenticado",
