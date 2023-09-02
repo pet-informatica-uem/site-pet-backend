@@ -58,12 +58,12 @@ class InscritosControlador:
         d = {
             "idEvento": idEvento,
             "idUsuario": idUsuario,
-            "dataInscricao": datetime.now(),
-            "comprovante" : caminhoComprovante, 
+            "dataInscricao": datetime.now(), 
         }
 
         d.update(**inscrito.model_dump())
         d = Inscrito(**d)
+        d.comprovante = caminhoComprovante # type: ignore
 
         # Cria o inscrito no bd
         InscritoBD.criar(d)
