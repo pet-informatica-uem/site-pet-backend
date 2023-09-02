@@ -12,6 +12,9 @@ class InscritoCriar(BaseModel):
     nivelConhecimento: int
     "Nível de conhecimento do usuário (1 a 5)."
 
+    comprovante: Path | None = None
+    "Comprovante de pagamento da inscrição."
+
 
 class InscritoLer(Inscrito):
     pass
