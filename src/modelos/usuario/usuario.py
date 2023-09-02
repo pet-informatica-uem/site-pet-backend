@@ -49,8 +49,8 @@ class Usuario(BaseModel):
     tipoConta: TipoConta
     "Tipo de conta. Representa permissões."
 
-    eventosInscrito: list[tuple[str, bool]] = []
-    "Lista de tuplas de id de evento e se o evento está ativo."
+    eventosInscrito: list[str] = []
+    "Lista de tuplas de id de evento."
 
     dataCriacao: datetime
     "Data e hora de criação da conta."

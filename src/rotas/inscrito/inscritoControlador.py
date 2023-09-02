@@ -89,7 +89,7 @@ class InscritosControlador:
         )
 
         # Adiciona o evento na lista de eventos inscritos do usuário
-        usuario.eventosInscrito.append((idEvento, True))
+        usuario.eventosInscrito.append(idEvento)
 
         # Atualiza o usuário no bd
         UsuarioBD.atualizar(usuario)
@@ -162,7 +162,7 @@ class InscritosControlador:
         usuario: Usuario = UsuarioBD.buscar("_id", inscrito.idUsuario)
 
         # Remove o evento na lista de eventos inscritos do usuário
-        usuario.eventosInscrito.remove((inscrito.idEvento, True))
+        usuario.eventosInscrito.remove(inscrito.idEvento)
 
         # Atualiza o usuário no bd
         UsuarioBD.atualizar(usuario)
