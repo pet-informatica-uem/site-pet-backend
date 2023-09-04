@@ -7,7 +7,7 @@ from pymongo.errors import DuplicateKeyError
 from src.config import config
 from src.modelos.autenticacao.autenticacao import TokenAutenticacao
 from src.modelos.evento.evento import Evento
-from src.modelos.excecao import JaExisteExcecao, NaoEncontradoExcecao
+from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoExcecao
 from src.modelos.inscrito.inscrito import Inscrito
 from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
 
@@ -20,6 +20,7 @@ colecaoUsuarios.create_index("email", unique=True)
 colecaoUsuarios.create_index("cpf", unique=True)
 
 colecaoEventos = cliente[config.NOME_BD]["eventos"]
+colecaoEventos.create_index("titulo", unique=True)
 
 colecaoInscritos = cliente[config.NOME_BD]["inscritos"]
 colecaoInscritos.create_index([("idEvento", 1), ("idUsuario", 1)], unique=True)
@@ -70,8 +71,8 @@ class EventoBD:
     def criar(modelo: Evento):
         try:
             colecaoEventos.insert_one(modelo.model_dump(by_alias=True))
-        except DuplicateKeyError:
-            logging.error("Evento já existe no banco de dados")
+        except DuplicateKeyError as e:
+            logging.error("Evento já existe no banco de dados" + str(e))
             raise JaExisteExcecao(message="Evento já existe no banco de dados")
 
     @staticmethod
@@ -84,9 +85,13 @@ class EventoBD:
 
     @staticmethod
     def atualizar(modelo: Evento):
-        colecaoEventos.update_one(
-            {"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)}
-        )
+        try:
+            colecaoEventos.update_one(
+                {"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)}
+            )
+        except DuplicateKeyError:
+            logging.error("Evento já existe no banco de dados")
+            raise JaExisteExcecao(message="Já existe um evento com esse título no banco de dados")
 
     @staticmethod
     def deletar(id: str):
@@ -99,12 +104,42 @@ class EventoBD:
 
 class InscritoBD:
     @staticmethod
-    def criar(modelo: Inscrito):
+    def _criar(modelo: Inscrito):
         try:
             colecaoInscritos.insert_one(modelo.model_dump())
         except DuplicateKeyError:
             logging.error("Inscrito já existe no banco de dados")
             raise JaExisteExcecao(message="Inscrito já existe no banco de dados")
+
+    @staticmethod
+    def criar(inscrito: Inscrito, evento: Evento, usuario: Usuario) -> None:
+        """Cria um inscrito no banco de dados.
+        
+        - inscrito -- inscrito a ser cadastrado
+        - evento -- evento a ser atualizado
+        - usuario -- usuário a ser atualizado
+
+        Return: None
+        """
+        
+        session = cliente.start_session()
+
+        # Realiza as operações no BD usando uma transação
+        try:
+            session.start_transaction()
+
+            InscritoBD._criar(inscrito)
+            EventoBD.atualizar(evento)
+            UsuarioBD.atualizar(usuario)
+
+            # Commita as operações
+            session.commit_transaction()
+        except Exception as e:
+            logging.error(f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}")
+
+            # Aborta a transação
+            session.abort_transaction()
+            raise APIExcecaoBase(message="Erro ao criar inscrito")
 
     @staticmethod
     def buscar(idEvento: str, idUsuario: str) -> Inscrito:

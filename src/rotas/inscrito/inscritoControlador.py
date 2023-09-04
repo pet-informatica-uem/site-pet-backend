@@ -24,7 +24,10 @@ from src.rotas.evento.eventoControlador import EventoControlador
 class InscritosControlador:
     @staticmethod
     def cadastrarInscrito(
-        idEvento: str, idUsuario: str, inscrito: InscritoCriar, comprovante: UploadFile
+        idEvento: str,
+        idUsuario: str,
+        dadosInscrito: InscritoCriar,
+        comprovante: UploadFile,
     ):
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
@@ -37,63 +40,59 @@ class InscritosControlador:
             raise APIExcecaoBase(message="Fora do período de inscrição")
 
         # Verifica se há vagas disponíveis
-        if inscrito.tipoVaga == TipoVaga.COM_NOTE:
+        if dadosInscrito.tipoVaga == TipoVaga.COM_NOTE:
             if evento.vagasDisponiveisComNote == 0:
                 raise APIExcecaoBase(message="Não há vagas disponíveis com note")
         else:
             if evento.vagasDisponiveisSemNote == 0:
                 raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
-        
+
         if evento.valor != 0:
             if comprovante:
                 if not validaComprovante(comprovante.file):
                     raise APIExcecaoBase(message="Comprovante inválido.")
-                
+
                 deletaImagem(idUsuario, ["eventos", evento.id, "comprovantes"])
-                caminhoComprovante: str | None = armazenaComprovante(evento.id, idUsuario, comprovante.file)
+                caminhoComprovante: str | None = armazenaComprovante(
+                    evento.id, idUsuario, comprovante.file
+                )
             else:
                 raise APIExcecaoBase(message="Falha ao registrar comprovante")
-        else: caminhoComprovante: str| None = None
-                                     
+        else:
+            caminhoComprovante: str | None = None
+
         d = {
             "idEvento": idEvento,
             "idUsuario": idUsuario,
-            "dataInscricao": datetime.now(), 
+            "dataInscricao": datetime.now(),
         }
 
-        d.update(**inscrito.model_dump())
-        d = Inscrito(**d)
-        d.comprovante = caminhoComprovante # type: ignore
-
-        # Cria o inscrito no bd
-        InscritoBD.criar(d)
+        d.update(**dadosInscrito.model_dump())
+        inscrito = Inscrito(**d)
+        inscrito.comprovante = caminhoComprovante  # type: ignore
 
         if inscrito.tipoVaga == TipoVaga.COM_NOTE:
             evento.vagasDisponiveisComNote -= 1
         else:
             evento.vagasDisponiveisSemNote -= 1
 
-        # Atualiza o evento no bd
-        EventoBD.atualizar(evento)
-
         # Recupera o usuário
         usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
 
         # Envia email de confirmação de inscrição
-        emailConfirmacaoEvento(
-            config.EMAIL_SMTP,
-            config.SENHA_SMTP,
-            usuario.email,
-            evento.id,
-            inscrito.tipoVaga,
-        )
+        # emailConfirmacaoEvento(
+        #     config.EMAIL_SMTP,
+        #     config.SENHA_SMTP,
+        #     usuario.email,
+        #     evento.id,
+        #     inscrito.tipoVaga,
+        # )
 
         # Adiciona o evento na lista de eventos inscritos do usuário
         usuario.eventosInscrito.append(idEvento)
 
-        # Atualiza o usuário no bd
-        UsuarioBD.atualizar(usuario)
-
+        # Cria o inscrito no bd
+        InscritoBD.criar(inscrito, evento, usuario)
 
     @staticmethod
     def getInscritos(idEvento: str):
