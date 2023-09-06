@@ -104,42 +104,42 @@ class EventoBD:
 
 class InscritoBD:
     @staticmethod
-    def _criar(modelo: Inscrito):
+    def criar(modelo: Inscrito):
         try:
             colecaoInscritos.insert_one(modelo.model_dump())
         except DuplicateKeyError:
             logging.error("Inscrito já existe no banco de dados")
             raise JaExisteExcecao(message="Inscrito já existe no banco de dados")
 
-    @staticmethod
-    def criar(inscrito: Inscrito, evento: Evento, usuario: Usuario) -> None:
-        """Cria um inscrito no banco de dados.
+    # @staticmethod
+    # def criar(inscrito: Inscrito, evento: Evento, usuario: Usuario) -> None:
+    #     """Cria um inscrito no banco de dados.
         
-        - inscrito -- inscrito a ser cadastrado
-        - evento -- evento a ser atualizado
-        - usuario -- usuário a ser atualizado
+    #     - inscrito -- inscrito a ser cadastrado
+    #     - evento -- evento a ser atualizado
+    #     - usuario -- usuário a ser atualizado
 
-        Return: None
-        """
+    #     Return: None
+    #     """
         
-        session = cliente.start_session()
+    #     session = cliente.start_session()
 
-        # Realiza as operações no BD usando uma transação
-        try:
-            session.start_transaction()
+    #     # Realiza as operações no BD usando uma transação
+    #     try:
+    #         session.start_transaction()
 
-            InscritoBD._criar(inscrito)
-            EventoBD.atualizar(evento)
-            UsuarioBD.atualizar(usuario)
+    #         InscritoBD._criar(inscrito)
+    #         EventoBD.atualizar(evento)
+    #         UsuarioBD.atualizar(usuario)
 
-            # Commita as operações
-            session.commit_transaction()
-        except Exception as e:
-            logging.error(f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}")
+    #         # Commita as operações
+    #         session.commit_transaction()
+    #     except Exception as e:
+    #         logging.error(f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}")
 
-            # Aborta a transação
-            session.abort_transaction()
-            raise APIExcecaoBase(message="Erro ao criar inscrito")
+    #         # Aborta a transação
+    #         session.abort_transaction()
+    #         raise APIExcecaoBase(message="Erro ao criar inscrito")
 
     @staticmethod
     def buscar(idEvento: str, idUsuario: str) -> Inscrito:

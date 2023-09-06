@@ -47,7 +47,7 @@ class UsuarioLerAdmin(UsuarioLer):
     cpf: str
 
     tipoConta: str
-    eventosInscrito: list[tuple[str, bool]] = []
+    eventosInscrito: list[str] = []
 
 
 class UsuarioAtualizar(BaseModel):

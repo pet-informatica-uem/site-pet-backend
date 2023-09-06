@@ -1,3 +1,4 @@
+import logging
 import time
 from datetime import datetime
 from PIL import Image
@@ -7,7 +8,7 @@ from fastapi import UploadFile
 from src.img.operacoesImagem import deletaImagem, validaComprovante, armazenaComprovante
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
-from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, colecaoInscritos
+from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, cliente
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import APIExcecaoBase
 from src.modelos.inscrito.inscrito import Inscrito
@@ -79,7 +80,7 @@ class InscritosControlador:
         # Recupera o usuário
         usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
 
-        # Envia email de confirmação de inscrição
+        # # Envia email de confirmação de inscrição
         # emailConfirmacaoEvento(
         #     config.EMAIL_SMTP,
         #     config.SENHA_SMTP,
@@ -91,8 +92,26 @@ class InscritosControlador:
         # Adiciona o evento na lista de eventos inscritos do usuário
         usuario.eventosInscrito.append(idEvento)
 
-        # Cria o inscrito no bd
-        InscritoBD.criar(inscrito, evento, usuario)
+        # Realiza as operações no BD usando uma transação
+        session = cliente.start_session()
+        try:
+            session.start_transaction()
+
+            InscritoBD.criar(inscrito)
+            EventoBD.atualizar(evento)
+            UsuarioBD.atualizar(usuario)
+
+            # Commita a transação se der tudo certo
+            session.commit_transaction()
+            session.end_session()
+
+        # Aborta a transação caso ocorra algum erro
+        except Exception as e:
+            logging.error(f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}")
+
+            session.abort_transaction()
+            session.end_session()
+            raise APIExcecaoBase(message="Erro ao criar inscrito")
 
     @staticmethod
     def getInscritos(idEvento: str):

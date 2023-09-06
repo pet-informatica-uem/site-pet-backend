@@ -112,7 +112,7 @@ def listarPetianos():
     response_model=UsuarioLerAdmin,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
-def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
+def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     return usuario
 
 
