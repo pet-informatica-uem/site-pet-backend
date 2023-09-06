@@ -10,7 +10,7 @@ MONGODB_TEST_URL = "mongodb+srv://<username>:<password>@<url>/<db>?retryWrites=t
 
 client = TestClient(petBack)
 
-_idUsuario = None
+_idUsuario: str = ""
 dadosUsuario = {
     "email": "ra120113@uem.br",
     "senha": "Alvaro123456!",
@@ -63,7 +63,7 @@ def test_tokenErroGenerico():
     )
     print('\n\n\n', token)
 
-    response = client.get(f"/usuarios/confirmar-email/?token={token}")
+    response = client.post(f"/usuarios/confirmar-email/?token={token}")
 
     print(response)
     print(response.json())
