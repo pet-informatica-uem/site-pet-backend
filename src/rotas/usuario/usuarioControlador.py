@@ -135,15 +135,15 @@ class UsuarioControlador():
         Autentica e gera um token de autenticação para o usuário com email e senha
         indicados.
         """
-
-        # verifica senha
+        
         usuario: Usuario = UsuarioBD().buscar("email", email)
-
-        if not conferirHashSenha(senha, usuario.senha):
-            raise NaoAutenticadoExcecao()
 
         # está ativo?
         if usuario.emailConfirmado != True:
+            raise NaoAutenticadoExcecao()
+        
+        # verifica senha
+        if not conferirHashSenha(senha, usuario.senha):
             raise NaoAutenticadoExcecao()
 
         # cria token

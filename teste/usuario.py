@@ -6,8 +6,6 @@ from src.modelos.usuario.usuarioClad import UsuarioCriar
 from src.autenticacao.jwtoken import gerarTokenAtivaConta
 from main import petBack
 
-MONGODB_TEST_URL = "mongodb+srv://<username>:<password>@<url>/<db>?retryWrites=true&w=majority"
-
 client = TestClient(petBack)
 
 _idUsuario: str = ""
@@ -55,68 +53,74 @@ def test_loginSemConfirmacao():
     assert response.json() == {"message": "Erro genérico."}
 
 
-# como passar esse token?
-# o caminho que chega no email é estranho, não é igual o que passo aqui
 def test_tokenErroGenerico():
     token: str = gerarTokenAtivaConta(
         _idUsuario, dadosUsuario["email"], timedelta(days=1)
     )
-    print('\n\n\n', token)
+
+    token = token[1:]
 
     response = client.post(f"/usuarios/confirmar-email/?token={token}")
 
-    print(response)
-    print(response.json())
+    assert response.status_code == 400
+    assert response.json() == {"message": "Erro genérico."}
+
+
+def test_tokenUsuarioNaoEncontrado():
+    token: str = gerarTokenAtivaConta(
+        "?" + _idUsuario[1:], dadosUsuario["email"], timedelta(days=1)
+    )
+
+    response = client.post(f"/usuarios/confirmar-email/?token={token}")
 
     assert response.status_code == 404
     assert response.json() == {"message": "O Usuário não foi encontrado."}
 
 
-# def test_confirmarEmail():
-#     token: str = gerarTokenAtivaConta(
-#         _idUsuario, dadosUsuario["email"], timedelta(days=1)
-#     )
+def test_confirmarEmail():
+    token: str = gerarTokenAtivaConta(
+        _idUsuario, dadosUsuario["email"], timedelta(days=1)
+    )
 
-#     response = client.get(f"/usuarios/confirmar-email/{token[0]}")
+    response = client.post(f"/usuarios/confirmar-email/?token={token}")
 
-#     assert response.status_code == 200
-#     assert response.json() is _idUsuario
+    print(response)
+    print(response.json())
+    print(type(response.json()))
 
-
-# daqui para baixo está estranho, está tudo estranho. Revisar
-
-# def test_usuarioLoginErroGEnerico(mocker):
-#     post_mock = mocker.patch('fastapi.testclient.TestClient.post')
-#     post_mock.return_value.status_code = 401
-#     post_mock.return_value.json.return_value = {"message": "Erro genérico."}
-
-#     response = client.post("/usuarios/login", data={'username': dadosUsuario['email'], 'password': dadosUsuario['senha']})
-
-#     assert response.status_code == 401
-#     assert response.json() == {"message": "Erro genérico."}
+    assert response.status_code == 200
+    assert isinstance(response.json(), str)
 
 
-# def test_usuarioNaoEncontrado(mocker):
-#     post_mock = mocker.patch("fastapi.testclient.TestClient.post")
-#     post_mock.return_value.status_code = 404
-#     post_mock.return_value.json.return_value = {
-#         "message": "O Usuário não foi encontrado."
-#     }
+# acredito que deveria retornar senha incorreta
+def test_loginSenhaIncorreta():
+    response = client.post(
+        "/usuarios/login",
+        data={
+            "username": dadosUsuario["email"],
+            "password": dadosUsuario["senha"] + "o",
+        },
+    )
 
-#     response = client.post(
-#         "/usuarios/login",
-#         data={
-#             "username": dadosUsuario["email"],
-#             "password": '0',
-#         },
-#     )
+    print(response.json())
+    print(response.status_code)
+    print(response)
 
-#     print(response.json())
-#     print(response.status_code)
-#     print(response)
+    assert response.status_code == 401
+    assert response.json() == {"message": "Erro genérico."}
 
-#     assert response.status_code == 404
-#     assert response.json() == {"message": "O Usuário não foi encontrado."}
+
+def test_loginEmailNaoCadastrado():
+    response = client.post(
+        "/usuarios/login",
+        data={
+            "username": "?",
+            "password": dadosUsuario["senha"],
+        },
+    )
+
+    assert response.status_code == 404
+    assert response.json() == {"message": "O Usuário não foi encontrado."}
 
 
 # def test_usuarioLogin():
