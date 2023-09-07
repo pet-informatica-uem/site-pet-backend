@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 
 from src.modelos.excecao import NaoAutorizadoExcecao
 from src.modelos.inscrito.inscritoClad import (
@@ -20,19 +20,19 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
     "/{idEvento}/inscritos",
     name="Cadastrar inscrito",
     description="""Cadastra um novo inscrito. 
-                   tipoVaga = true para vaga com note.
-                   tipoVaga = false para vaga sem note.
+                   tipoVaga = com Notebook para vaga com note.
+                   tipoVaga = sem Notebook para vaga sem note.
                    nivelConhecimento 1-5""",
     status_code=status.HTTP_201_CREATED,
 )
 def cadastrarInscrito(
-    idEvento: str,
-    inscrito: InscritoCriar,
-    # TODO comprovante: UploadFile,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+    idEvento: str,
+    inscrito: InscritoCriar = Depends(),
+    comprovante: UploadFile = File(...),
 ):
     # Despacha para o controlador
-    InscritosControlador.cadastrarInscrito(idEvento, usuario.id, inscrito)
+    InscritosControlador.cadastrarInscrito(idEvento, usuario.id, inscrito, comprovante)
 
 
 @roteador.get(

@@ -1,6 +1,7 @@
 import smtplib
 import ssl
 from email.message import EmailMessage
+from src.modelos.inscrito.inscritoClad import TipoVaga
 
 from src.modelos.bd import EventoBD
 from src.modelos.evento.evento import Evento
@@ -47,7 +48,7 @@ def emailConfirmacaoEvento(
     senhaPet: str,
     emailDestino: str,
     idEvento: str,
-    tipoVaga: bool,
+    tipoVaga: TipoVaga,
 ) -> None:
     # Recupera o evento
     evento: Evento = EventoBD.buscar("_id", idEvento)
@@ -66,7 +67,7 @@ def emailConfirmacaoEvento(
             + "\n"
         )
 
-    if tipoVaga:
+    if tipoVaga == TipoVaga.COM_NOTE:
         vaga = "Utilizar seu notebook."
     else:
         vaga = "Sem notebook."

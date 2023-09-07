@@ -14,17 +14,15 @@ formatoString = "%d/%m/%Y %H:%M"
 roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
 
-# TODO conferir se é interessante retornar o id
 @roteador.get(
     "/",
     name="Recuperar todos os eventos",
     description="Retorna todos os eventos cadastrados no banco de dados.",
 )
-def getEventos() -> list:
+def getEventos() -> list[Evento]:
     return EventoControlador.getEventos()
 
 
-# TODO conferir se é interessante retornar o id
 @roteador.get(
     "/{id}",
     name="Recuperar evento por ID",

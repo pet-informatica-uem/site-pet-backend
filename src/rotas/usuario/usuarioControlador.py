@@ -282,8 +282,8 @@ class UsuarioControlador():
         if not validaImagem(foto.file):
             raise ImagemInvalidaExcecao()
 
-        deletaImagem(usuario.nome, ["usuarios"])
-        caminhoFotoPerfil: str = armazenaFotoUsuario(usuario.nome, foto.file)  # type: ignore
+        deletaImagem(usuario.id, ["usuarios"])
+        caminhoFotoPerfil: str = armazenaFotoUsuario(usuario.id, foto.file)  # type: ignore
         usuario.foto = caminhoFotoPerfil  # type: ignore
 
         # atualiza no bd

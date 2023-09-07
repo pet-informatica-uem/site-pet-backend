@@ -31,21 +31,6 @@ class UsuarioCriar(BaseModel):
         return v
 
 
-class UsuarioLerAdmin(BaseModel):
-    id: str
-    nome: str
-    email: EmailStr
-    cpf: str
-    curso: str
-    tipoConta: str
-    eventosInscrito: list[tuple[str, bool]] = []
-
-    foto: Path | None = None
-    github: str | None = None
-    linkedin: str | None = None
-    instagram: str | None = None
-
-
 class UsuarioLer(BaseModel):
     nome: str
     email: EmailStr
@@ -55,6 +40,14 @@ class UsuarioLer(BaseModel):
     github: str | None = None
     linkedin: str | None = None
     instagram: str | None = None
+
+
+class UsuarioLerAdmin(UsuarioLer):
+    id: str
+    cpf: str
+
+    tipoConta: str
+    eventosInscrito: list[str] = []
 
 
 class UsuarioAtualizar(BaseModel):

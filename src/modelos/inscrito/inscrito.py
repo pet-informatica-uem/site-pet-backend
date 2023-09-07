@@ -1,7 +1,13 @@
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 
 from pydantic import BaseModel
+
+
+class TipoVaga(str, Enum):
+    COM_NOTE = "comNotebook"
+    SEM_NOTE = "semNotebook"
 
 
 class Inscrito(BaseModel):
@@ -15,7 +21,7 @@ class Inscrito(BaseModel):
     idUsuario: str
     "Identificador único do usuário."
 
-    tipoVaga: bool
+    tipoVaga: TipoVaga
     "Tipo de vaga: True para com notebook e False para sem notebook."
 
     nivelConhecimento: int

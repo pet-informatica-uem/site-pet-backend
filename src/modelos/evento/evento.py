@@ -29,6 +29,9 @@ class Evento(BaseModel):
     dias: list[tuple[datetime, datetime]]
     "Lista de tuplas de data e hora de início e fim de cada dia do evento."
 
+    fimEvento: datetime
+    "Último dia e hora do evento (gerado automaticamente a partir de 'dias')."
+
     local: str
     "Local do evento."
 
@@ -55,6 +58,3 @@ class Evento(BaseModel):
 
     imagemCracha: str | None = None
     "Caminho para a imagem do crachá do evento."
-
-    ativo: bool = True
-    "Indica se o evento está ativo ou não."

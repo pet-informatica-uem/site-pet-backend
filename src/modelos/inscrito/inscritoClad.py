@@ -2,11 +2,11 @@ from pathlib import Path
 
 from pydantic import BaseModel
 
-from src.modelos.inscrito.inscrito import Inscrito
+from src.modelos.inscrito.inscrito import Inscrito, TipoVaga
 
 
 class InscritoCriar(BaseModel):
-    tipoVaga: bool
+    tipoVaga: TipoVaga
     "Tipo de vaga: True para com notebook e False para sem notebook."
 
     nivelConhecimento: int
@@ -18,7 +18,7 @@ class InscritoLer(Inscrito):
 
 
 class InscritoAtualizar(BaseModel):
-    tipoVaga: bool | None = None
+    tipoVaga: TipoVaga | None = None
     "Tipo de vaga: True para com notebook e False para sem notebook."
 
 
