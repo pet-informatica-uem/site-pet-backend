@@ -3,7 +3,6 @@ from src.config import config
 
 class ConexaoBD:
     def __init__(self, nomeBanco: str = config.NOME_BD) -> None:
-        
         self.cliente = MongoClient(str(config.URI_BD))
         self.colecaoTokens = self.cliente[nomeBanco]["authTokens"]
         self.colecaoUsuarios = self.cliente[nomeBanco]["usuarios"]

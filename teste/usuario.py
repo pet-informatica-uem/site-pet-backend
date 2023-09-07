@@ -50,10 +50,10 @@ def test_loginSemConfirmacao():
     )
 
     assert response.status_code == 401
-    assert response.json() == {"message": "Erro genérico."}
+    assert response.json() == {"message": "Usuário não autenticado."}
 
 
-def test_tokenErroGenerico():
+def test_tokenInvalido():
     token: str = gerarTokenAtivaConta(
         _idUsuario, dadosUsuario["email"], timedelta(days=1)
     )
@@ -63,7 +63,7 @@ def test_tokenErroGenerico():
     response = client.post(f"/usuarios/confirmar-email/?token={token}")
 
     assert response.status_code == 400
-    assert response.json() == {"message": "Erro genérico."}
+    assert response.json() == {"message": "O token é inválido."}
 
 
 def test_tokenUsuarioNaoEncontrado():
@@ -84,10 +84,6 @@ def test_confirmarEmail():
 
     response = client.post(f"/usuarios/confirmar-email/?token={token}")
 
-    print(response)
-    print(response.json())
-    print(type(response.json()))
-
     assert response.status_code == 200
     assert isinstance(response.json(), str)
 
@@ -102,12 +98,8 @@ def test_loginSenhaIncorreta():
         },
     )
 
-    print(response.json())
-    print(response.status_code)
-    print(response)
-
     assert response.status_code == 401
-    assert response.json() == {"message": "Erro genérico."}
+    assert response.json() == {"message": "Usuário não autenticado."}
 
 
 def test_loginEmailNaoCadastrado():

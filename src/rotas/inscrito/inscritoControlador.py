@@ -8,7 +8,7 @@ from fastapi import UploadFile
 from src.img.operacoesImagem import deletaImagem, validaComprovante, armazenaComprovante
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
-from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, cliente
+from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import APIExcecaoBase
 from src.modelos.inscrito.inscrito import Inscrito
@@ -36,7 +36,7 @@ class InscritosControlador(InscritoBD, UsuarioBD):
         # Verifica se está no período de inscrição
         if (
             evento.inicioInscricao > datetime.now()
-            or evento.fimInscricao < datetime.now()
+            and evento.fimInscricao < datetime.now()
         ):
             raise APIExcecaoBase(message="Fora do período de inscrição")
 
@@ -93,7 +93,7 @@ class InscritosControlador(InscritoBD, UsuarioBD):
         usuario.eventosInscrito.append(idEvento)
 
         # Realiza as operações no BD usando uma transação
-        session = cliente.start_session()
+        session = UsuarioBD.cliente.start_session()
         try:
             session.start_transaction()
 
