@@ -135,8 +135,11 @@ class UsuarioControlador:
         indicados.
         """
 
-        # verifica senha
-        usuario: Usuario = UsuarioBD.buscar("email", email)
+        # verifica senha e usuario
+        try:
+            usuario: Usuario = UsuarioBD.buscar("email", email)
+        except NaoEncontradoExcecao:
+            raise EmailSenhaIncorretoExcecao()
 
         # está ativo?
         if usuario.emailConfirmado != True:
