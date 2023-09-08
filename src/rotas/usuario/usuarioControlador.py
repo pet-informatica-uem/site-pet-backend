@@ -18,6 +18,8 @@ from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaIma
 from src.modelos.bd import TokenAutenticacaoBD, UsuarioBD
 from src.modelos.excecao import (
     APIExcecaoBase,
+    EmailNaoConfirmadoExcecao,
+    EmailSenhaIncorretoExcecao,
     ImagemInvalidaExcecao,
     JaExisteExcecao,
     NaoAutenticadoExcecao,
@@ -136,12 +138,12 @@ class UsuarioControlador:
         # verifica senha
         usuario: Usuario = UsuarioBD.buscar("email", email)
 
-        if not conferirHashSenha(senha, usuario.senha):
-            raise NaoAutenticadoExcecao()
-
         # está ativo?
         if usuario.emailConfirmado != True:
-            raise NaoAutenticadoExcecao()
+            raise EmailNaoConfirmadoExcecao()
+
+        if not conferirHashSenha(senha, usuario.senha):
+            raise EmailSenhaIncorretoExcecao()
 
         # cria token
         tk: str = secrets.token_urlsafe()
