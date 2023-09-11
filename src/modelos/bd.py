@@ -91,7 +91,9 @@ class EventoBD:
             )
         except DuplicateKeyError:
             logging.error("Evento já existe no banco de dados")
-            raise JaExisteExcecao(message="Já existe um evento com esse título no banco de dados")
+            raise JaExisteExcecao(
+                message="Já existe um evento com esse título no banco de dados"
+            )
 
     @staticmethod
     def deletar(id: str):
@@ -114,14 +116,14 @@ class InscritoBD:
     # @staticmethod
     # def criar(inscrito: Inscrito, evento: Evento, usuario: Usuario) -> None:
     #     """Cria um inscrito no banco de dados.
-        
+
     #     - inscrito -- inscrito a ser cadastrado
     #     - evento -- evento a ser atualizado
     #     - usuario -- usuário a ser atualizado
 
     #     Return: None
     #     """
-        
+
     #     session = cliente.start_session()
 
     #     # Realiza as operações no BD usando uma transação

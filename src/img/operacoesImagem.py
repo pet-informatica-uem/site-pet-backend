@@ -3,9 +3,11 @@ import os
 import time
 from typing import BinaryIO
 
+import PyPDF2
 from PIL import Image
 
 from src.config import config
+
 
 def validaImagem(imagem: bytes | BinaryIO | str) -> bool:
     """Retorna se 'imagem' é válida.
@@ -33,12 +35,22 @@ def validaComprovante(comprovante: bytes | BinaryIO | str) -> bool:
     :return -- valor booleano
     """
     eh_valida = True
+
     try:
         with Image.open(comprovante) as img:
             if img.format not in ["PNG", "JPEG", "PDF"]:
                 eh_valida = False
     except IOError:
-        return False
+        try:
+            # Abre o PDF
+            pdf_reader = PyPDF2.PdfReader(comprovante)  # type: ignore
+
+            # Checa se o PDF está criptografado
+            if pdf_reader.is_encrypted:
+                return False
+        except Exception as e:
+            print(str(e))
+            return False
 
     return eh_valida
 
@@ -169,7 +181,7 @@ def __armazenaImagem(
 
 
 def __armazenaComprovante(
-    path: str, nomeBase: str, imagem: bytes | BinaryIO | str
+    path: str, nomeBase: str, comprovante: bytes | BinaryIO | str
 ) -> str | None:
     """Armazena o comprovante no path fornecido usando um nome base.
 
@@ -180,14 +192,36 @@ def __armazenaComprovante(
     :return -- caminho para o comprovante salvo : str. None, se o comprovante for inválido.
     """
     try:
-        with Image.open(imagem, formats=["PNG", "JPEG", "PDF"]) as img:
+        with Image.open(comprovante, formats=["PNG", "JPEG"]) as img:
             extensao = img.format.lower()  # type: ignore
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
             pathDefinitivo = os.path.join(path, nome)
-            img.save(pathDefinitivo, save_all=True)
+            img.save(pathDefinitivo)
         return pathDefinitivo
     except IOError:
-        return None
+        try:
+            # Abre o PDF
+            pdf_reader = PyPDF2.PdfReader(comprovante)  # type: ignore
+
+            # Cria um PDF Writer
+            pdf_writer = PyPDF2.PdfWriter()
+
+            # Adiciona as páginas do PDF
+            for page_num in range(len(pdf_reader.pages)):
+                page = pdf_reader.pages[page_num]
+                pdf_writer.add_page(page)
+
+            nome = __geraNomeImagem(nomeBase, extensao="pdf")
+            pathDefinitivo = os.path.join(path, nome)
+
+            # Salva o PDF
+            with open(pathDefinitivo, "wb") as output_file:
+                pdf_writer.write(output_file)
+            return pathDefinitivo
+
+        except Exception as e:
+            print(str(e))
+            return None
 
 
 def __geraNomeImagem(nomeBase: str, extensao: str) -> str:

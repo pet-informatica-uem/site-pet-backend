@@ -29,7 +29,7 @@ def cadastrarInscrito(
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
     idEvento: str,
     inscrito: InscritoCriar = Depends(),
-    comprovante: UploadFile = File(...),
+    comprovante: UploadFile | None = None,
 ):
     # Despacha para o controlador
     InscritosControlador.cadastrarInscrito(idEvento, usuario.id, inscrito, comprovante)

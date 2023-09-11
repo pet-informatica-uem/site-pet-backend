@@ -4,9 +4,9 @@ from typing import BinaryIO
 
 from bson.objectid import ObjectId
 from fastapi import UploadFile
-from src.img.criaPastas import criaPastaEvento
 
 from src.config import config
+from src.img.criaPastas import criaPastaEvento
 from src.img.operacoesImagem import (
     armazenaArteEvento,
     armazenaCrachaEvento,

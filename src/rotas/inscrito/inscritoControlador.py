@@ -1,13 +1,13 @@
 import logging
 import time
 from datetime import datetime
-from PIL import Image
 
 from fastapi import UploadFile
+from PIL import Image
 
-from src.img.operacoesImagem import deletaImagem, validaComprovante, armazenaComprovante
 from src.config import config
 from src.email.operacoesEmail import emailConfirmacaoEvento
+from src.img.operacoesImagem import armazenaComprovante, deletaImagem, validaComprovante
 from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, cliente
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import APIExcecaoBase
@@ -28,7 +28,7 @@ class InscritosControlador:
         idEvento: str,
         idUsuario: str,
         dadosInscrito: InscritoCriar,
-        comprovante: UploadFile,
+        comprovante: UploadFile | None,
     ):
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
@@ -58,7 +58,9 @@ class InscritosControlador:
                     evento.id, idUsuario, comprovante.file
                 )
             else:
-                raise APIExcecaoBase(message="Falha ao registrar comprovante")
+                raise APIExcecaoBase(
+                    message="Comprovante obrigatório para eventos pagos."
+                )
         else:
             caminhoComprovante: str | None = None
 
@@ -107,7 +109,9 @@ class InscritosControlador:
 
         # Aborta a transação caso ocorra algum erro
         except Exception as e:
-            logging.error(f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}")
+            logging.error(
+                f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}"
+            )
 
             session.abort_transaction()
             session.end_session()
