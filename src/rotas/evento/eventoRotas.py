@@ -73,8 +73,8 @@ def editarEvento(
 def atualizarImagensEvento(
     id: str,
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
-    arte: UploadFile,
-    cracha: UploadFile,
+    arte: UploadFile | None = None,
+    cracha: UploadFile | None = None,
 ):
     # Despacha para o controlador
     EventoControlador.atualizarImagensEvento(id, arte, cracha)
