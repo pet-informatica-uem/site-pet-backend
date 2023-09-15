@@ -9,7 +9,7 @@ from src.modelos.inscrito.inscritoClad import TipoVaga
 
 
 # Função para enviar email customizado
-def emailGenerico(
+def enviarEmailGenerico(
     emailPet: str, senhaPet: str, emailDestino: str, titulo: str, texto: str
 ) -> None:
     mensagem: EmailMessage = EmailMessage()
@@ -22,7 +22,9 @@ def emailGenerico(
 
 
 # Função para enviar verificação de email
-def verificarEmail(emailPet: str, senhaPet: str, emailDestino: str, link: str) -> None:
+def enviarEmailVerificacao(
+    emailPet: str, senhaPet: str, emailDestino: str, link: str
+) -> None:
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
@@ -33,7 +35,9 @@ def verificarEmail(emailPet: str, senhaPet: str, emailDestino: str, link: str) -
 
 
 # Função para enviar link troca de senha
-def resetarSenha(emailPet: str, senhaPet: str, emailDestino: str, link: str) -> None:
+def enviarEmailResetSenha(
+    emailPet: str, senhaPet: str, emailDestino: str, link: str
+) -> None:
     mensagem: EmailMessage = EmailMessage()
     mensagem["From"] = emailPet
     mensagem["To"] = emailDestino
@@ -43,7 +47,7 @@ def resetarSenha(emailPet: str, senhaPet: str, emailDestino: str, link: str) -> 
 
 
 # Função que envia email para avisar sobre inscrição do evento
-def emailConfirmacaoEvento(
+def enviarEmailConfirmacaoEvento(
     emailPet: str,
     senhaPet: str,
     emailDestino: str,

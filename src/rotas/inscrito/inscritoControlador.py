@@ -6,7 +6,7 @@ from fastapi import UploadFile
 from PIL import Image
 
 from src.config import config
-from src.email.operacoesEmail import emailConfirmacaoEvento
+from src.email.operacoesEmail import enviarEmailConfirmacaoEvento
 from src.img.operacoesImagem import armazenaComprovante, deletaImagem, validaComprovante
 from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, cliente
 from src.modelos.evento.evento import Evento
@@ -83,13 +83,13 @@ class InscritosControlador:
         usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
 
         # # Envia email de confirmação de inscrição
-        # emailConfirmacaoEvento(
-        #     config.EMAIL_SMTP,
-        #     config.SENHA_SMTP,
-        #     usuario.email,
-        #     evento.id,
-        #     inscrito.tipoVaga,
-        # )
+        enviarEmailConfirmacaoEvento(
+            config.EMAIL_SMTP,
+            config.SENHA_SMTP,
+            usuario.email,
+            evento.id,
+            inscrito.tipoVaga,
+        )
 
         # Adiciona o evento na lista de eventos inscritos do usuário
         usuario.eventosInscrito.append(idEvento)

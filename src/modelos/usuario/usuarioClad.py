@@ -42,14 +42,6 @@ class UsuarioLer(BaseModel):
     instagram: str | None = None
 
 
-class UsuarioLerAdmin(UsuarioLer):
-    id: str
-    cpf: str
-
-    tipoConta: str
-    eventosInscrito: list[str] = []
-
-
 class UsuarioAtualizar(BaseModel):
     nome: str | None = None
     curso: str | None = None

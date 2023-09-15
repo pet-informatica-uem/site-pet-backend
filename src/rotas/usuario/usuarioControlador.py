@@ -3,7 +3,6 @@ import secrets
 from datetime import datetime, timedelta
 
 from fastapi import UploadFile
-from pymongo.errors import DuplicateKeyError
 
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
@@ -13,15 +12,14 @@ from src.autenticacao.jwtoken import (
     processaTokenTrocaSenha,
 )
 from src.config import config
-from src.email.operacoesEmail import resetarSenha, verificarEmail
+from src.email.operacoesEmail import enviarEmailResetSenha, enviarEmailVerificacao
 from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
-from src.modelos.bd import TokenAutenticacaoBD, UsuarioBD
+from src.modelos.bd import TokenAutenticacaoBD, UsuarioBD, cliente
 from src.modelos.excecao import (
     APIExcecaoBase,
     EmailNaoConfirmadoExcecao,
     EmailSenhaIncorretoExcecao,
     ImagemInvalidaExcecao,
-    JaExisteExcecao,
     NaoAutenticadoExcecao,
     NaoEncontradoExcecao,
     UsuarioNaoEncontradoExcecao,
@@ -32,7 +30,6 @@ from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizarEmail,
     UsuarioAtualizarSenha,
     UsuarioCriar,
-    UsuarioLer,
 )
 
 
@@ -86,9 +83,8 @@ class UsuarioControlador:
         }
 
         d.update(dadosUsuario.model_dump(by_alias=True))
-        # cria usuario
+        # cria modelo do usuario
         usuario: Usuario = Usuario(**d)
-        UsuarioBD.criar(usuario)
 
         # gera token de ativação válido por 24h
         token: str = geraTokenAtivaConta(
@@ -101,9 +97,12 @@ class UsuarioControlador:
             config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token
         )
 
-        verificarEmail(
+        enviarEmailVerificacao(
             config.EMAIL_SMTP, config.SENHA_SMTP, dadosUsuario.email, linkConfirmacao
         )
+
+        # cria o usuário no bd
+        UsuarioBD.criar(usuario)
 
         return usuario.id
 
@@ -113,7 +112,9 @@ class UsuarioControlador:
         UsuarioBD.buscar("email", email)
         # Gera o link e envia o email se o usuário estiver cadastrado
         link: str = geraLinkEsqueciSenha(email)
-        resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
+        enviarEmailResetSenha(
+            config.EMAIL_SMTP, config.SENHA_SMTP, email, link
+        )  # Envia o email
 
     @staticmethod
     def trocarSenha(token: str, senha: str) -> None:
@@ -266,7 +267,7 @@ class UsuarioControlador:
 
             UsuarioBD.atualizar(usuario)
             mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
-            verificarEmail(
+            enviarEmailVerificacao(
                 config.EMAIL_SMTP, config.SENHA_SMTP, usuario.email, mensagemEmail
             )
         else:

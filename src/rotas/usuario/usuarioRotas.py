@@ -21,7 +21,6 @@ from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizarSenha,
     UsuarioCriar,
     UsuarioLer,
-    UsuarioLerAdmin,
 )
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
@@ -78,12 +77,11 @@ def cadastrarUsuario(usuario: UsuarioCriar) -> str:
     return usuarioCadastrado
 
 
-# TODO resolver o response model para petiano ou usuario
 @roteador.get(
     "/",
     name="Recuperar usuários cadastrados",
     description="Lista todos os usuários cadastrados.",
-    response_model=list[UsuarioLerAdmin],
+    response_model=list[Usuario],
 )
 def listarUsuarios(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
@@ -109,7 +107,7 @@ def listarPetianos():
     Retorna detalhes do usuário autenticado.
     """,
     status_code=status.HTTP_200_OK,
-    response_model=UsuarioLerAdmin,
+    response_model=Usuario,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
@@ -123,7 +121,7 @@ def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     Retorna detalhes do usuário com id fornecido.
     """,
     status_code=status.HTTP_200_OK,
-    response_model=UsuarioLerAdmin,
+    response_model=Usuario,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str):
