@@ -22,11 +22,15 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
-origins = ["http://localhost:3000", "http://localhost"]
-
-origins = ["http://localhost:3000", "http://localhost"]
+origins = ["*"]
 
 petBack = FastAPI()
+
+petBack.middleware("http")(middlewareExcecao)
+petBack.include_router(roteadorUsuario)
+petBack.include_router(roteadorEvento)
+petBack.include_router(roteadorInscrito)
+
 petBack.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -34,10 +38,6 @@ petBack.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-petBack.middleware("http")(middlewareExcecao)
-petBack.include_router(roteadorUsuario)
-petBack.include_router(roteadorEvento)
-petBack.include_router(roteadorInscrito)
 
 # Caso não existam, cria as pastas para armazenar imagens.
 criaPastas()
