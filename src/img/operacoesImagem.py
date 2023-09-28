@@ -49,7 +49,6 @@ def validaComprovante(comprovante: bytes | BinaryIO | str) -> bool:
             if pdf_reader.is_encrypted:
                 return False
         except Exception as e:
-            print(str(e))
             return False
 
     return eh_valida
@@ -220,7 +219,6 @@ def __armazenaComprovante(
             return pathDefinitivo
 
         except Exception as e:
-            print(str(e))
             return None
 
 

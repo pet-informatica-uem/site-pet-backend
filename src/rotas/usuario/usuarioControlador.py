@@ -189,7 +189,7 @@ class UsuarioControlador:
         raise UsuarioNaoEncontradoExcecao()
 
     @staticmethod
-    def getUsuarios(petiano: bool) -> list[Usuario]:
+    def getUsuarios(petiano: bool = False) -> list[Usuario]:
         return UsuarioBD.listar(petiano)
 
     @staticmethod

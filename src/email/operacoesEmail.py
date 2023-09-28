@@ -94,11 +94,12 @@ def enviarEmailConfirmacaoEvento(
 def enviarEmail(
     emailPet: str, senhaPet: str, emailDestino: str, mensagem: EmailMessage
 ) -> None:
-    try:
-        contexto: ssl.SSLContext = ssl.create_default_context()
+    # try:
+    #     contexto: ssl.SSLContext = ssl.create_default_context()
 
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto) as smtp:
-            smtp.login(emailPet, senhaPet)
-            smtp.sendmail(emailPet, emailDestino, mensagem.as_string())
-    except Exception as e:
-        raise EmailNaoFoiEnviadoExcecao()
+    #     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto) as smtp:
+    #         smtp.login(emailPet, senhaPet)
+    #         smtp.sendmail(emailPet, emailDestino, mensagem.as_string())
+    # except Exception as e:
+    #     raise EmailNaoFoiEnviadoExcecao()
+    print(f"enviou um email, msg: \n{mensagem}")

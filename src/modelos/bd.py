@@ -151,7 +151,6 @@ class InscritoBD:
         ):
             return Inscrito(**inscrito)  # type: ignore
         else:
-            print(inscrito)
             raise NaoEncontradoExcecao(message="O inscrito não foi encontrado.")
 
     @staticmethod

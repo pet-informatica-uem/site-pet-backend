@@ -80,14 +80,14 @@ def cadastrarUsuario(usuario: UsuarioCriar) -> str:
 @roteador.get(
     "/",
     name="Recuperar usuários cadastrados",
-    description="Lista todos os usuários cadastrados.",
+    description="Rota apenas para petianos.\n\n"
+    "Lista todos os usuários cadastrados.",
     response_model=list[Usuario],
 )
 def listarUsuarios(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
-    petiano: bool = False,
 ):
-    return UsuarioControlador.getUsuarios(petiano)
+    return UsuarioControlador.getUsuarios()
 
 
 @roteador.get(
@@ -117,9 +117,8 @@ def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
 @roteador.get(
     "/{id}",
     name="Obter detalhes do usuário com id fornecido",
-    description="""
-    Retorna detalhes do usuário com id fornecido.
-    """,
+    description="Retorna detalhes do usuário com id fornecido.\n\n"
+    "Usuários não petianos só podem ver seus próprios dados.",
     status_code=status.HTTP_200_OK,
     response_model=Usuario,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
@@ -137,9 +136,8 @@ def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: 
 @roteador.patch(
     "/{id}",
     name="Editar dados do usuário selecionado",
-    description="""
-    Edita os dados do usuário (exceto senha e email).
-    """,
+    description="Edita os dados do usuário (exceto senha e email).\n\n"
+    "Usuários não petianos só podem editar seus próprios dados.",
     status_code=status.HTTP_200_OK,
     response_model=UsuarioLer,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
@@ -185,7 +183,8 @@ def editarEmail(
 @roteador.put(
     "/{id}/senha",
     name="Editar senha do usuário autenticado",
-    description="""O usuário é capaz de editar sua senha. Caso a opção deslogarAoTrocarSenha for ativada, todos as sessões serão deslogadas ao trocar a senha.""",
+    description="""O usuário é capaz de editar sua senha. Caso a opção deslogarAoTrocarSenha 
+    seja selecionada, todos as sessões serão deslogadas ao trocar a senha.""",
 )
 def editarSenha(
     id: str,
@@ -221,7 +220,8 @@ def editarFoto(
 
 @roteador.delete(
     "/{id}",
-    name="Remove o usuário indicado",
+    name="Remove o usuário indicado"
+    "Usuários não petianos só podem excluir seus próprios perfis.",
     description="""
     Elimina o usuário.
     """,
@@ -255,9 +255,8 @@ def confirmaEmail(token: str):
 @roteador.post(
     "/esqueci-senha",
     name="Recuperar conta",
-    description="""
-        Envia um email para a conta fornecida para trocar a senha.
-        Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
+    description="""Envia um email para a conta fornecida para trocar a senha.
+    Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
     """,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )

@@ -36,7 +36,7 @@ class InscritosControlador:
         # Verifica se está no período de inscrição
         if (
             evento.inicioInscricao > datetime.now()
-            or evento.fimInscricao < datetime.now()
+            and evento.fimInscricao < datetime.now()
         ):
             raise APIExcecaoBase(message="Fora do período de inscrição")
 
@@ -82,15 +82,6 @@ class InscritosControlador:
         # Recupera o usuário
         usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
 
-        # # Envia email de confirmação de inscrição
-        enviarEmailConfirmacaoEvento(
-            config.EMAIL_SMTP,
-            config.SENHA_SMTP,
-            usuario.email,
-            evento.id,
-            inscrito.tipoVaga,
-        )
-
         # Adiciona o evento na lista de eventos inscritos do usuário
         usuario.eventosInscrito.append(idEvento)
 
@@ -116,6 +107,15 @@ class InscritosControlador:
             session.abort_transaction()
             session.end_session()
             raise APIExcecaoBase(message="Erro ao criar inscrito")
+
+        # Envia email de confirmação de inscrição
+        enviarEmailConfirmacaoEvento(
+            config.EMAIL_SMTP,
+            config.SENHA_SMTP,
+            usuario.email,
+            evento.id,
+            inscrito.tipoVaga,
+        )
 
     @staticmethod
     def getInscritos(idEvento: str):
@@ -174,17 +174,31 @@ class InscritosControlador:
         else:
             evento.vagasDisponiveisSemNote += 1
 
-        # Atualiza o evento no bd
-        EventoBD.atualizar(evento)
-
-        # Remove o inscrito do bd
-        InscritoBD.deletar(inscrito.idEvento, inscrito.idUsuario)
-
         # Recupera o usuário
         usuario: Usuario = UsuarioBD.buscar("_id", inscrito.idUsuario)
 
         # Remove o evento na lista de eventos inscritos do usuário
         usuario.eventosInscrito.remove(inscrito.idEvento)
 
-        # Atualiza o usuário no bd
-        UsuarioBD.atualizar(usuario)
+        # Realiza as operações no BD usando uma transação
+        session = cliente.start_session()
+        try:
+            session.start_transaction()
+
+            EventoBD.atualizar(evento)
+            InscritoBD.deletar(inscrito.idEvento, inscrito.idUsuario)
+            UsuarioBD.atualizar(usuario)
+
+            # Commita a transação se der tudo certo
+            session.commit_transaction()
+            session.end_session()
+
+        # Aborta a transação caso ocorra algum erro
+        except Exception as e:
+            logging.error(
+                f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}"
+            )
+
+            session.abort_transaction()
+            session.end_session()
+            raise APIExcecaoBase(message="Erro ao criar inscrito")

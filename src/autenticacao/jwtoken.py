@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 
 from jose import JWTError, jwt
 
@@ -24,13 +25,13 @@ def processaTokenAtivaConta(token: str) -> dict[str, str]:
     - "mensagem" é um dicionário contendo chaves "idUsuario" e "email"
       caso o token seja válido, ou uma mensagem de erro caso contrário.
     """
-
     # Tenta decodificar o token
     try:
         token_info: dict[str, str] = jwt.decode(
             token, config.SEGREDO_JWT, algorithms=["HS256"]
         )
-    except JWTError:
+    except JWTError as e:
+        logging.warning(f"Token inválido, error messagem:\n {str(e)}")
         raise TokenInvalidoExcecao()
 
     # Recupera as informações do token
