@@ -20,9 +20,9 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
     "/{idEvento}/inscritos",
     name="Cadastrar inscrito",
     description="Cadastra um novo inscrito.\n\n "
-                   "- tipoVaga = comNotebook para vaga com note.\n\n"
-                   "- tipoVaga = semNotebook para vaga sem note.\n\n"
-                   "- nivelConhecimento 1-5",
+    "- tipoVaga = comNotebook para vaga com note.\n\n"
+    "- tipoVaga = semNotebook para vaga sem note.\n\n"
+    "- nivelConhecimento 1-5",
     status_code=status.HTTP_201_CREATED,
 )
 def cadastrarInscrito(

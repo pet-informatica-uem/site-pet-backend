@@ -97,9 +97,7 @@ class UsuarioControlador:
             config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token
         )
 
-        enviarEmailVerificacao(
-            config.EMAIL_SMTP, config.SENHA_SMTP, dadosUsuario.email, linkConfirmacao
-        )
+        enviarEmailVerificacao(dadosUsuario.email, linkConfirmacao)
 
         # cria o usuário no bd
         UsuarioBD.criar(usuario)
@@ -112,9 +110,7 @@ class UsuarioControlador:
         UsuarioBD.buscar("email", email)
         # Gera o link e envia o email se o usuário estiver cadastrado
         link: str = geraLinkEsqueciSenha(email)
-        enviarEmailResetSenha(
-            config.EMAIL_SMTP, config.SENHA_SMTP, email, link
-        )  # Envia o email
+        enviarEmailResetSenha(email, link)  # Envia o email
 
     @staticmethod
     def trocarSenha(token: str, senha: str) -> None:
@@ -267,9 +263,7 @@ class UsuarioControlador:
 
             UsuarioBD.atualizar(usuario)
             mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
-            enviarEmailVerificacao(
-                config.EMAIL_SMTP, config.SENHA_SMTP, usuario.email, mensagemEmail
-            )
+            enviarEmailVerificacao(usuario.email, mensagemEmail)
         else:
             raise APIExcecaoBase(message="Senha incorreta")
 

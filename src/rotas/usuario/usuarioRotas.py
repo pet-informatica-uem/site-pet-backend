@@ -80,8 +80,7 @@ def cadastrarUsuario(usuario: UsuarioCriar) -> str:
 @roteador.get(
     "/",
     name="Recuperar usuários cadastrados",
-    description="Rota apenas para petianos.\n\n"
-    "Lista todos os usuários cadastrados.",
+    description="Rota apenas para petianos.\n\n" "Lista todos os usuários cadastrados.",
     response_model=list[Usuario],
 )
 def listarUsuarios(

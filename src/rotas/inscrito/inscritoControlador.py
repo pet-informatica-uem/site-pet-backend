@@ -110,8 +110,6 @@ class InscritosControlador:
 
         # Envia email de confirmação de inscrição
         enviarEmailConfirmacaoEvento(
-            config.EMAIL_SMTP,
-            config.SENHA_SMTP,
             usuario.email,
             evento.id,
             inscrito.tipoVaga,

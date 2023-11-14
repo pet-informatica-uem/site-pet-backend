@@ -1,7 +1,9 @@
+import logging
 import smtplib
-import ssl
-from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
+from src.config import config
 from src.modelos.bd import EventoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import EmailNaoFoiEnviadoExcecao
@@ -9,47 +11,42 @@ from src.modelos.inscrito.inscritoClad import TipoVaga
 
 
 # Função para enviar email customizado
-def enviarEmailGenerico(
-    emailPet: str, senhaPet: str, emailDestino: str, titulo: str, texto: str
-) -> None:
-    mensagem: EmailMessage = EmailMessage()
-    mensagem["From"] = emailPet
+def enviarEmailGenerico(emailDestino: str, titulo: str, texto: str) -> None:
+    mensagem: MIMEMultipart = MIMEMultipart()
+    mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
     mensagem["Subject"] = titulo
-    mensagem.set_content(texto)
+    mensagem.attach(MIMEText(texto, "plain", "utf-8"))
 
-    return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
+    return enviarEmail(emailDestino, mensagem)
 
 
 # Função para enviar verificação de email
-def enviarEmailVerificacao(
-    emailPet: str, senhaPet: str, emailDestino: str, link: str
-) -> None:
-    mensagem: EmailMessage = EmailMessage()
-    mensagem["From"] = emailPet
+def enviarEmailVerificacao(emailDestino: str, link: str) -> None:
+    mensagem: MIMEMultipart = MIMEMultipart()
+    mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
     mensagem["Subject"] = "Pet-Info - Verficação de Conta"
-    mensagem.set_content("Clique no link para verificar sua conta: " + link)
+    content = "Clique no link para verificar sua conta: " + link
+    mensagem.attach(MIMEText(content, "plain", "utf-8"))
 
-    return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
+    return enviarEmail(emailDestino, mensagem)
 
 
 # Função para enviar link troca de senha
-def enviarEmailResetSenha(
-    emailPet: str, senhaPet: str, emailDestino: str, link: str
-) -> None:
-    mensagem: EmailMessage = EmailMessage()
-    mensagem["From"] = emailPet
+def enviarEmailResetSenha(emailDestino: str, link: str) -> None:
+    mensagem: MIMEMultipart = MIMEMultipart()
+    mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
     mensagem["Subject"] = "PET-Info - Reset de senha"
-    mensagem.set_content("Para resetar sua senha, acesse o link: " + link)
-    return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
+    mensagem.attach(
+        MIMEText("Para resetar sua senha, acesse o link: " + link, "plain", "utf-8")
+    )
+    return enviarEmail(emailDestino, mensagem)
 
 
 # Função que envia email para avisar sobre inscrição do evento
 def enviarEmailConfirmacaoEvento(
-    emailPet: str,
-    senhaPet: str,
     emailDestino: str,
     idEvento: str,
     tipoVaga: TipoVaga,
@@ -57,8 +54,8 @@ def enviarEmailConfirmacaoEvento(
     # Recupera o evento
     evento: Evento = EventoBD.buscar("_id", idEvento)
 
-    mensagem: EmailMessage = EmailMessage()
-    mensagem["From"] = emailPet
+    mensagem: MIMEMultipart = MIMEMultipart()
+    mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
     mensagem["Subject"] = "PET-Info: Você foi cadastrado no evento " + evento.titulo
 
@@ -76,30 +73,32 @@ def enviarEmailConfirmacaoEvento(
     else:
         vaga = "Sem notebook."
 
-    mensagem.set_content(
-        "Nome do evento: "
-        + evento.titulo
-        + "\nLocal do Evento: "
-        + evento.local
-        + "\nDias do evento: "
-        + diasEvento
-        + "\nNesse evento você optou por: "
-        + vaga
+    mensagem.attach(
+        MIMEText(
+            "Nome do evento: "
+            + evento.titulo
+            + "\nLocal do Evento: "
+            + evento.local
+            + "\nDias do evento: "
+            + diasEvento
+            + "\nNesse evento você optou por: "
+            + vaga,
+            "plain",
+            "utf-8",
+        )
     )
 
-    return enviarEmail(emailPet, senhaPet, emailDestino, mensagem)
+    return enviarEmail(emailDestino, mensagem)
 
 
 # Função que faz o envio de emails
-def enviarEmail(
-    emailPet: str, senhaPet: str, emailDestino: str, mensagem: EmailMessage
-) -> None:
+def enviarEmail(emailDestino: str, mensagem: MIMEMultipart) -> None:
     try:
-        contexto: ssl.SSLContext = ssl.create_default_context()
-
-        with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=contexto) as smtp:
-            smtp.login(emailPet, senhaPet)
-            smtp.sendmail(emailPet, emailDestino, mensagem.as_string())
+        with smtplib.SMTP("smtp.gmail.com", 587) as server:
+            server.starttls()
+            server.login(config.EMAIL_SMTP, config.SENHA_SMTP)
+            text = mensagem.as_string()
+            server.sendmail(config.EMAIL_SMTP, emailDestino, text)
     except Exception as e:
-        raise EmailNaoFoiEnviadoExcecao()
-    # print(f"enviou um email, msg: \n{mensagem}")
+        logging.warning("Erro ao enviar um email: " + str(e))
+        raise (EmailNaoFoiEnviadoExcecao)
