@@ -94,7 +94,7 @@ class UsuarioControlador:
         # manda email de ativação
         # não é necessário fazer urlencode pois jwt é url-safe
         linkConfirmacao: str = (
-            config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token
+            config.CAMINHO_BASE + "/usuario/confirma-email?token=" + token
         )
 
         enviarEmailVerificacao(dadosUsuario.email, linkConfirmacao)
