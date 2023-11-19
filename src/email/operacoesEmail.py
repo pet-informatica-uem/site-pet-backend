@@ -93,6 +93,17 @@ def enviarEmailConfirmacaoEvento(
 
 # Função que faz o envio de emails
 def enviarEmail(emailDestino: str, mensagem: MIMEMultipart) -> None:
+    if config.MOCK_EMAIL:
+        logging.info("Envio de email para " + str(emailDestino) + "\n\n")
+
+        # print MIME text with logging.info
+        imprimir = {"text/plain", "text/html"}
+        for part in mensagem.walk():
+            if part.get_content_type() in imprimir:
+                logging.info("Email:\n\n" + str(part.get_payload(decode=True)))
+
+        return
+
     try:
         with smtplib.SMTP("smtp.gmail.com", 587) as server:
             server.starttls()
