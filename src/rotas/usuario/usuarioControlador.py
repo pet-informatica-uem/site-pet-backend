@@ -20,6 +20,7 @@ from src.modelos.excecao import (
     EmailNaoConfirmadoExcecao,
     EmailSenhaIncorretoExcecao,
     ImagemInvalidaExcecao,
+    ImagemNaoSalvaExcecao,
     NaoAutenticadoExcecao,
     NaoEncontradoExcecao,
     UsuarioNaoEncontradoExcecao,
@@ -280,8 +281,12 @@ class UsuarioControlador:
             raise ImagemInvalidaExcecao()
 
         deletaImagem(usuario.id, ["usuarios"])
-        caminhoFotoPerfil: str = armazenaFotoUsuario(usuario.id, foto.file)  # type: ignore
-        usuario.foto = caminhoFotoPerfil  # type: ignore
+
+        caminhoFotoPerfil = armazenaFotoUsuario(usuario.id, foto.file)
+        if not caminhoFotoPerfil:
+            raise ImagemNaoSalvaExcecao()
+
+        usuario.foto = caminhoFotoPerfil.name
 
         # atualiza no bd
         UsuarioBD.atualizar(usuario)

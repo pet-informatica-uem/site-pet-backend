@@ -36,6 +36,11 @@ class ImagemInvalidaExcecao(APIExcecaoBase):
     code = status.HTTP_400_BAD_REQUEST
 
 
+class ImagemNaoSalvaExcecao(APIExcecaoBase):
+    message = "Erro no processamento da imagem."
+    code = status.HTTP_500_INTERNAL_SERVER_ERROR
+
+
 class NaoAutenticadoExcecao(APIExcecaoBase):
     message = "Usuário não autenticado."
     code = status.HTTP_401_UNAUTHORIZED

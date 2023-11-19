@@ -123,6 +123,7 @@ def confirmaEmail(token: str):
     """,
     status_code=status.HTTP_200_OK,
     response_model=Usuario,
+    response_model_exclude={"senha"},
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
@@ -261,6 +262,7 @@ def editarFoto(
     "Usuários não petianos só podem ver seus próprios dados.",
     status_code=status.HTTP_200_OK,
     response_model=Usuario,
+    response_model_exclude={"senha"},
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str):
@@ -295,10 +297,11 @@ def patchUsuario(
 
 @roteador.delete(
     "/{id}",
-    name="Remove o usuário indicado"
-    "Usuários não petianos só podem excluir seus próprios perfis.",
+    name="Remove o usuário indicado",
     description="""
     Elimina o usuário.
+
+    Usuários não petianos só podem excluir seus próprios perfis.
     """,
 )
 def deletaUsuario(
