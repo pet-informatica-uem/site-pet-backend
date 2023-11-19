@@ -100,6 +100,22 @@ def listarPetianos():
 
 
 @roteador.get(
+    "/confirma-email",
+    name="Confirmação de email",
+    description="Confirma o email de uma conta através do token suprido.",
+    status_code=status.HTTP_200_OK,
+    responses=listaRespostasExcecoes(
+        NaoAutenticadoExcecao,
+        UsuarioNaoEncontradoExcecao,
+        APIExcecaoBase,
+        JaExisteExcecao,
+    ),
+)
+def confirmaEmail(token: str):
+    UsuarioControlador.ativarConta(token)
+
+
+@roteador.get(
     "/eu",
     name="Obter detalhes do usuário autenticado",
     description="""
@@ -113,43 +129,64 @@ def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     return usuario
 
 
-@roteador.get(
-    "/{id}",
-    name="Obter detalhes do usuário com id fornecido",
-    description="Retorna detalhes do usuário com id fornecido.\n\n"
-    "Usuários não petianos só podem ver seus próprios dados.",
-    status_code=status.HTTP_200_OK,
-    response_model=Usuario,
+@roteador.post(
+    "/esqueci-senha",
+    name="Recuperar conta",
+    description="""Envia um email para a conta fornecida para trocar a senha.
+    Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
+    """,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
-def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str):
-    if usuario.id == id:
-        return usuario
-    elif usuario.tipoConta == TipoConta.PETIANO:
-        vitima: Usuario = UsuarioControlador.getUsuario(id)
-        return vitima
-    else:
-        raise NaoAutorizadoExcecao()
+def recuperaConta(email: Annotated[EmailStr, Form()]):
+    # Verifica se o email é válido
+    if not ValidacaoCadastro.email(email):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email inválido.",
+        )
+
+    # Passa o email para o controlador
+    UsuarioControlador.recuperarConta(email)
 
 
-@roteador.patch(
-    "/{id}",
-    name="Editar dados do usuário selecionado",
-    description="Edita os dados do usuário (exceto senha e email).\n\n"
-    "Usuários não petianos só podem editar seus próprios dados.",
+@roteador.post(
+    "/altera-senha",
+    name="Trocar senha",
+    description="""
+        Altera a senha do usuário. Falha, se a senha ou o link forem inválidos.
+    """,
     status_code=status.HTTP_200_OK,
-    response_model=UsuarioLer,
-    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
+    responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
-def patchUsuario(
-    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
-    dados: UsuarioAtualizar,
-    id: str,
-):
-    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
-        return UsuarioControlador.editarUsuario(id, dados)
-    else:
-        raise NaoAutorizadoExcecao()
+def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
+    # Validacao basica da senha
+    if not ValidacaoCadastro.senha(senha.get_secret_value()):
+        raise HTTPException(status_code=400, detail="Senha inválida.")
+
+    # Despacha o token para o controlador
+    UsuarioControlador.trocarSenha(token, senha.get_secret_value())
+
+
+@roteador.post(
+    "/login",
+    name="Autenticar",
+    description="""
+    Autentica o usuário através do email e senha fornecidos.
+    """,
+    status_code=status.HTTP_200_OK,
+    response_model=Token,
+    responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
+)
+def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
+    # obtém dados
+    email: str = dados.username
+    senha: str = dados.password
+
+    # normaliza email
+    email: str = email.lower().strip()
+
+    # chama controlador
+    return UsuarioControlador.autenticarUsuario(email, senha)
 
 
 @roteador.put(
@@ -217,6 +254,45 @@ def editarFoto(
         UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
 
 
+@roteador.get(
+    "/{id}",
+    name="Obter detalhes do usuário com id fornecido",
+    description="Retorna detalhes do usuário com id fornecido.\n\n"
+    "Usuários não petianos só podem ver seus próprios dados.",
+    status_code=status.HTTP_200_OK,
+    response_model=Usuario,
+    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
+)
+def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str):
+    if usuario.id == id:
+        return usuario
+    elif usuario.tipoConta == TipoConta.PETIANO:
+        vitima: Usuario = UsuarioControlador.getUsuario(id)
+        return vitima
+    else:
+        raise NaoAutorizadoExcecao()
+
+
+@roteador.patch(
+    "/{id}",
+    name="Editar dados do usuário selecionado",
+    description="Edita os dados do usuário (exceto senha e email).\n\n"
+    "Usuários não petianos só podem editar seus próprios dados.",
+    status_code=status.HTTP_200_OK,
+    response_model=UsuarioLer,
+    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
+)
+def patchUsuario(
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+    dados: UsuarioAtualizar,
+    id: str,
+):
+    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
+        return UsuarioControlador.editarUsuario(id, dados)
+    else:
+        raise NaoAutorizadoExcecao()
+
+
 @roteador.delete(
     "/{id}",
     name="Remove o usuário indicado"
@@ -233,79 +309,3 @@ def deletaUsuario(
         UsuarioControlador.deletarUsuario(id)
     else:
         raise NaoAutorizadoExcecao()
-
-
-@roteador.get(
-    "/confirma-email",
-    name="Confirmação de email",
-    description="Confirma o email de uma conta através do token suprido.",
-    status_code=status.HTTP_200_OK,
-    responses=listaRespostasExcecoes(
-        NaoAutenticadoExcecao,
-        UsuarioNaoEncontradoExcecao,
-        APIExcecaoBase,
-        JaExisteExcecao,
-    ),
-)
-def confirmaEmail(token: str):
-    UsuarioControlador.ativarConta(token)
-
-
-@roteador.post(
-    "/esqueci-senha",
-    name="Recuperar conta",
-    description="""Envia um email para a conta fornecida para trocar a senha.
-    Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
-    """,
-    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
-)
-def recuperaConta(email: Annotated[EmailStr, Form()]):
-    # Verifica se o email é válido
-    if not ValidacaoCadastro.email(email):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email inválido.",
-        )
-
-    # Passa o email para o controlador
-    UsuarioControlador.recuperarConta(email)
-
-
-@roteador.post(
-    "/altera-senha",
-    name="Trocar senha",
-    description="""
-        Altera a senha do usuário. Falha, se a senha ou o link forem inválidos.
-    """,
-    status_code=status.HTTP_200_OK,
-    responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
-)
-def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
-    # Validacao basica da senha
-    if not ValidacaoCadastro.senha(senha.get_secret_value()):
-        raise HTTPException(status_code=400, detail="Senha inválida.")
-
-    # Despacha o token para o controlador
-    UsuarioControlador.trocarSenha(token, senha.get_secret_value())
-
-
-@roteador.post(
-    "/login",
-    name="Autenticar",
-    description="""
-    Autentica o usuário através do email e senha fornecidos.
-    """,
-    status_code=status.HTTP_200_OK,
-    response_model=Token,
-    responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
-)
-def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
-    # obtém dados
-    email: str = dados.username
-    senha: str = dados.password
-
-    # normaliza email
-    email: str = email.lower().strip()
-
-    # chama controlador
-    return UsuarioControlador.autenticarUsuario(email, senha)
