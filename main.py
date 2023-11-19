@@ -22,7 +22,16 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
-origins = ["*"]
+origins = [
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "http://localhost",
+    "https://localhost",
+    "http://localhost:8000",
+    "https://localhost:8000",
+    "http://www.din.uem.br",
+    "https://www.din.uem.br",
+]
 
 petBack = FastAPI()
 
