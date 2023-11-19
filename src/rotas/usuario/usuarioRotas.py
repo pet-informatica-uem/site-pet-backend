@@ -235,7 +235,7 @@ def deletaUsuario(
         raise NaoAutorizadoExcecao()
 
 
-@roteador.post(
+@roteador.get(
     "/confirma-email",
     name="Confirmação de email",
     description="Confirma o email de uma conta através do token suprido.",
