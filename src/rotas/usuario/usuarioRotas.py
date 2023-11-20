@@ -1,10 +1,11 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
 
+from src.limiter import limiter
 from src.modelos.bd import TokenAutenticacaoBD
 from src.modelos.excecao import (
     APIExcecaoBase,
@@ -57,6 +58,7 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
     raise HTTPException(status_code=401, detail="Acesso negado.")
 
 
+@limiter.limit("3/minute")
 @roteador.post(
     "/",
     name="Cadastrar usuário",
@@ -69,7 +71,7 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
     status_code=status.HTTP_201_CREATED,
     responses=listaRespostasExcecoes(JaExisteExcecao, APIExcecaoBase),
 )
-def cadastrarUsuario(usuario: UsuarioCriar) -> str:
+def cadastrarUsuario(request: Request, usuario: UsuarioCriar) -> str:
     # despacha para controlador
     usuarioCadastrado = UsuarioControlador.cadastrarUsuario(usuario)
 
@@ -130,6 +132,7 @@ def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     return usuario
 
 
+@limiter.limit("3/minute")
 @roteador.post(
     "/esqueci-senha",
     name="Recuperar conta",
@@ -138,7 +141,7 @@ def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     """,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
-def recuperaConta(email: Annotated[EmailStr, Form()]):
+def recuperaConta(request: Request, email: Annotated[EmailStr, Form()]):
     # Verifica se o email é válido
     if not ValidacaoCadastro.email(email):
         raise HTTPException(
@@ -168,6 +171,7 @@ def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
     UsuarioControlador.trocarSenha(token, senha.get_secret_value())
 
 
+@limiter.limit("3/minute")
 @roteador.post(
     "/login",
     name="Autenticar",
@@ -178,7 +182,9 @@ def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
     response_model=Token,
     responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
-def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
+def autenticar(
+    request: Request, dados: Annotated[OAuth2PasswordRequestForm, Depends()]
+):
     # obtém dados
     email: str = dados.username
     senha: str = dados.password
@@ -188,6 +194,19 @@ def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
     # chama controlador
     return UsuarioControlador.autenticarUsuario(email, senha)
+
+
+@roteador.delete(
+    "/login",
+    name="Desautenticar",
+    description="""
+    Desautentica o token fornecido.
+    """,
+    status_code=status.HTTP_200_OK,
+    responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
+)
+def desautenticar(token: Annotated[str, Depends(tokenAcesso)]):
+    TokenAutenticacaoBD.deletar(token)
 
 
 @roteador.put(
