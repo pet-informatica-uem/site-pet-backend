@@ -21,7 +21,6 @@ from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizarSenha,
     UsuarioCriar,
     UsuarioLer,
-    UsuarioLerAdmin,
 )
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
@@ -86,18 +85,16 @@ def cadastrarUsuario(usuario: UsuarioCriar) -> str:
     return usuarioCadastrado
 
 
-# TODO resolver o response model para petiano ou usuario
 @roteador.get(
     "/",
     name="Recuperar usuários cadastrados",
-    description="Lista todos os usuários cadastrados.",
-    response_model=list[UsuarioLerAdmin],
+    description="Rota apenas para petianos.\n\n" "Lista todos os usuários cadastrados.",
+    response_model=list[Usuario],
 )
 def listarUsuarios(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
-    petiano: bool = False,
 ):
-    return UsuarioControlador.getUsuarios(petiano)
+    return UsuarioControlador.getUsuarios()
 
 
 @roteador.get(
@@ -111,6 +108,7 @@ def listarPetianos():
 
 
 @roteador.get(
+<<<<<<< HEAD
     "/eu",
     name="Obter detalhes do usuário autenticado",
     description="""
@@ -248,6 +246,9 @@ def deletaUsuario(
 
 @roteador.post(
     "/confirmar-email",
+=======
+    "/confirma-email",
+>>>>>>> main
     name="Confirmação de email",
     description="Confirma o email de uma conta através do token suprido.",
     status_code=status.HTTP_200_OK,
@@ -263,12 +264,25 @@ def confirmarEmail(token: str) -> str|None:
     return id
 
 
+@roteador.get(
+    "/eu",
+    name="Obter detalhes do usuário autenticado",
+    description="""
+    Retorna detalhes do usuário autenticado.
+    """,
+    status_code=status.HTTP_200_OK,
+    response_model=Usuario,
+    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
+)
+def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
+    return usuario
+
+
 @roteador.post(
     "/esqueci-senha",
     name="Recuperar conta",
-    description="""
-        Envia um email para a conta fornecida para trocar a senha.
-        Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
+    description="""Envia um email para a conta fornecida para trocar a senha.
+    Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
     """,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
@@ -322,3 +336,125 @@ def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
 
     # chama controlador
     return UsuarioControlador.autenticarUsuario(email, senha)
+
+
+@roteador.put(
+    "/{id}/email",
+    name="Editar email do usuário autenticado",
+    description="""O usuário é capaz de editar seu email""",
+)
+def editarEmail(
+    id: str,
+    dadosEmail: UsuarioAtualizarEmail,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
+):
+    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
+        if not ValidacaoCadastro.email(dadosEmail.novoEmail):
+            logging.info("Erro. Novo email não foi validado com sucesso.")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
+            )
+        # normaliza dados
+        novoEmail = dadosEmail.novoEmail.lower().strip()
+        dadosEmail.novoEmail = novoEmail
+
+        UsuarioControlador.editarEmail(dadosEmail, id)
+
+        TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
+    else:
+        raise NaoAutenticadoExcecao()
+
+
+@roteador.put(
+    "/{id}/senha",
+    name="Editar senha do usuário autenticado",
+    description="""O usuário é capaz de editar sua senha. Caso a opção deslogarAoTrocarSenha 
+    seja selecionada, todos as sessões serão deslogadas ao trocar a senha.""",
+)
+def editarSenha(
+    id: str,
+    dadosSenha: UsuarioAtualizarSenha,
+    deslogarAoTrocarSenha: bool,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
+):
+    if usuario.id == id:
+        # efetua troca de senha
+        UsuarioControlador.editaSenha(
+            dadosSenha,
+            usuario,
+        )
+
+        # efetua logout de todas as sessões, caso o usuário desejar
+        if deslogarAoTrocarSenha:
+            TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
+
+
+@roteador.put(
+    "/{id}/foto",
+    name="Atualizar foto de perfil",
+    description="O usuário petiano é capaz de editar sua foto de perfil",
+)
+def editarFoto(
+    id: str,
+    foto: UploadFile,
+    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
+) -> None:
+    if usuario.id == id:
+        UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
+
+
+@roteador.get(
+    "/{id}",
+    name="Obter detalhes do usuário com id fornecido",
+    description="Retorna detalhes do usuário com id fornecido.\n\n"
+    "Usuários não petianos só podem ver seus próprios dados.",
+    status_code=status.HTTP_200_OK,
+    response_model=Usuario,
+    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
+)
+def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str):
+    if usuario.id == id:
+        return usuario
+    elif usuario.tipoConta == TipoConta.PETIANO:
+        vitima: Usuario = UsuarioControlador.getUsuario(id)
+        return vitima
+    else:
+        raise NaoAutorizadoExcecao()
+
+
+@roteador.patch(
+    "/{id}",
+    name="Editar dados do usuário selecionado",
+    description="Edita os dados do usuário (exceto senha e email).\n\n"
+    "Usuários não petianos só podem editar seus próprios dados.",
+    status_code=status.HTTP_200_OK,
+    response_model=UsuarioLer,
+    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
+)
+def patchUsuario(
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+    dados: UsuarioAtualizar,
+    id: str,
+):
+    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
+        return UsuarioControlador.editarUsuario(id, dados)
+    else:
+        raise NaoAutorizadoExcecao()
+
+
+@roteador.delete(
+    "/{id}",
+    name="Remove o usuário indicado"
+    "Usuários não petianos só podem excluir seus próprios perfis.",
+    description="""
+    Elimina o usuário.
+    """,
+)
+def deletaUsuario(
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+    id: str,
+):
+    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
+        UsuarioControlador.deletarUsuario(id)
+    else:
+        raise NaoAutorizadoExcecao()

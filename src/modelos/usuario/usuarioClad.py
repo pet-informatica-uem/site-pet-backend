@@ -1,5 +1,3 @@
-from pathlib import Path
-
 from pydantic import BaseModel, EmailStr, SecretStr, field_validator
 
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
@@ -36,18 +34,10 @@ class UsuarioLer(BaseModel):
     email: EmailStr
     curso: str
 
-    foto: Path | None = None
+    foto: str | None = None
     github: str | None = None
     linkedin: str | None = None
     instagram: str | None = None
-
-
-class UsuarioLerAdmin(UsuarioLer):
-    id: str
-    cpf: str
-
-    tipoConta: str
-    eventosInscrito: list[str] = []
 
 
 class UsuarioAtualizar(BaseModel):

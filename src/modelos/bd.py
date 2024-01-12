@@ -74,7 +74,9 @@ class EventoBD(ConexaoBD):
             )
         except DuplicateKeyError:
             logging.error("Evento já existe no banco de dados")
-            raise JaExisteExcecao(message="Já existe um evento com esse título no banco de dados")
+            raise JaExisteExcecao(
+                message="Já existe um evento com esse título no banco de dados"
+            )
 
     def deletar(self, id: str):
         self.colecaoEventos.delete_one({"_id": id})
@@ -97,14 +99,14 @@ class InscritoBD(ConexaoBD):
     # @staticmethod
     # def criar(inscrito: Inscrito, evento: Evento, usuario: Usuario) -> None:
     #     """Cria um inscrito no banco de dados.
-        
+
     #     - inscrito -- inscrito a ser cadastrado
     #     - evento -- evento a ser atualizado
     #     - usuario -- usuário a ser atualizado
 
     #     Return: None
     #     """
-        
+
     #     session = cliente.start_session()
 
     #     # Realiza as operações no BD usando uma transação
@@ -132,7 +134,6 @@ class InscritoBD(ConexaoBD):
         ):
             return Inscrito(**inscrito)  # type: ignore
         else:
-            print(inscrito)
             raise NaoEncontradoExcecao(message="O inscrito não foi encontrado.")
 
     def atualizar(self, modelo: Inscrito):

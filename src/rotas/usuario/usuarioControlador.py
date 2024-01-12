@@ -12,13 +12,14 @@ from src.autenticacao.jwtoken import (
     processaTokenTrocaSenha,
 )
 from src.config import config
-from src.email.operacoesEmail import resetarSenha, verificarEmail
+from src.email.operacoesEmail import enviarEmailResetSenha, enviarEmailVerificacao
 from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
-from src.modelos.bd import TokenAutenticacaoBD, UsuarioBD
+from src.modelos.bd import TokenAutenticacaoBD, UsuarioBD, cliente
 from src.modelos.excecao import (
     APIExcecaoBase,
+    EmailNaoConfirmadoExcecao,
+    EmailSenhaIncorretoExcecao,
     ImagemInvalidaExcecao,
-    JaExisteExcecao,
     NaoAutenticadoExcecao,
     NaoEncontradoExcecao,
     UsuarioNaoEncontradoExcecao,
@@ -29,7 +30,6 @@ from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizarEmail,
     UsuarioAtualizarSenha,
     UsuarioCriar,
-    UsuarioLer,
 )
 
 
@@ -87,9 +87,12 @@ class UsuarioControlador():
         }
 
         d.update(dadosUsuario.model_dump(by_alias=True))
-        # cria usuario
+        # cria modelo do usuario
         usuario: Usuario = Usuario(**d)
+<<<<<<< HEAD
         UsuarioBD().criar(usuario)
+=======
+>>>>>>> main
 
         # gera token de ativação válido por 24h
         token: str = gerarTokenAtivaConta(
@@ -99,12 +102,13 @@ class UsuarioControlador():
         # manda email de ativação
         # não é necessário fazer urlencode pois jwt é url-safe
         linkConfirmacao: str = (
-            config.CAMINHO_BASE + "/usuario/confirmacaoEmail?token=" + token
+            config.CAMINHO_BASE + "/usuario/confirma-email?token=" + token
         )
 
-        verificarEmail(
-            config.EMAIL_SMTP, config.SENHA_SMTP, dadosUsuario.email, linkConfirmacao
-        )
+        enviarEmailVerificacao(dadosUsuario.email, linkConfirmacao)
+
+        # cria o usuário no bd
+        UsuarioBD.criar(usuario)
 
         return usuario.id
 
@@ -114,7 +118,7 @@ class UsuarioControlador():
         UsuarioBD.buscar("email", email)
         # Gera o link e envia o email se o usuário estiver cadastrado
         link: str = geraLinkEsqueciSenha(email)
-        resetarSenha(config.EMAIL_SMTP, config.SENHA_SMTP, email, link)  # Envia o email
+        enviarEmailResetSenha(email, link)  # Envia o email
 
     @staticmethod
     def trocarSenha(token: str, senha: str) -> None:
@@ -135,6 +139,7 @@ class UsuarioControlador():
         Autentica e gera um token de autenticação para o usuário com email e senha
         indicados.
         """
+<<<<<<< HEAD
         
         usuario: Usuario = UsuarioBD().buscar("email", email)
 
@@ -145,6 +150,21 @@ class UsuarioControlador():
         # verifica senha
         if not conferirHashSenha(senha, usuario.senha):
             raise NaoAutenticadoExcecao()
+=======
+
+        # verifica senha e usuario
+        try:
+            usuario: Usuario = UsuarioBD.buscar("email", email)
+        except NaoEncontradoExcecao:
+            raise EmailSenhaIncorretoExcecao()
+
+        # está ativo?
+        if usuario.emailConfirmado != True:
+            raise EmailNaoConfirmadoExcecao()
+
+        if not conferirHashSenha(senha, usuario.senha):
+            raise EmailSenhaIncorretoExcecao()
+>>>>>>> main
 
         # cria token
         tk: str = secrets.token_urlsafe()
@@ -186,8 +206,13 @@ class UsuarioControlador():
         raise UsuarioNaoEncontradoExcecao()
 
     @staticmethod
+<<<<<<< HEAD
     def getUsuarios(petiano: bool) -> list[Usuario]:
         return UsuarioBD().listar(petiano)
+=======
+    def getUsuarios(petiano: bool = False) -> list[Usuario]:
+        return UsuarioBD.listar(petiano)
+>>>>>>> main
 
     @staticmethod
     def editarUsuario(
@@ -262,11 +287,17 @@ class UsuarioControlador():
             usuario.email = dadosEmail.novoEmail
             usuario.emailConfirmado = False
 
+<<<<<<< HEAD
             UsuarioBD().atualizar(usuario)
             mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={gerarTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
             verificarEmail(
                 config.EMAIL_SMTP, config.SENHA_SMTP, usuario.email, mensagemEmail
             )
+=======
+            UsuarioBD.atualizar(usuario)
+            mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            enviarEmailVerificacao(usuario.email, mensagemEmail)
+>>>>>>> main
         else:
             raise APIExcecaoBase(message="Senha incorreta")
 

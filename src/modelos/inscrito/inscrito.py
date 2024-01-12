@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from pathlib import Path
 
 from pydantic import BaseModel
 
@@ -27,7 +26,7 @@ class Inscrito(BaseModel):
     nivelConhecimento: int
     "Nível de conhecimento do usuário (1 a 5)."
 
-    comprovante: Path | None = None
+    comprovante: str | None = None
     "Comprovante de pagamento da inscrição."
 
     dataInscricao: datetime

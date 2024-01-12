@@ -1,14 +1,19 @@
 import logging
 import time
 from datetime import datetime
-from PIL import Image
 
 from fastapi import UploadFile
+from PIL import Image
 
-from src.img.operacoesImagem import deletaImagem, validaComprovante, armazenaComprovante
 from src.config import config
+<<<<<<< HEAD
 from src.email.operacoesEmail import emailConfirmacaoEvento
 from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD
+=======
+from src.email.operacoesEmail import enviarEmailConfirmacaoEvento
+from src.img.operacoesImagem import armazenaComprovante, deletaImagem, validaComprovante
+from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, cliente
+>>>>>>> main
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import APIExcecaoBase
 from src.modelos.inscrito.inscrito import Inscrito
@@ -28,7 +33,7 @@ class InscritosControlador(InscritoBD, UsuarioBD):
         idEvento: str,
         idUsuario: str,
         dadosInscrito: InscritoCriar,
-        comprovante: UploadFile,
+        comprovante: UploadFile | None,
     ):
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
@@ -58,7 +63,9 @@ class InscritosControlador(InscritoBD, UsuarioBD):
                     evento.id, idUsuario, comprovante.file
                 )
             else:
-                raise APIExcecaoBase(message="Falha ao registrar comprovante")
+                raise APIExcecaoBase(
+                    message="Comprovante obrigatório para eventos pagos."
+                )
         else:
             caminhoComprovante: str | None = None
 
@@ -80,15 +87,6 @@ class InscritosControlador(InscritoBD, UsuarioBD):
         # Recupera o usuário
         usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
 
-        # # Envia email de confirmação de inscrição
-        # emailConfirmacaoEvento(
-        #     config.EMAIL_SMTP,
-        #     config.SENHA_SMTP,
-        #     usuario.email,
-        #     evento.id,
-        #     inscrito.tipoVaga,
-        # )
-
         # Adiciona o evento na lista de eventos inscritos do usuário
         usuario.eventosInscrito.append(idEvento)
 
@@ -107,11 +105,20 @@ class InscritosControlador(InscritoBD, UsuarioBD):
 
         # Aborta a transação caso ocorra algum erro
         except Exception as e:
-            logging.error(f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}")
+            logging.error(
+                f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}"
+            )
 
             session.abort_transaction()
             session.end_session()
             raise APIExcecaoBase(message="Erro ao criar inscrito")
+
+        # Envia email de confirmação de inscrição
+        enviarEmailConfirmacaoEvento(
+            usuario.email,
+            evento.id,
+            inscrito.tipoVaga,
+        )
 
     @staticmethod
     def getInscritos(idEvento: str):
@@ -170,17 +177,31 @@ class InscritosControlador(InscritoBD, UsuarioBD):
         else:
             evento.vagasDisponiveisSemNote += 1
 
-        # Atualiza o evento no bd
-        EventoBD.atualizar(evento)
-
-        # Remove o inscrito do bd
-        InscritoBD.deletar(inscrito.idEvento, inscrito.idUsuario)
-
         # Recupera o usuário
         usuario: Usuario = UsuarioBD.buscar("_id", inscrito.idUsuario)
 
         # Remove o evento na lista de eventos inscritos do usuário
         usuario.eventosInscrito.remove(inscrito.idEvento)
 
-        # Atualiza o usuário no bd
-        UsuarioBD.atualizar(usuario)
+        # Realiza as operações no BD usando uma transação
+        session = cliente.start_session()
+        try:
+            session.start_transaction()
+
+            EventoBD.atualizar(evento)
+            InscritoBD.deletar(inscrito.idEvento, inscrito.idUsuario)
+            UsuarioBD.atualizar(usuario)
+
+            # Commita a transação se der tudo certo
+            session.commit_transaction()
+            session.end_session()
+
+        # Aborta a transação caso ocorra algum erro
+        except Exception as e:
+            logging.error(
+                f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}"
+            )
+
+            session.abort_transaction()
+            session.end_session()
+            raise APIExcecaoBase(message="Erro ao criar inscrito")

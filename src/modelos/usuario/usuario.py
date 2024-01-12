@@ -1,6 +1,5 @@
 from datetime import date, datetime
 from enum import Enum
-from pathlib import Path
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -75,7 +74,7 @@ class Usuario(BaseModel):
     twitter: str | None = None
     "Link para o Twitter pessoal."
 
-    foto: Path | None = None
+    foto: str | None = None
     "Caminho para foto de perfil do petiano."
 
 
@@ -92,5 +91,5 @@ class Petiano(BaseModel):
     instagram: str | None = None
     "Link para o Instagram pessoal."
 
-    foto: Path | None = None
+    foto: str | None = None
     "Caminho para foto de perfil do petiano."

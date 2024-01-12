@@ -42,6 +42,16 @@ class NaoAutenticadoExcecao(APIExcecaoBase):
     model = NaoAutenticadoErro
 
 
+class EmailSenhaIncorretoExcecao(APIExcecaoBase):
+    message = "Email e/ou senha incorreto(s)."
+    code = status.HTTP_401_UNAUTHORIZED
+
+
+class EmailNaoConfirmadoExcecao(APIExcecaoBase):
+    message = "Email não confirmado."
+    code = status.HTTP_401_UNAUTHORIZED
+
+
 class NaoAutorizadoExcecao(APIExcecaoBase):
     message = "Acesso negado."
     code = status.HTTP_403_FORBIDDEN

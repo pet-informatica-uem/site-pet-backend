@@ -77,6 +77,11 @@ class Configuracoes(BaseSettings):
     Horário de início das rotinas.
     """
 
+    MOCK_EMAIL: bool = False
+    """
+    Caso verdadeiro, não envia emails mas imprime o conteúdo deles na saída padrão.
+    """
+
     class Config:
         env_prefix = "PET_API_"
 
