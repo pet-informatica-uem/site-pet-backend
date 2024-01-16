@@ -11,6 +11,7 @@ def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
     """Gera e retorna um token JWT que pode ser usado para confirmar um email."""
     afirmacoes = {"sub": idUsuario, "email": email, "exp": datetime.now() + duracao}
 
+
     token = jwt.encode(afirmacoes, config.SEGREDO_JWT, algorithm="HS256")
     return token
 
