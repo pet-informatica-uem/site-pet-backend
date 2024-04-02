@@ -24,7 +24,7 @@ logging.basicConfig(
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 origins = ["*"]
 
-petBack = FastAPI()
+petBack = FastAPI(root_path=config.ROOT_PATH)
 
 petBack.middleware("http")(middlewareExcecao)
 petBack.include_router(roteadorUsuario)
