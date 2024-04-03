@@ -22,6 +22,7 @@ from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizarSenha,
     UsuarioCriar,
     UsuarioLer,
+    UsuarioLerAdmin,
 )
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
@@ -58,7 +59,7 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
     raise HTTPException(status_code=401, detail="Acesso negado.")
 
 
-@limiter.limit("3/minute")
+
 @roteador.post(
     "/",
     name="Cadastrar usuário",
@@ -71,6 +72,7 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
     status_code=status.HTTP_201_CREATED,
     responses=listaRespostasExcecoes(JaExisteExcecao, APIExcecaoBase),
 )
+@limiter.limit("3/minute")
 def cadastrarUsuario(request: Request, usuario: UsuarioCriar) -> str:
     # despacha para controlador
     usuarioCadastrado = UsuarioControlador.cadastrarUsuario(usuario)
@@ -83,12 +85,14 @@ def cadastrarUsuario(request: Request, usuario: UsuarioCriar) -> str:
     "/",
     name="Recuperar usuários cadastrados",
     description="Rota apenas para petianos.\n\n" "Lista todos os usuários cadastrados.",
-    response_model=list[Usuario],
+    response_model=list[UsuarioLerAdmin],
 )
 def listarUsuarios(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
 ):
     return UsuarioControlador.getUsuarios()
+
+
 
 
 @roteador.get(
@@ -124,23 +128,22 @@ def confirmaEmail(token: str):
     Retorna detalhes do usuário autenticado.
     """,
     status_code=status.HTTP_200_OK,
-    response_model=Usuario,
-    response_model_exclude={"senha"},
+    response_model=UsuarioLerAdmin,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     return usuario
 
 
-@limiter.limit("3/minute")
+
 @roteador.post(
     "/esqueci-senha",
     name="Recuperar conta",
     description="""Envia um email para a conta fornecida para trocar a senha.
-    Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
+    Falha, caso o email da conta seja inválido.
     """,
-    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
+@limiter.limit("3/minute")
 def recuperaConta(request: Request, email: Annotated[EmailStr, Form()]):
     # Verifica se o email é válido
     if not ValidacaoCadastro.email(email):
@@ -171,7 +174,6 @@ def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
     UsuarioControlador.trocarSenha(token, senha.get_secret_value())
 
 
-@limiter.limit("3/minute")
 @roteador.post(
     "/login",
     name="Autenticar",
@@ -182,6 +184,7 @@ def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
     response_model=Token,
     responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
+@limiter.limit("3/minute")
 def autenticar(
     request: Request, dados: Annotated[OAuth2PasswordRequestForm, Depends()]
 ):
@@ -280,8 +283,7 @@ def editarFoto(
     description="Retorna detalhes do usuário com id fornecido.\n\n"
     "Usuários não petianos só podem ver seus próprios dados.",
     status_code=status.HTTP_200_OK,
-    response_model=Usuario,
-    response_model_exclude={"senha"},
+    response_model=UsuarioLerAdmin,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str):

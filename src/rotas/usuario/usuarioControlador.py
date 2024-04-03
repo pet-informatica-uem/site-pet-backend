@@ -108,10 +108,14 @@ class UsuarioControlador:
     # Envia um email para trocar de senha se o email estiver cadastrado no bd
     @staticmethod
     def recuperarConta(email: str) -> None:
-        UsuarioBD.buscar("email", email)
-        # Gera o link e envia o email se o usuário estiver cadastrado
-        link: str = geraLinkEsqueciSenha(email)
-        enviarEmailResetSenha(email, link)  # Envia o email
+        try:
+            UsuarioBD.buscar("email", email)
+            # Gera o link e envia o email se o usuário estiver cadastrado
+            link: str = geraLinkEsqueciSenha(email)
+            enviarEmailResetSenha(email, link)  # Envia o email
+        except NaoEncontradoExcecao:
+            pass
+
 
     @staticmethod
     def trocarSenha(token: str, senha: str) -> None:

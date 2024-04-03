@@ -21,36 +21,29 @@
 -------
 ### <a name="Information">Information Gathering</a>
 - [x] Manually explore the site
-- [x] Spider/crawl for missed or hidden content
-- [x] Check for files that expose content, such as robots.txt, sitemap.xml, .DS_Store
-- [x] Check the caches of major search engines for publicly accessible sites
-- [x] Check for differences in content based on User Agent (eg, Mobile sites, access as a Search engine Crawler)
-- [x] Perform Web Application Fingerprinting
+- [ ] Check for files that expose content, such as robots.txt, sitemap.xml, .DS_Store
+- [ ] Check the caches of major search engines for publicly accessible sites
+- [ ] Check for differences in content based on User Agent (eg, Mobile sites, access as a Search engine Crawler)
+- [ ] Perform Web Application Fingerprinting
 - [x] Identify technologies used
 - [x] Identify user roles
 - [x] Identify application entry points
-- [x] Identify client-side code
-- [x] Identify multiple versions/channels (e.g. web, mobile web, mobile app, web services)
-- [x] Identify co-hosted and related applications
-- [ ] Identify all hostnames and ports
-- [ ] Identify third-party hosted content
+- [x] Identify all hostnames and ports
 
 
 ### <a name="Configuration">Configuration Management</a>
 
-- [ ] Check for commonly used application and administrative URLs
-- [ ] Check for old, backup and unreferenced files
-- [ ] Check HTTP methods supported and Cross Site Tracing (XST)
+- [x] Check for commonly used application and administrative URLs
+- [x] Check for old, backup and unreferenced files
+- [x] Check HTTP methods supported and Cross Site Tracing (XST)
 - [x] Test file extensions handling
-- [ ] Test for security HTTP headers (e.g. CSP, X-Frame-Options, HSTS)
-- [ ] Test for policies (e.g. Flash, Silverlight, robots)
-- [ ] Test for non-production data in live environment, and vice-versa
+- [x] Test for security HTTP headers (e.g. CSP, X-Frame-Options, HSTS)
 - [x] Check for sensitive data in client-side code (e.g. API keys, credentials)
 
 
 ### <a name="Transmission">Secure Transmission</a>
 
-- [ ] Check SSL Version, Algorithms, Key length
+- [x] Check SSL Version, Algorithms, Key length
 - [ ] Check for Digital Certificate Validity (Duration, Signature and CN)
 - [ ] Check credentials only delivered over HTTPS
 - [ ] Check that the login form is delivered over HTTPS
@@ -63,45 +56,29 @@
 - [x] Test for user enumeration
 - [x] Test for authentication bypass
 - [x] Test for bruteforce protection
-- [ ] Test password quality rules
-- [x] Test remember me functionality
-- [x] Test for autocomplete on password forms/input
-- [ ] Test password reset and/or recovery
-- [ ] Test password change process
-- [x] Test CAPTCHA
-- [x] Test multi factor authentication
-- [x] Test for logout functionality presence
-- [ ] Test for cache management on HTTP (eg Pragma, Expires, Max-age)
-- [x] Test for default logins
-- [x] Test for user-accessible authentication history
+- [x] Test password quality rules
+- [x] Test password reset and/or recovery
+- [x] Test password change process
+- [ ] Test for logout functionality presence
+- [ ] Test for user-accessible authentication history
 - [ ] Test for out-of channel notification of account lockouts and successful password changes
-- [ ] Test for consistent authentication across applications with shared authentication schema / SSO
 
 
 
 ### <a name="Session">Session Management</a>
-- [ ] Establish how session management is handled in the application (eg, tokens in cookies, token in URL)
-- [ ] Check session tokens for cookie flags (httpOnly and secure)
-- [ ] Check session cookie scope (path and domain)
-- [ ] Check session cookie duration (expires and max-age)
-- [ ] Check session termination after a maximum lifetime
-- [ ] Check session termination after relative timeout
-- [ ] Check session termination after logout
-- [ ] Test to see if users can have multiple simultaneous sessions
-- [ ] Test session cookies for randomness
-- [ ] Confirm that new session tokens are issued on login, role change and logout
-- [ ] Test for consistent session management across applications with shared session management
-- [ ] Test for session puzzling
-- [ ] Test for CSRF and clickjacking
+- [x] Check session termination after a maximum lifetime
+- [x] Check session termination after relative timeout
+- [x] Check session termination after logout
+- [x] Test to see if users can have multiple simultaneous sessions
+- [x] Test session cookies for randomness
+- [x] Confirm that new session tokens are issued on login, role change and logout
 
 
 
 ### <a name="Authorization">Authorization</a>
 - [ ] Test for path traversal
-- [ ] Test for bypassing authorization schema
-- [ ] Test for vertical Access control problems (a.k.a. Privilege Escalation)
-- [ ] Test for horizontal Access control problems (between two users at the same privilege level)
-- [ ] Test for missing authorization
+- [x] Test for horizontal Access control problems (between two users at the same privilege level)
+- [x] Test for missing authorization
 
 
 ### <a name="Validation">Data Validation</a>
@@ -110,39 +87,19 @@
 - [ ] Test for DOM based Cross Site Scripting
 - [ ] Test for Cross Site Flashing
 - [ ] Test for HTML Injection
-- [ ] Test for SQL Injection
-- [ ] Test for SOQL Injection
-- [ ] Test for LDAP Injection
-- [ ] Test for ORM Injection
-- [ ] Test for XML Injection
-- [ ] Test for XXE Injection
-- [ ] Test for SSI Injection
-- [ ] Test for XPath Injection
-- [ ] Test for XQuery Injection
 - [ ] Test for IMAP/SMTP Injection
-- [ ] Test for Code Injection
-- [ ] Test for Expression Language Injection
-- [ ] Test for Command Injection
-- [ ] Test for Overflow (Stack, Heap and Integer)
 - [ ] Test for Format String
-- [ ] Test for incubated vulnerabilities
-- [ ] Test for HTTP Splitting/Smuggling
-- [ ] Test for HTTP Verb Tampering
-- [ ] Test for Open Redirection
-- [ ] Test for Local File Inclusion
-- [ ] Test for Remote File Inclusion
-- [ ] Compare client-side and server-side validation rules
-- [ ] Test for NoSQL injection
-- [ ] Test for HTTP parameter pollution
-- [ ] Test for auto-binding
-- [ ] Test for Mass Assignment
-- [ ] Test for NULL/Invalid Session Cookie
+- [x] Test for incubated vulnerabilities
+- [x] Test for NoSQL injection
+- [x] Test for HTTP parameter pollution
+- [x] Test for auto-binding
+- [x] Test for Mass Assignment
+- [x] Test for NULL/Invalid Session Cookie
 
 ### <a name="Denial">Denial of Service</a>
 - [ ] Test for anti-automation
 - [ ] Test for account lockout
 - [ ] Test for HTTP protocol DoS
-- [ ] Test for SQL wildcard DoS
 
 
 ### <a name="Business">Business Logic</a>
@@ -162,7 +119,7 @@
 
 
 ### <a name="File">Risky Functionality - File Uploads</a>
-- [ ] Test that acceptable file types are whitelisted
+- [X] Test that acceptable file types are whitelisted
 - [ ] Test that file size limits, upload frequency and total file counts are defined and are enforced
 - [ ] Test that file contents match the defined file type
 - [ ] Test that all file uploads have Anti-Virus scanning in-place.
@@ -170,21 +127,6 @@
 - [ ] Test that uploaded files are not directly accessible within the web root
 - [ ] Test that uploaded files are not served on the same hostname/port
 - [ ] Test that files and other media are integrated with the authentication and authorisation schemas
-
-
-### <a name="Card">Risky Functionality - Card Payment</a>
-- [ ] Test for known vulnerabilities and configuration issues on Web Server and Web Application
-- [ ] Test for default or guessable password
-- [ ] Test for non-production data in live environment, and vice-versa
-- [ ] Test for Injection vulnerabilities
-- [ ] Test for Buffer Overflows
-- [ ] Test for Insecure Cryptographic Storage
-- [ ] Test for Insufficient Transport Layer Protection
-- [ ] Test for Improper Error Handling
-- [ ] Test for all vulnerabilities with a CVSS v2 score > 4.0
-- [ ] Test for Authentication and Authorization issues
-- [ ] Test for CSRF
-
 
 ### <a name="HTML">HTML 5</a>
 - [ ] Test Web Messaging

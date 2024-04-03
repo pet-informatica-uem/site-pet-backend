@@ -35,6 +35,7 @@ origins = [
     "https://localhost:8000",
     "http://www.din.uem.br",
     "https://www.din.uem.br",
+    "https://www.petinfouem.com.br",
 ]
 
 
@@ -43,11 +44,11 @@ petBack.state.limiter = limiter
 petBack.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 petBack.middleware("http")(middlewareExcecao)
+petBack.add_middleware(SlowAPIMiddleware)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
 
-petBack.add_middleware(SlowAPIMiddleware)
 petBack.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
