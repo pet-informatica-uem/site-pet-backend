@@ -26,6 +26,7 @@ from src.modelos.usuario.usuarioClad import (
 )
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
+from src.config import config
 
 
 class Token(BaseModel):
@@ -39,7 +40,9 @@ roteador: APIRouter = APIRouter(
 )
 
 
-tokenAcesso: OAuth2PasswordBearer = OAuth2PasswordBearer(tokenUrl="/usuarios/login")
+tokenAcesso: OAuth2PasswordBearer = OAuth2PasswordBearer(
+    tokenUrl=config.ROOT_PATH + "/usuarios/login"
+)
 
 
 def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):

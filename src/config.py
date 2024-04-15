@@ -75,6 +75,11 @@ class Configuracoes(BaseSettings):
     Caso verdadeiro, não envia emails mas imprime o conteúdo deles na saída padrão.
     """
 
+    ROOT_PATH: str = ""
+    """
+    URL-raiz do servidor.
+    """
+
     class Config:
         env_prefix = "PET_API_"
 

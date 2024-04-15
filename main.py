@@ -38,8 +38,7 @@ origins = [
     "https://www.petinfouem.com.br",
 ]
 
-
-petBack = FastAPI()
+petBack = FastAPI(root_path=config.ROOT_PATH)
 petBack.state.limiter = limiter
 petBack.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
