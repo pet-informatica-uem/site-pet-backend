@@ -4,7 +4,10 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from content_size_limit_asgi import ContentSizeLimitMiddleware
+from content_size_limit_asgi.errors import ContentSizeExceeded
 
+from src.modelos.excecao import APIExcecaoBase, TamanhoLimiteExcedidoExcecao
 from src.config import config
 from src.img.criaPastas import criaPastas
 from src.middlewareExcecao import requestHandler as middlewareExcecao
@@ -24,13 +27,18 @@ logging.basicConfig(
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 origins = ["*"]
 
-petBack = FastAPI()
+petBack = FastAPI(log_level="debug")
+
+@petBack.exception_handler(APIExcecaoBase)
+def middlewareExcecaoAPI(request, excecao):
+    return excecao.response()
 
 petBack.middleware("http")(middlewareExcecao)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
 
+petBack.add_middleware(ContentSizeLimitMiddleware, max_content_size=5*1024*1024, exception_cls=TamanhoLimiteExcedidoExcecao)
 petBack.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -38,6 +46,11 @@ petBack.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@petBack.exception_handler(ContentSizeExceeded)
+def middlewareExcecaoTamanho(request, excecao):
+    return TamanhoLimiteExcedidoExcecao().response()
 
 # Caso não existam, cria as pastas para armazenar imagens.
 criaPastas()

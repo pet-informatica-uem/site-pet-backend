@@ -139,6 +139,14 @@ class TokenInvalidoExcecao(APIExcecaoBase):
     code = status.HTTP_400_BAD_REQUEST
 
 
+class TamanhoLimiteExcedidoExcecao(APIExcecaoBase):
+    message = "O tamanho da requisição ultrapassou o limite."
+    code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+    def __init__(self, msg: str, **kwargs):
+        # kwargs.setdefault("message", msg)
+        super().__init__(**kwargs)
+
+
 def listaRespostasExcecoes(
     *args: Type[APIExcecaoBase],
 ) -> dict[int | str, dict[str, Any]]:
