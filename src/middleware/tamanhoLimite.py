@@ -6,29 +6,29 @@ from src.modelos.excecao import TamanhoLimiteExcedidoExcecao
 
 
 class TamanhoLimiteMiddleware:
-    size_limit: int | None
+    tamLimite: int | None
 
     def __init__(self, app: ASGIApp, *, size_limit: int | None = None) -> None:
         self.app = app
-        self.size_limit = size_limit
+        self.tamLimite = size_limit
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] != "http" or self.size_limit is None:
+        if scope["type"] != "http" or self.tamLimite is None:
             await self.app(scope, receive, send)
             return
 
-        body_size = 0
+        tamCorpo = 0
 
         async def receive_limiting() -> Message:
-            nonlocal body_size
+            nonlocal tamCorpo
 
             message = await receive()
             if message["type"] != "http.request":
                 return message
 
-            body_size += len(message.get("body", b""))
+            tamCorpo += len(message.get("body", b""))
 
-            if body_size > self.size_limit:  # type: ignore
+            if tamCorpo > self.tamLimite:  # type: ignore
                 # mágica: convertemos o TamanhoLimiteExcedidoExcecao em um HTTPException
                 # porque? HTTPException é mágico e cancela o restante da solicitação
                 # que coisa hein?
