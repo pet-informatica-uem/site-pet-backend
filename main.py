@@ -4,13 +4,14 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from content_size_limit_asgi import ContentSizeLimitMiddleware
-from content_size_limit_asgi.errors import ContentSizeExceeded
+from starlette.middleware.base import BaseHTTPMiddleware
 
+from src.middleware.tamanhoLimite import TamanhoLimiteMiddleware
+from src.middleware.tempoLimite import TempoLimiteMiddleware
 from src.modelos.excecao import APIExcecaoBase, TamanhoLimiteExcedidoExcecao
 from src.config import config
 from src.img.criaPastas import criaPastas
-from src.middlewareExcecao import requestHandler as middlewareExcecao
+from src.middleware.excecoes import ExcecaoAPIMiddleware
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
@@ -27,18 +28,15 @@ logging.basicConfig(
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
 origins = ["*"]
 
-petBack = FastAPI(log_level="debug")
+petBack = FastAPI()
 
-@petBack.exception_handler(APIExcecaoBase)
-def middlewareExcecaoAPI(request, excecao):
-    return excecao.response()
-
-petBack.middleware("http")(middlewareExcecao)
+petBack.add_middleware(TamanhoLimiteMiddleware, size_limit=5 * 1024 * 1024)
+petBack.add_middleware(BaseHTTPMiddleware, dispatch=TempoLimiteMiddleware(30))
+petBack.add_middleware(BaseHTTPMiddleware, dispatch=ExcecaoAPIMiddleware)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
 
-petBack.add_middleware(ContentSizeLimitMiddleware, max_content_size=5*1024*1024, exception_cls=TamanhoLimiteExcedidoExcecao)
 petBack.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -46,11 +44,6 @@ petBack.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-@petBack.exception_handler(ContentSizeExceeded)
-def middlewareExcecaoTamanho(request, excecao):
-    return TamanhoLimiteExcedidoExcecao().response()
 
 # Caso não existam, cria as pastas para armazenar imagens.
 criaPastas()

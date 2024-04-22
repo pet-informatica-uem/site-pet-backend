@@ -142,9 +142,11 @@ class TokenInvalidoExcecao(APIExcecaoBase):
 class TamanhoLimiteExcedidoExcecao(APIExcecaoBase):
     message = "O tamanho da requisição ultrapassou o limite."
     code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
-    def __init__(self, msg: str, **kwargs):
-        # kwargs.setdefault("message", msg)
-        super().__init__(**kwargs)
+
+
+class TempoLimiteExcedidoExcecao(APIExcecaoBase):
+    message = "Tempo limite excedido."
+    code = status.HTTP_408_REQUEST_TIMEOUT
 
 
 def listaRespostasExcecoes(
