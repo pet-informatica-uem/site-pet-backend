@@ -9,6 +9,7 @@ from src.limiter import limiter
 from src.modelos.bd import TokenAutenticacaoBD
 from src.modelos.excecao import (
     APIExcecaoBase,
+    ErroValidacaoExcecao,
     JaExisteExcecao,
     NaoAutenticadoExcecao,
     NaoAutorizadoExcecao,
@@ -49,6 +50,7 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
     try:
         return UsuarioControlador.getUsuarioAutenticado(token)
     except NaoAutenticadoExcecao:
+        # esse HTTPException é necessário devido ao header incluso.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Não autenticado",
@@ -57,9 +59,9 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
 
 
 def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
-    if usuario.tipoConta == "petiano":
+    if usuario.tipoConta == TipoConta.PETIANO:
         return usuario
-    raise HTTPException(status_code=401, detail="Acesso negado.")
+    raise NaoAutorizadoExcecao()
 
 
 @roteador.post(
@@ -146,10 +148,7 @@ def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
 def recuperaConta(request: Request, email: Annotated[EmailStr, Form()]):
     # Verifica se o email é válido
     if not ValidacaoCadastro.email(email):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email inválido.",
-        )
+        raise ErroValidacaoExcecao(message="Email inválido.")
 
     # Passa o email para o controlador
     UsuarioControlador.recuperarConta(email)
@@ -167,7 +166,7 @@ def recuperaConta(request: Request, email: Annotated[EmailStr, Form()]):
 def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
     # Validacao basica da senha
     if not ValidacaoCadastro.senha(senha.get_secret_value()):
-        raise HTTPException(status_code=400, detail="Senha inválida.")
+        raise ErroValidacaoExcecao(message="Senha inválida.")
 
     # Despacha o token para o controlador
     UsuarioControlador.trocarSenha(token, senha.get_secret_value())
@@ -231,10 +230,7 @@ def editarEmail(
 ):
     if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
         if not ValidacaoCadastro.email(dadosEmail.novoEmail):
-            logging.info("Erro. Novo email não foi validado com sucesso.")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
-            )
+            raise ErroValidacaoExcecao(message="Email inválido.")
         # normaliza dados
         novoEmail = dadosEmail.novoEmail.lower().strip()
         dadosEmail.novoEmail = novoEmail
@@ -255,7 +251,7 @@ def editarEmail(
 def editarSenha(
     id: str,
     dadosSenha: UsuarioAtualizarSenha,
-    deslogarAoTrocarSenha: bool,
+    deslogarAoTrocarSenha: bool | None = True,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
 ):
     if usuario.id == id:

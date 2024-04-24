@@ -3,7 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, UploadFile, status
 
 from src.modelos.evento.evento import Evento
-from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
+from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar, EventoLer
 from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
@@ -30,6 +30,7 @@ def getEventos() -> list[Evento]:
         Recupera um evento cadastrado no banco de dados.
         Falha, caso o evento não exista.
     """,
+    response_model=EventoLer,
 )
 def getEvento(id: str) -> Evento:
     evento: Evento = EventoControlador.getEvento(id)

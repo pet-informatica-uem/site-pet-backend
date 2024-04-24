@@ -129,12 +129,12 @@ class InscritosControlador:
             # Recupera o evento
             evento: Evento = EventoControlador.getEvento(idEvento)
 
-            if inscrito.tipoVaga:
+            if inscrito.tipoVaga == TipoVaga.COM_NOTE:
                 if evento.vagasDisponiveisComNote == 0:
                     raise APIExcecaoBase(message="Não há vagas disponíveis com note")
                 evento.vagasDisponiveisSemNote += 1
                 evento.vagasDisponiveisComNote -= 1
-            else:
+            elif inscrito.tipoVaga == TipoVaga.SEM_NOTE:
                 if evento.vagasDisponiveisSemNote == 0:
                     raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
                 evento.vagasDisponiveisComNote += 1
@@ -167,9 +167,9 @@ class InscritosControlador:
             inscrito.idEvento, inscrito.idUsuario
         )
 
-        if inscritoRecuperado.tipoVaga:
+        if inscritoRecuperado.tipoVaga == TipoVaga.COM_NOTE:
             evento.vagasDisponiveisComNote += 1
-        else:
+        elif inscritoRecuperado.tipoVaga == TipoVaga.SEM_NOTE:
             evento.vagasDisponiveisSemNote += 1
 
         # Recupera o usuário

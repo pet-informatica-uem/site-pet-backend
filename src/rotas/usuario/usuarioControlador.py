@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from fastapi import UploadFile
 
+from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
     geraLinkEsqueciSenha,
@@ -116,13 +117,15 @@ class UsuarioControlador:
         except NaoEncontradoExcecao:
             pass
 
-
     @staticmethod
     def trocarSenha(token: str, senha: str) -> None:
         # Verifica o token e recupera o email
         email: str = processaTokenTrocaSenha(token)
 
         usuario: Usuario = UsuarioBD.buscar("email", email)
+
+        if not ValidacaoCadastro.senha(senha):
+            raise ValueError("Senha inválida")
 
         usuario.senha = hashSenha(senha)
 
@@ -174,6 +177,9 @@ class UsuarioControlador:
             raise NaoAutenticadoExcecao()
 
         if usuario := UsuarioBD.buscar("_id", id):
+            if not usuario.emailConfirmado:
+                raise EmailNaoConfirmadoExcecao()
+
             return usuario
         else:
             raise NaoAutenticadoExcecao()
@@ -267,7 +273,9 @@ class UsuarioControlador:
             usuario.emailConfirmado = False
 
             UsuarioBD.atualizar(usuario)
-            mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            mensagemEmail: str = (
+                f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            )
             enviarEmailVerificacao(usuario.email, mensagemEmail)
         else:
             raise APIExcecaoBase(message="Senha incorreta")
