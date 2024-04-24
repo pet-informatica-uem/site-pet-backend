@@ -302,6 +302,9 @@ class UsuarioControlador:
 
         UsuarioBD.atualizar(usuario)
 
+        # desautentica o usuário para evitar que tokens antigas ganhem permissões novas
+        TokenAutenticacaoBD.deletarTokensUsuario(id)
+
     @staticmethod
     def demitirPetiano(id: str, egresso: bool) -> None:
         """
@@ -324,3 +327,6 @@ class UsuarioControlador:
             usuario.tipoConta = TipoConta.ESTUDANTE
 
         UsuarioBD.atualizar(usuario)
+
+        # desautentica o usuário para forçar ressincronização
+        TokenAutenticacaoBD.deletarTokensUsuario(id)
