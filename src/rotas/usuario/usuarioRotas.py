@@ -62,7 +62,6 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
     raise HTTPException(status_code=401, detail="Acesso negado.")
 
 
-
 @roteador.post(
     "/",
     name="Cadastrar usuário",
@@ -94,8 +93,6 @@ def listarUsuarios(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
 ):
     return UsuarioControlador.getUsuarios()
-
-
 
 
 @roteador.get(
@@ -136,7 +133,6 @@ def confirmaEmail(token: str):
 )
 def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     return usuario
-
 
 
 @roteador.post(
@@ -213,6 +209,17 @@ def autenticar(
 )
 def desautenticar(token: Annotated[str, Depends(tokenAcesso)]):
     TokenAutenticacaoBD.deletar(token)
+
+
+@roteador.post(
+    "/deslogar-tudo",
+    name="Deslogar de todas as sessões",
+    description="""Desloga o usuário autenticado de todas as sessões ativas, inclusive a usada.""",
+)
+def deslogarTudo(
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+):
+    TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
 
 
 @roteador.put(
