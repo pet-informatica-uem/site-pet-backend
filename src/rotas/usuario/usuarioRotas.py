@@ -203,23 +203,20 @@ def autenticar(
     name="Desautenticar",
     description="""
     Desautentica o token fornecido.
+
+    Caso o parâmetro todos seja fornecido, todas as sessões ativas do usuário serão deslogadas.
     """,
     status_code=status.HTTP_200_OK,
     responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
-def desautenticar(token: Annotated[str, Depends(tokenAcesso)]):
-    TokenAutenticacaoBD.deletar(token)
-
-
-@roteador.post(
-    "/deslogar-tudo",
-    name="Deslogar de todas as sessões",
-    description="""Desloga o usuário autenticado de todas as sessões ativas, inclusive a usada.""",
-)
-def deslogarTudo(
-    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+def desautenticar(
+    token: Annotated[str, Depends(tokenAcesso)], todos: bool | None = False
 ):
-    TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
+    usuario = getUsuarioAutenticado(token)
+    if todos:
+        TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
+    else:
+        TokenAutenticacaoBD.deletar(token)
 
 
 @roteador.put(
