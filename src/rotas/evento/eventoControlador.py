@@ -18,12 +18,13 @@ from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
 from src.modelos.excecao import APIExcecaoBase, ImagemInvalidaExcecao
 from src.modelos.inscrito.inscrito import Inscrito
+from src.modelos.evento.eventoQuery import eventoQuery
 
 
 class EventoControlador:
     @staticmethod
-    def getEventos() -> list[Evento]:
-        return EventoBD.listar()
+    def getEventos(query: eventoQuery) -> list[Evento]:
+        return EventoBD.listar(query)
 
     @staticmethod
     def getEvento(id: str) -> Evento:
