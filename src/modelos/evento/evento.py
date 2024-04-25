@@ -29,6 +29,9 @@ class Evento(BaseModel):
     dias: list[tuple[datetime, datetime]]
     "Lista de tuplas de data e hora de início e fim de cada dia do evento."
 
+    inicioEvento: datetime
+    "Primeiro dia e hora do evento (gerado automaticamente a partir de 'dias')."
+
     fimEvento: datetime
     "Último dia e hora do evento (gerado automaticamente a partir de 'dias')."
 

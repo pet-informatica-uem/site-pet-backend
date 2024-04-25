@@ -11,6 +11,8 @@ from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoEx
 from src.modelos.inscrito.inscrito import Inscrito
 from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
 
+from src.modelos.evento.eventoQuery import eventoQuery
+
 cliente: MongoClient = MongoClient(str(config.URI_BD))
 
 colecaoTokens = cliente[config.NOME_BD]["authTokens"]
@@ -100,8 +102,25 @@ class EventoBD:
         colecaoEventos.delete_one({"_id": id})
 
     @staticmethod
-    def listar() -> list[Evento]:
-        return [Evento(**e) for e in colecaoEventos.find()]
+    def listar(query: eventoQuery) -> list[Evento]:
+        resultado: list[Evento]
+
+        if query == eventoQuery.PASSADO:
+            dbQuery = {"fimEvento": {"$lt": datetime.now}}
+            resultado = colecaoEventos.find(dbQuery)
+        elif query == eventoQuery.PRESENTE:
+            dbQuery = {
+                "inicioEvento": {"$lt": datetime.now},
+                "fimEvento": {"$gt": datetime.now},
+            }
+            resultado = colecaoEventos.find(dbQuery)
+        else:
+            dbQuery = {"inicioEvento": {"$gt": datetime.now}}
+            resultado = colecaoEventos.find(dbQuery)
+
+        print(resultado)
+        resultado = [Evento(**e) for e in resultado]
+        return resultado
 
 
 class InscritoBD:
