@@ -195,18 +195,18 @@ def __armazenaComprovante(
         return pathDefinitivo
     except IOError:
         try:
-            # Abre o PDF
+            # Lê o arquivo, em binário, do PDF
             arquivo_pdf = comprovante.read()
 
-            # Coloca as imagens do PDF na memória
+            # Converte o PDF na memória para uma lista de imagens
             imagens = convert_from_bytes(arquivo_pdf)
             
-            # Converte as imagens para RGB
+            # Converte as imagens para RGB, caso necessário
             for image in imagens:
                 if image.mode != "RGB":
                     image = image.convert("RGB")
 
-            # Define o tamanho e largura maximo das imagens
+            # Define as dimensões máximas das imagens
             largura_saida = max(image.width for image in imagens)
             altura_saida = sum(image.height for image in imagens)
 
@@ -223,7 +223,8 @@ def __armazenaComprovante(
             nome = __geraNomeImagem(nomeBase, "png")
             pathDefinitivo = os.path.join(path, nome)
             imagem_saida.save(pathDefinitivo)
-
+            return pathDefinitivo
+        
         except Exception as e:
             return None
 
