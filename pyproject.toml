@@ -23,6 +23,7 @@ isort = "^5.12.0"
 pydantic-settings = "^2.0.2"
 apscheduler = "^3.10.4"
 pypdf2 = "^3.0.1"
+pdf2image = "^1.17.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

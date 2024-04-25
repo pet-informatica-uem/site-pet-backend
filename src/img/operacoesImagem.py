@@ -4,6 +4,7 @@ import time
 from typing import BinaryIO
 
 import PyPDF2
+from pdf2image import convert_from_path
 from PIL import Image
 
 from src.config import config
@@ -200,23 +201,33 @@ def __armazenaComprovante(
     except IOError:
         try:
             # Abre o PDF
-            pdf_reader = PyPDF2.PdfReader(comprovante)  # type: ignore
+            arquivo_pdf = comprovante
 
-            # Cria um PDF Writer
-            pdf_writer = PyPDF2.PdfWriter()
+            # Coloca as imagens do PDF na memória
+            imagens = convert_from_path(arquivo_pdf)
+            
+            # Converte as imagens para RGB
+            for image in imagens:
+                if image.mode != "RGB":
+                    image = image.convert("RGB")
 
-            # Adiciona as páginas do PDF
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                pdf_writer.add_page(page)
+            # Define o tamanho e largura maximo das imagens
+            largura_saida = max(image.width for image in imagens)
+            altura_saida = sum(image.height for image in imagens)
 
-            nome = __geraNomeImagem(nomeBase, extensao="pdf")
+            # Cria a imagem de saída
+            imagem_saida = Image.new("RGB", (largura_saida, altura_saida))
+
+            # Concatena as imagens na vertical
+            pos_y = 0
+            for imagem_chunk in imagens:
+                imagem_saida.paste(imagem_chunk, (0, pos_y))
+                pos_y += imagem_chunk.height
+
+            # Salva a imagem de saída
+            nome = __geraNomeImagem(nomeBase, "png")
             pathDefinitivo = os.path.join(path, nome)
-
-            # Salva o PDF
-            with open(pathDefinitivo, "wb") as output_file:
-                pdf_writer.write(output_file)
-            return pathDefinitivo
+            imagem_saida.save(pathDefinitivo)
 
         except Exception as e:
             return None
