@@ -1,5 +1,6 @@
 import locale
 import logging
+import logging.handlers
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
@@ -14,7 +15,7 @@ from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
 
 logging.basicConfig(
     handlers=[
-        logging.FileHandler("output.log", encoding="utf-8"),
+        logging.handlers.TimedRotatingFileHandler("logs/output.log", when="M", interval=1),
         logging.StreamHandler(),
     ],
     encoding="utf-8",
