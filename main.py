@@ -15,7 +15,7 @@ from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
 logging.basicConfig(
     handlers=[
         logging.handlers.TimedRotatingFileHandler(
-            "logs/output.log", when="M", interval=1
+            "logs/output.log", when="midnight", interval=1
         ),
         logging.StreamHandler(),
     ],
