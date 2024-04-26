@@ -18,8 +18,8 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
 @roteador.get(
     "/",
-    name="Recuperar todos os eventos",
-    description="Retorna todos os eventos cadastrados no banco de dados.",
+    name="Recuperar eventos",
+    description="Retorna todos os eventos cadastrados no banco de dados filtrados pelo parâmetro 'query'.",
 )
 def getEventos(query: eventoQuery) -> list[Evento]:
     return EventoControlador.getEventos(query)
