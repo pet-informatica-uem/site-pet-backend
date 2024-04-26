@@ -142,6 +142,7 @@ class EventoControlador:
             _id=secrets.token_hex(16),
             vagasDisponiveisComNote=dadosEvento.vagasComNote,
             vagasDisponiveisSemNote=dadosEvento.vagasSemNote,
+            inicioEvento=dadosEvento.dias[0][0],
             fimEvento=dadosEvento.dias[-1][1],
         )
         EventoBD.criar(evento)

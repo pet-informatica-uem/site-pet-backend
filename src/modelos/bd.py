@@ -105,21 +105,23 @@ class EventoBD:
     def listar(query: eventoQuery) -> list[Evento]:
         resultado: list[Evento]
 
+        
         if query == eventoQuery.PASSADO:
-            dbQuery = {"fimEvento": {"$lt": datetime.now}}
-            resultado = colecaoEventos.find(dbQuery)
+            dbQuery = {"fimEvento": {"$lt": datetime.now()}}
+            resultadoBusca = colecaoEventos.find(dbQuery)
         elif query == eventoQuery.PRESENTE:
             dbQuery = {
-                "inicioEvento": {"$lt": datetime.now},
-                "fimEvento": {"$gt": datetime.now},
+                "inicioEvento": {"$lt": datetime.now()},
+                "fimEvento": {"$gt": datetime.now()},
             }
-            resultado = colecaoEventos.find(dbQuery)
-        else:
-            dbQuery = {"inicioEvento": {"$gt": datetime.now}}
-            resultado = colecaoEventos.find(dbQuery)
+            resultadoBusca = colecaoEventos.find(dbQuery)
+        elif query == eventoQuery.FUTURO:
+            dbQuery = {"inicioEvento": {"$gt": datetime.now()}}
+            resultadoBusca = colecaoEventos.find(dbQuery)
+        else :
+            resultadoBusca = colecaoEventos.find()
 
-        print(resultado)
-        resultado = [Evento(**e) for e in resultado]
+        resultado = [Evento(**e) for e in resultadoBusca]
         return resultado
 
 

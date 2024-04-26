@@ -2,5 +2,6 @@ from enum import Enum
 
 class eventoQuery(str, Enum):
     PASSADO = 'passados'
-    PRESENTE = 'presente'
+    PRESENTE = 'atuais'
     FUTURO = 'futuros'
+    TODOS = 'todos'
