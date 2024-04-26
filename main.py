@@ -2,20 +2,21 @@ import locale
 import logging
 import logging.handlers
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import config
 from src.img.criaPastas import criaPastas
-from src.middlewareExcecao import requestHandler as middlewareExcecao
+from src.middleware import requestHandler, requestLogging
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
 
 logging.basicConfig(
     handlers=[
-        logging.handlers.TimedRotatingFileHandler("logs/output.log", when="M", interval=1),
+        logging.handlers.TimedRotatingFileHandler(
+            "logs/output.log", when="M", interval=1
+        ),
         logging.StreamHandler(),
     ],
     encoding="utf-8",
@@ -27,7 +28,8 @@ origins = ["*"]
 
 petBack = FastAPI(root_path=config.ROOT_PATH)
 
-petBack.middleware("http")(middlewareExcecao)
+petBack.middleware("http")(requestHandler)
+petBack.middleware("http")(requestLogging)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)

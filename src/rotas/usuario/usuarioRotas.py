@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
 
+from src.config import config
 from src.modelos.bd import TokenAutenticacaoBD
 from src.modelos.excecao import (
     APIExcecaoBase,
@@ -24,7 +25,6 @@ from src.modelos.usuario.usuarioClad import (
 )
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
-from src.config import config
 
 
 class Token(BaseModel):
@@ -200,7 +200,7 @@ def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
 def editarEmail(
     id: str,
     dadosEmail: UsuarioAtualizarEmail,
-    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,  # type: ignore
 ):
     if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
         if not ValidacaoCadastro.email(dadosEmail.novoEmail):
@@ -229,7 +229,7 @@ def editarSenha(
     id: str,
     dadosSenha: UsuarioAtualizarSenha,
     deslogarAoTrocarSenha: bool,
-    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,  # type: ignore
 ):
     if usuario.id == id:
         # efetua troca de senha
@@ -251,7 +251,7 @@ def editarSenha(
 def editarFoto(
     id: str,
     foto: UploadFile,
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
+    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,  # type: ignore
 ) -> None:
     if usuario.id == id:
         UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
