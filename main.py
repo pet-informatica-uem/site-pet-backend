@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import config
 from src.img.criaPastas import criaPastas
-from src.middleware import requestHandler, requestLogging
+from src.middleware import requestHandler, requestLogger
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
@@ -29,7 +29,7 @@ origins = ["*"]
 petBack = FastAPI(root_path=config.ROOT_PATH)
 
 petBack.middleware("http")(requestHandler)
-petBack.middleware("http")(requestLogging)
+petBack.middleware("http")(requestLogger)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)

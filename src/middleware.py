@@ -6,7 +6,7 @@ from src.modelos.excecao import APIExcecaoBase
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
 
 
-async def requestLogging(request: Request, call_next):
+async def requestLogger(request: Request, call_next):
     """
     Middleware para logar as requisições.
     """
@@ -20,7 +20,6 @@ async def requestLogging(request: Request, call_next):
             token = request.headers.get("Authorization").replace("Bearer ", "")  # type: ignore
             usuario = UsuarioControlador.getUsuarioAutenticado(token)  # type: ignore
             idUsuario = usuario.id
-            print(log_dict)
         except Exception as e:
             pass
 
