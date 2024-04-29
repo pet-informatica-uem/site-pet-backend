@@ -72,7 +72,7 @@ class InscritosControlador:
 
         d.update(**dadosInscrito.model_dump())
         inscrito = Inscrito(**d)
-        inscrito.comprovante = caminhoComprovante.name if caminhoComprovante else None  # type: ignore
+        inscrito.comprovante = str(caminhoComprovante) if caminhoComprovante else None  # type: ignore
 
         if inscrito.tipoVaga == TipoVaga.COM_NOTE:
             evento.vagasDisponiveisComNote -= 1
@@ -118,6 +118,10 @@ class InscritosControlador:
     @staticmethod
     def getInscritos(idEvento: str):
         return InscritoBD.listarInscritosEvento(idEvento)
+    
+    @staticmethod
+    def getInscrito(idEvento: str, idInscrito: str):
+        return InscritoBD.buscar(idEvento, idInscrito)
 
     @staticmethod
     def editarInscrito(idEvento: str, idInscrito: str, inscrito: InscritoAtualizar):

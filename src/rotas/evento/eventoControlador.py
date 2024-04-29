@@ -112,7 +112,7 @@ class EventoControlador:
             if not caminhoArte:
                 raise ImagemNaoSalvaExcecao()
 
-            evento.arte = caminhoArte.name
+            evento.arte = str(caminhoArte)
 
             # atualiza no bd
             EventoBD.atualizar(evento)
@@ -127,7 +127,7 @@ class EventoControlador:
             if not caminhoCracha:
                 raise ImagemNaoSalvaExcecao()
 
-            evento.cracha = caminhoCracha.name
+            evento.cracha = str(caminhoCracha)
             
             # atualiza no bd
             EventoBD.atualizar(evento)
