@@ -20,6 +20,7 @@ from src.modelos.excecao import (
     EmailNaoConfirmadoExcecao,
     EmailSenhaIncorretoExcecao,
     ImagemInvalidaExcecao,
+    ImagemNaoSalvaExcecao,
     NaoAutenticadoExcecao,
     NaoEncontradoExcecao,
     UsuarioNaoEncontradoExcecao,
@@ -107,10 +108,14 @@ class UsuarioControlador:
     # Envia um email para trocar de senha se o email estiver cadastrado no bd
     @staticmethod
     def recuperarConta(email: str) -> None:
-        UsuarioBD.buscar("email", email)
-        # Gera o link e envia o email se o usuário estiver cadastrado
-        link: str = geraLinkEsqueciSenha(email)
-        enviarEmailResetSenha(email, link)  # Envia o email
+        try:
+            UsuarioBD.buscar("email", email)
+            # Gera o link e envia o email se o usuário estiver cadastrado
+            link: str = geraLinkEsqueciSenha(email)
+            enviarEmailResetSenha(email, link)  # Envia o email
+        except NaoEncontradoExcecao:
+            pass
+
 
     @staticmethod
     def trocarSenha(token: str, senha: str) -> None:
@@ -262,7 +267,9 @@ class UsuarioControlador:
             usuario.emailConfirmado = False
 
             UsuarioBD.atualizar(usuario)
-            mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            mensagemEmail: str = (
+                f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            )
             enviarEmailVerificacao(usuario.email, mensagemEmail)
         else:
             raise APIExcecaoBase(message="Senha incorreta")
@@ -280,8 +287,54 @@ class UsuarioControlador:
             raise ImagemInvalidaExcecao()
 
         deletaImagem(usuario.id, ["usuarios"])
-        caminhoFotoPerfil: str = armazenaFotoUsuario(usuario.id, foto.file)  # type: ignore
-        usuario.foto = caminhoFotoPerfil  # type: ignore
+
+        caminhoFotoPerfil = armazenaFotoUsuario(usuario.id, foto.file)
+        if not caminhoFotoPerfil:
+            raise ImagemNaoSalvaExcecao()
+
+        usuario.foto = caminhoFotoPerfil.name
 
         # atualiza no bd
         UsuarioBD.atualizar(usuario)
+
+    @staticmethod
+    def promoverPetiano(id: str) -> None:
+        """
+        Promove um usuário a petiano.
+        """
+
+        usuario = UsuarioControlador.getUsuario(id)
+
+        logging.info(f"Promovendo usuário {usuario.id} a petiano")
+        usuario.tipoConta = TipoConta.PETIANO
+
+        UsuarioBD.atualizar(usuario)
+
+        # desautentica o usuário para evitar que tokens antigas ganhem permissões novas
+        TokenAutenticacaoBD.deletarTokensUsuario(id)
+
+    @staticmethod
+    def demitirPetiano(id: str, egresso: bool) -> None:
+        """
+        Demite um usuário petiano ou egresso a egresso, caso `egresso` seja verdadeiro, ou a estudante caso contrário.
+        """
+
+        usuario = UsuarioControlador.getUsuario(id)
+
+        if (
+            usuario.tipoConta != TipoConta.PETIANO
+            and usuario.tipoConta != TipoConta.EGRESSO
+        ):
+            raise NaoAtualizadaExcecao(message="Usuário não é petiano nem egresso")
+
+        if egresso:
+            logging.info(f"Demitindo usuário {usuario.id} a egresso")
+            usuario.tipoConta = TipoConta.EGRESSO
+        else:
+            logging.info(f"Demitindo usuário {usuario.id} a estudante")
+            usuario.tipoConta = TipoConta.ESTUDANTE
+
+        UsuarioBD.atualizar(usuario)
+
+        # desautentica o usuário para forçar ressincronização
+        TokenAutenticacaoBD.deletarTokensUsuario(id)

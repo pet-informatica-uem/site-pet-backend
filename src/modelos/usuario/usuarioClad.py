@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, EmailStr, SecretStr, field_validator
 
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
@@ -38,6 +39,16 @@ class UsuarioLer(BaseModel):
     github: str | None = None
     linkedin: str | None = None
     instagram: str | None = None
+
+class UsuarioLerAdmin(UsuarioLer):
+    id: str
+    cpf: str
+    emailConfirmado: bool
+    tipoConta: str
+    eventosInscrito: list[str]
+    dataCriacao: datetime
+    inicioPet: datetime | None = None
+    fimPet: datetime | None = None
 
 
 class UsuarioAtualizar(BaseModel):

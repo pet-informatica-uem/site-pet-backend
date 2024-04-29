@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 from datetime import datetime, timedelta
 
 from pydantic_core import Url
@@ -50,9 +50,7 @@ class Configuracoes(BaseSettings):
     para serem exibidos e enviados aos usuários.
     """
 
-    CAMINHO_IMAGEM: str = os.path.join(
-        os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "img"
-    )
+    CAMINHO_IMAGEM: Path = Path.cwd() / "img"
     """
     Caminho onde serão armazenadas as imagens (.../img/). 
     """
@@ -75,6 +73,11 @@ class Configuracoes(BaseSettings):
     MOCK_EMAIL: bool = False
     """
     Caso verdadeiro, não envia emails mas imprime o conteúdo deles na saída padrão.
+    """
+
+    ROOT_PATH: str = ""
+    """
+    URL-raiz do servidor.
     """
 
     class Config:
