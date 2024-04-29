@@ -1,13 +1,12 @@
 import locale
 import logging
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.middleware.tamanhoLimite import TamanhoLimiteMiddleware
 from src.middleware.tempoLimite import TempoLimiteMiddleware
-from src.modelos.excecao import APIExcecaoBase, TamanhoLimiteExcedidoExcecao
 from src.config import config
 from src.img.criaPastas import criaPastas
 from src.middleware.excecoes import ExcecaoAPIMiddleware
@@ -40,9 +39,10 @@ origins = [
 
 petBack = FastAPI(root_path=config.ROOT_PATH)
 petBack.state.limiter = limiter
-petBack.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-petBack.middleware("http")(middlewareExcecao)
+petBack.add_middleware(TamanhoLimiteMiddleware, size_limit=5 * 1024 * 1024)
+petBack.add_middleware(BaseHTTPMiddleware, dispatch=TempoLimiteMiddleware(30))
+petBack.add_middleware(BaseHTTPMiddleware, dispatch=ExcecaoAPIMiddleware)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
