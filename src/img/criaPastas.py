@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 
 
 def criaPastas():
@@ -11,8 +11,9 @@ def criaPastas():
     ]
 
     for directory in directories:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        path = Path.cwd() / directory
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
             logging.info(f"Created directory: {directory}")
 
 
@@ -26,6 +27,7 @@ def criaPastaEvento(idEvento: str):
     ]
 
     for directory in directories:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+        path = Path.cwd() / directory
+        if not path.exists():
+            path.mkdir(parents=True, exist_ok=True)
             logging.info(f"Created directory: {directory}")

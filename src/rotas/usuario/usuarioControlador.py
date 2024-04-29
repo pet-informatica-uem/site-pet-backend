@@ -20,7 +20,7 @@ from src.modelos.excecao import (
     EmailNaoConfirmadoExcecao,
     EmailSenhaIncorretoExcecao,
     ImagemInvalidaExcecao,
-    NaoAtualizadaExcecao,
+    ImagemNaoSalvaExcecao,
     NaoAutenticadoExcecao,
     NaoEncontradoExcecao,
     UsuarioNaoEncontradoExcecao,
@@ -108,10 +108,14 @@ class UsuarioControlador:
     # Envia um email para trocar de senha se o email estiver cadastrado no bd
     @staticmethod
     def recuperarConta(email: str) -> None:
-        UsuarioBD.buscar("email", email)
-        # Gera o link e envia o email se o usuário estiver cadastrado
-        link: str = geraLinkEsqueciSenha(email)
-        enviarEmailResetSenha(email, link)  # Envia o email
+        try:
+            UsuarioBD.buscar("email", email)
+            # Gera o link e envia o email se o usuário estiver cadastrado
+            link: str = geraLinkEsqueciSenha(email)
+            enviarEmailResetSenha(email, link)  # Envia o email
+        except NaoEncontradoExcecao:
+            pass
+
 
     @staticmethod
     def trocarSenha(token: str, senha: str) -> None:
@@ -283,8 +287,12 @@ class UsuarioControlador:
             raise ImagemInvalidaExcecao()
 
         deletaImagem(usuario.id, ["usuarios"])
-        caminhoFotoPerfil: str = armazenaFotoUsuario(usuario.id, foto.file)  # type: ignore
-        usuario.foto = caminhoFotoPerfil  # type: ignore
+
+        caminhoFotoPerfil = armazenaFotoUsuario(usuario.id, foto.file)
+        if not caminhoFotoPerfil:
+            raise ImagemNaoSalvaExcecao()
+
+        usuario.foto = caminhoFotoPerfil.name
 
         # atualiza no bd
         UsuarioBD.atualizar(usuario)

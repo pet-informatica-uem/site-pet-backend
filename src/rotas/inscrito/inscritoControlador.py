@@ -54,7 +54,7 @@ class InscritosControlador:
                     raise APIExcecaoBase(message="Comprovante inválido.")
 
                 deletaImagem(idUsuario, ["eventos", evento.id, "comprovantes"])
-                caminhoComprovante: str | None = armazenaComprovante(
+                caminhoComprovante = armazenaComprovante(
                     evento.id, idUsuario, comprovante.file
                 )
             else:
@@ -62,7 +62,7 @@ class InscritosControlador:
                     message="Comprovante obrigatório para eventos pagos."
                 )
         else:
-            caminhoComprovante: str | None = None
+            caminhoComprovante = None
 
         d = {
             "idEvento": idEvento,
@@ -72,7 +72,7 @@ class InscritosControlador:
 
         d.update(**dadosInscrito.model_dump())
         inscrito = Inscrito(**d)
-        inscrito.comprovante = caminhoComprovante  # type: ignore
+        inscrito.comprovante = caminhoComprovante.name if caminhoComprovante else None  # type: ignore
 
         if inscrito.tipoVaga == TipoVaga.COM_NOTE:
             evento.vagasDisponiveisComNote -= 1

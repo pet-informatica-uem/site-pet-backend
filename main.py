@@ -4,6 +4,9 @@ import logging
 from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.errors import RateLimitExceeded
 
 from src.config import config
 from src.img.criaPastas import criaPastas
@@ -11,6 +14,7 @@ from src.middlewareExcecao import requestHandler as middlewareExcecao
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
+from src.limiter import limiter
 
 logging.basicConfig(
     handlers=[
@@ -22,11 +26,24 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
-origins = ["*"]
+origins = [
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "http://localhost",
+    "https://localhost",
+    "http://localhost:8000",
+    "https://localhost:8000",
+    "http://www.din.uem.br",
+    "https://www.din.uem.br",
+    "https://www.petinfouem.com.br",
+]
 
 petBack = FastAPI(root_path=config.ROOT_PATH)
+petBack.state.limiter = limiter
+petBack.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 petBack.middleware("http")(middlewareExcecao)
+petBack.add_middleware(SlowAPIMiddleware)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
