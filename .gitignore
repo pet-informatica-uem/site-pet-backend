@@ -98,6 +98,7 @@ Icon
 
 # logs
 *.log
+logs/
 
 #pyenv
 .python-version
