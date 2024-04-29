@@ -138,6 +138,16 @@ class TokenInvalidoExcecao(APIExcecaoBase):
     code = status.HTTP_400_BAD_REQUEST
 
 
+class TamanhoLimiteExcedidoExcecao(APIExcecaoBase):
+    message = "O tamanho da requisição ultrapassou o limite."
+    code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+
+
+class TempoLimiteExcedidoExcecao(APIExcecaoBase):
+    message = "Tempo limite excedido."
+    code = status.HTTP_408_REQUEST_TIMEOUT
+
+
 def listaRespostasExcecoes(
     *args: Type[APIExcecaoBase],
 ) -> dict[int | str, dict[str, Any]]:
