@@ -56,8 +56,8 @@ class Evento(BaseModel):
     valor: float
     "Valor da inscrição."
 
-    imagemCapa: str | None = None
+    arte: str | None = None
     "Caminho para a imagem de capa do evento."
 
-    imagemCracha: str | None = None
+    cracha: str | None = None
     "Caminho para a imagem do crachá do evento."
