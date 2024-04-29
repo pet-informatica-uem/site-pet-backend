@@ -267,7 +267,9 @@ class UsuarioControlador:
             usuario.emailConfirmado = False
 
             UsuarioBD.atualizar(usuario)
-            mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            mensagemEmail: str = (
+                f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            )
             enviarEmailVerificacao(usuario.email, mensagemEmail)
         else:
             raise APIExcecaoBase(message="Senha incorreta")
@@ -294,3 +296,45 @@ class UsuarioControlador:
 
         # atualiza no bd
         UsuarioBD.atualizar(usuario)
+
+    @staticmethod
+    def promoverPetiano(id: str) -> None:
+        """
+        Promove um usuário a petiano.
+        """
+
+        usuario = UsuarioControlador.getUsuario(id)
+
+        logging.info(f"Promovendo usuário {usuario.id} a petiano")
+        usuario.tipoConta = TipoConta.PETIANO
+
+        UsuarioBD.atualizar(usuario)
+
+        # desautentica o usuário para evitar que tokens antigas ganhem permissões novas
+        TokenAutenticacaoBD.deletarTokensUsuario(id)
+
+    @staticmethod
+    def demitirPetiano(id: str, egresso: bool) -> None:
+        """
+        Demite um usuário petiano ou egresso a egresso, caso `egresso` seja verdadeiro, ou a estudante caso contrário.
+        """
+
+        usuario = UsuarioControlador.getUsuario(id)
+
+        if (
+            usuario.tipoConta != TipoConta.PETIANO
+            and usuario.tipoConta != TipoConta.EGRESSO
+        ):
+            raise NaoAtualizadaExcecao(message="Usuário não é petiano nem egresso")
+
+        if egresso:
+            logging.info(f"Demitindo usuário {usuario.id} a egresso")
+            usuario.tipoConta = TipoConta.EGRESSO
+        else:
+            logging.info(f"Demitindo usuário {usuario.id} a estudante")
+            usuario.tipoConta = TipoConta.ESTUDANTE
+
+        UsuarioBD.atualizar(usuario)
+
+        # desautentica o usuário para forçar ressincronização
+        TokenAutenticacaoBD.deletarTokensUsuario(id)

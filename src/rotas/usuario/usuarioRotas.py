@@ -284,6 +284,31 @@ def editarFoto(
         UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
 
 
+@roteador.post(
+    "/{id}/petiano",
+    name="Promover usuário a petiano",
+    description="Promove o usuário especificado a petiano.",
+)
+def promoverPetiano(
+    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...
+):
+    UsuarioControlador.promoverPetiano(id)
+
+
+@roteador.delete(
+    "/{id}/petiano",
+    name="Rebaixar usuário a não petiano",
+    description="""Remove o status de petiano do usuário especificado.
+        Por padrão, a conta passa a ser do tipo egresso, mas caso o parâmetro egresso seja falso, o usuário é rebaixado a estudante.""",
+)
+def demitirPetiano(
+    id: str,
+    egresso: bool | None = True,
+    _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
+):
+    UsuarioControlador.demitirPetiano(id, egresso if egresso is not None else True)
+
+
 @roteador.get(
     "/{id}",
     name="Obter detalhes do usuário com id fornecido",
