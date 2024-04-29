@@ -4,6 +4,7 @@ from datetime import datetime
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 
+from src.modelos.registro.registro import Registro
 from src.config import config
 from src.modelos.autenticacao.autenticacao import TokenAutenticacao
 from src.modelos.evento.evento import Evento
@@ -26,6 +27,8 @@ colecaoEventos.create_index("titulo", unique=True)
 
 colecaoInscritos = cliente[config.NOME_BD]["inscritos"]
 colecaoInscritos.create_index([("idEvento", 1), ("idUsuario", 1)], unique=True)
+
+colecaoRegistro = cliente[config.NOME_BD]["registros"]
 
 
 class UsuarioBD:
@@ -221,3 +224,21 @@ class TokenAutenticacaoBD:
     @staticmethod
     def deletarTokensUsuario(idUsuario: str):
         colecaoTokens.delete_many({"idUsuario": idUsuario})
+
+
+class RegistroBD:
+    @staticmethod
+    def criar(modelo: Registro):
+        colecaoRegistro.insert_one(modelo.model_dump())
+
+    @staticmethod
+    def buscar(idUsuario: str) -> dict:
+        # Verifica se o registro está cadastrado no bd
+        if not colecaoRegistro.find_one({id: idUsuario}):
+            raise NaoEncontradoExcecao(message="Nenhum registro encontrado.")
+        else:
+            return colecaoRegistro.find_one({id: idUsuario})  # type: ignore
+
+    @staticmethod
+    def listar() -> list[dict]:
+        return [r for r in colecaoRegistro.find()]

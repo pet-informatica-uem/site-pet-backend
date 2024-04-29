@@ -1,3 +1,4 @@
+from datetime import datetime
 import logging
 from typing import Annotated
 
@@ -16,6 +17,8 @@ from pydantic import BaseModel, EmailStr, SecretStr
 
 from src.config import config
 from src.limiter import limiter
+from src.modelos.registro.registro import Registro
+from src.modelos.bd import RegistroBD
 from src.modelos.bd import TokenAutenticacaoBD
 from src.modelos.excecao import (
     APIExcecaoBase,
