@@ -1,2 +1,2 @@
 #!/bin/bash
-nohup poetry run uvicorn main:petBack >> log.log &
+/home/pet/.local/bin/poetry run uvicorn main:petBack
