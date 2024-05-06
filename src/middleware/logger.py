@@ -1,6 +1,7 @@
 import logging
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
+from src.rotas.usuario.usuarioControlador import UsuarioControlador
 
 
 class LoggerMiddleware(BaseHTTPMiddleware):
