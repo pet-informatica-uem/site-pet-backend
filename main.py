@@ -2,10 +2,10 @@ import locale
 import logging
 import logging.handlers
 
-from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.middleware.logger import LoggerMiddleware
 from src.middleware.tamanhoLimite import TamanhoLimiteMiddleware
 from src.middleware.tempoLimite import TempoLimiteMiddleware
 from src.config import config
@@ -15,6 +15,9 @@ from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
 from src.limiter import limiter
+
+# cria pasta logs
+criaPastas()
 
 logging.basicConfig(
     handlers=[
@@ -43,9 +46,10 @@ origins = [
 petBack = FastAPI(root_path=config.ROOT_PATH)
 petBack.state.limiter = limiter
 
+petBack.add_middleware(ExcecaoAPIMiddleware)
+petBack.add_middleware(LoggerMiddleware)
+petBack.add_middleware(TempoLimiteMiddleware, request_timeout=30)
 petBack.add_middleware(TamanhoLimiteMiddleware, size_limit=5 * 1024 * 1024)
-petBack.add_middleware(BaseHTTPMiddleware, dispatch=TempoLimiteMiddleware(30))
-petBack.add_middleware(BaseHTTPMiddleware, dispatch=ExcecaoAPIMiddleware)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
@@ -58,8 +62,6 @@ petBack.add_middleware(
     allow_headers=["*"],
 )
 
-# Caso não existam, cria as pastas para armazenar imagens.
-criaPastas()
 
 logging.info("Backend inicializado")
 

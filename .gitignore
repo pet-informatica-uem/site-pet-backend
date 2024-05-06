@@ -98,14 +98,13 @@ Icon
 
 # logs
 *.log
-logs/
+/logs
 
 # pyenv
 .python-version
 
 # fotos
 /img
-.gitignore
 
 # lock file
 .lock
