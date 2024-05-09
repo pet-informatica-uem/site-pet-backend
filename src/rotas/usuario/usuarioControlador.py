@@ -2,7 +2,7 @@ import logging
 import secrets
 from datetime import datetime, timedelta
 
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
@@ -20,6 +20,8 @@ from src.modelos.excecao import (
     EmailNaoConfirmadoExcecao,
     EmailSenhaIncorretoExcecao,
     ImagemInvalidaExcecao,
+    ImagemNaoSalvaExcecao,
+    NaoAtualizadaExcecao,
     NaoAutenticadoExcecao,
     NaoEncontradoExcecao,
     UsuarioNaoEncontradoExcecao,
@@ -56,7 +58,7 @@ class UsuarioControlador:
             UsuarioBD.atualizar(usuario)
 
     @staticmethod
-    def cadastrarUsuario(dadosUsuario: UsuarioCriar) -> str:
+    def cadastrarUsuario(dadosUsuario: UsuarioCriar, tasks: BackgroundTasks) -> str:
         """
         Cria uma conta com os dados fornecidos, e envia um email
         de confirmação de criação de conta ao endereço fornecido.
@@ -97,7 +99,7 @@ class UsuarioControlador:
             config.CAMINHO_BASE + "/usuario/confirma-email?token=" + token
         )
 
-        enviarEmailVerificacao(dadosUsuario.email, linkConfirmacao)
+        tasks.add_task(enviarEmailVerificacao, dadosUsuario.email, linkConfirmacao)
 
         # cria o usuário no bd
         UsuarioBD.criar(usuario)
@@ -106,11 +108,14 @@ class UsuarioControlador:
 
     # Envia um email para trocar de senha se o email estiver cadastrado no bd
     @staticmethod
-    def recuperarConta(email: str) -> None:
-        UsuarioBD.buscar("email", email)
-        # Gera o link e envia o email se o usuário estiver cadastrado
-        link: str = geraLinkEsqueciSenha(email)
-        enviarEmailResetSenha(email, link)  # Envia o email
+    def recuperarConta(email: str, tasks: BackgroundTasks) -> None:
+        try:
+            UsuarioBD.buscar("email", email)
+            # Gera o link e envia o email se o usuário estiver cadastrado
+            link: str = geraLinkEsqueciSenha(email)
+            tasks.add_task(enviarEmailResetSenha, email, link)  # Envia o email
+        except NaoEncontradoExcecao:
+            pass
 
     @staticmethod
     def trocarSenha(token: str, senha: str) -> None:
@@ -245,7 +250,9 @@ class UsuarioControlador:
             raise APIExcecaoBase(message="Senha incorreta")
 
     @staticmethod
-    def editarEmail(dadosEmail: UsuarioAtualizarEmail, id: str) -> None:
+    def editarEmail(
+        dadosEmail: UsuarioAtualizarEmail, id: str, tasks: BackgroundTasks
+    ) -> None:
         """
         Atualiza o email de um usuário existente.
 
@@ -262,8 +269,10 @@ class UsuarioControlador:
             usuario.emailConfirmado = False
 
             UsuarioBD.atualizar(usuario)
-            mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
-            enviarEmailVerificacao(usuario.email, mensagemEmail)
+            mensagemEmail: str = (
+                f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            )
+            tasks.add_task(enviarEmailVerificacao, usuario.email, mensagemEmail)
         else:
             raise APIExcecaoBase(message="Senha incorreta")
 
@@ -280,8 +289,54 @@ class UsuarioControlador:
             raise ImagemInvalidaExcecao()
 
         deletaImagem(usuario.id, ["usuarios"])
-        caminhoFotoPerfil: str = armazenaFotoUsuario(usuario.id, foto.file)  # type: ignore
-        usuario.foto = caminhoFotoPerfil  # type: ignore
+
+        caminhoFotoPerfil = armazenaFotoUsuario(usuario.id, foto.file)
+        if not caminhoFotoPerfil:
+            raise ImagemNaoSalvaExcecao()
+
+        usuario.foto = caminhoFotoPerfil.name
 
         # atualiza no bd
         UsuarioBD.atualizar(usuario)
+
+    @staticmethod
+    def promoverPetiano(id: str) -> None:
+        """
+        Promove um usuário a petiano.
+        """
+
+        usuario = UsuarioControlador.getUsuario(id)
+
+        logging.info(f"Promovendo usuário {usuario.id} a petiano")
+        usuario.tipoConta = TipoConta.PETIANO
+
+        UsuarioBD.atualizar(usuario)
+
+        # desautentica o usuário para evitar que tokens antigas ganhem permissões novas
+        TokenAutenticacaoBD.deletarTokensUsuario(id)
+
+    @staticmethod
+    def demitirPetiano(id: str, egresso: bool) -> None:
+        """
+        Demite um usuário petiano ou egresso a egresso, caso `egresso` seja verdadeiro, ou a estudante caso contrário.
+        """
+
+        usuario = UsuarioControlador.getUsuario(id)
+
+        if (
+            usuario.tipoConta != TipoConta.PETIANO
+            and usuario.tipoConta != TipoConta.EGRESSO
+        ):
+            raise NaoAtualizadaExcecao(message="Usuário não é petiano nem egresso")
+
+        if egresso:
+            logging.info(f"Demitindo usuário {usuario.id} a egresso")
+            usuario.tipoConta = TipoConta.EGRESSO
+        else:
+            logging.info(f"Demitindo usuário {usuario.id} a estudante")
+            usuario.tipoConta = TipoConta.ESTUDANTE
+
+        UsuarioBD.atualizar(usuario)
+
+        # desautentica o usuário para forçar ressincronização
+        TokenAutenticacaoBD.deletarTokensUsuario(id)

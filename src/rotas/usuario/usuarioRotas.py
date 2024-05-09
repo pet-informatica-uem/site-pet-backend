@@ -1,10 +1,20 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, HTTPException, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+    BackgroundTasks,
+)
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
 
+from src.limiter import limiter
 from src.modelos.bd import TokenAutenticacaoBD
 from src.modelos.excecao import (
     APIExcecaoBase,
@@ -21,6 +31,7 @@ from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizarSenha,
     UsuarioCriar,
     UsuarioLer,
+    UsuarioLerAdmin,
 )
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
@@ -72,9 +83,12 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
     status_code=status.HTTP_201_CREATED,
     responses=listaRespostasExcecoes(JaExisteExcecao, APIExcecaoBase),
 )
-def cadastrarUsuario(usuario: UsuarioCriar) -> str:
+@limiter.limit("3/minute")
+def cadastrarUsuario(
+    tasks: BackgroundTasks, request: Request, usuario: UsuarioCriar
+) -> str:
     # despacha para controlador
-    usuarioCadastrado = UsuarioControlador.cadastrarUsuario(usuario)
+    usuarioCadastrado = UsuarioControlador.cadastrarUsuario(usuario, tasks)
 
     # retorna os dados do usuario cadastrado
     return usuarioCadastrado
@@ -84,7 +98,7 @@ def cadastrarUsuario(usuario: UsuarioCriar) -> str:
     "/",
     name="Recuperar usuários cadastrados",
     description="Rota apenas para petianos.\n\n" "Lista todos os usuários cadastrados.",
-    response_model=list[Usuario],
+    response_model=list[UsuarioLerAdmin],
 )
 def listarUsuarios(
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
@@ -125,7 +139,7 @@ def confirmaEmail(token: str):
     Retorna detalhes do usuário autenticado.
     """,
     status_code=status.HTTP_200_OK,
-    response_model=Usuario,
+    response_model=UsuarioLerAdmin,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
@@ -136,11 +150,13 @@ def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     "/esqueci-senha",
     name="Recuperar conta",
     description="""Envia um email para a conta fornecida para trocar a senha.
-    Falha, caso o email da conta seja inválido ou não esteja relacionado a uma conta cadastrada.
+    Falha, caso o email da conta seja inválido.
     """,
-    responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
-def recuperaConta(email: Annotated[EmailStr, Form()]):
+@limiter.limit("3/minute")
+def recuperaConta(
+    tasks: BackgroundTasks, request: Request, email: Annotated[EmailStr, Form()]
+):
     # Verifica se o email é válido
     if not ValidacaoCadastro.email(email):
         raise HTTPException(
@@ -149,7 +165,7 @@ def recuperaConta(email: Annotated[EmailStr, Form()]):
         )
 
     # Passa o email para o controlador
-    UsuarioControlador.recuperarConta(email)
+    UsuarioControlador.recuperarConta(email, tasks)
 
 
 @roteador.post(
@@ -180,7 +196,10 @@ def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
     response_model=Token,
     responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
-def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
+@limiter.limit("3/minute")
+def autenticar(
+    request: Request, dados: Annotated[OAuth2PasswordRequestForm, Depends()]
+):
     # obtém dados
     email: str = dados.username
     senha: str = dados.password
@@ -192,12 +211,34 @@ def autenticar(dados: Annotated[OAuth2PasswordRequestForm, Depends()]):
     return UsuarioControlador.autenticarUsuario(email, senha)
 
 
+@roteador.delete(
+    "/login",
+    name="Desautenticar",
+    description="""
+    Desautentica o token fornecido.
+
+    Caso o parâmetro todos seja fornecido, todas as sessões ativas do usuário serão deslogadas.
+    """,
+    status_code=status.HTTP_200_OK,
+    responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
+)
+def desautenticar(
+    token: Annotated[str, Depends(tokenAcesso)], todos: bool | None = False
+):
+    usuario = getUsuarioAutenticado(token)
+    if todos:
+        TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
+    else:
+        TokenAutenticacaoBD.deletar(token)
+
+
 @roteador.put(
     "/{id}/email",
     name="Editar email do usuário autenticado",
     description="""O usuário é capaz de editar seu email""",
 )
 def editarEmail(
+    tasks: BackgroundTasks,
     id: str,
     dadosEmail: UsuarioAtualizarEmail,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
@@ -212,7 +253,7 @@ def editarEmail(
         novoEmail = dadosEmail.novoEmail.lower().strip()
         dadosEmail.novoEmail = novoEmail
 
-        UsuarioControlador.editarEmail(dadosEmail, id)
+        UsuarioControlador.editarEmail(dadosEmail, id, tasks)
 
         TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
     else:
@@ -257,13 +298,38 @@ def editarFoto(
         UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
 
 
+@roteador.post(
+    "/{id}/petiano",
+    name="Promover usuário a petiano",
+    description="Promove o usuário especificado a petiano.",
+)
+def promoverPetiano(
+    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...
+):
+    UsuarioControlador.promoverPetiano(id)
+
+
+@roteador.delete(
+    "/{id}/petiano",
+    name="Rebaixar usuário a não petiano",
+    description="""Remove o status de petiano do usuário especificado.
+        Por padrão, a conta passa a ser do tipo egresso, mas caso o parâmetro egresso seja falso, o usuário é rebaixado a estudante.""",
+)
+def demitirPetiano(
+    id: str,
+    egresso: bool | None = True,
+    _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
+):
+    UsuarioControlador.demitirPetiano(id, egresso if egresso is not None else True)
+
+
 @roteador.get(
     "/{id}",
     name="Obter detalhes do usuário com id fornecido",
     description="Retorna detalhes do usuário com id fornecido.\n\n"
     "Usuários não petianos só podem ver seus próprios dados.",
     status_code=status.HTTP_200_OK,
-    response_model=Usuario,
+    response_model=UsuarioLerAdmin,
     responses=listaRespostasExcecoes(UsuarioNaoEncontradoExcecao),
 )
 def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str):
@@ -298,10 +364,11 @@ def patchUsuario(
 
 @roteador.delete(
     "/{id}",
-    name="Remove o usuário indicado"
-    "Usuários não petianos só podem excluir seus próprios perfis.",
+    name="Remove o usuário indicado",
     description="""
     Elimina o usuário.
+
+    Usuários não petianos só podem excluir seus próprios perfis.
     """,
 )
 def deletaUsuario(
