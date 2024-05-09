@@ -177,13 +177,13 @@ def recuperaConta(
     status_code=status.HTTP_200_OK,
     responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
-def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
+def trocaSenha(tasks: BackgroundTasks, token: str, senha: Annotated[SecretStr, Form()]):
     # Validacao basica da senha
     if not ValidacaoCadastro.senha(senha.get_secret_value()):
         raise HTTPException(status_code=400, detail="Senha inválida.")
 
     # Despacha o token para o controlador
-    UsuarioControlador.trocarSenha(token, senha.get_secret_value())
+    UsuarioControlador.trocarSenha(token, senha.get_secret_value(), tasks)
 
 
 @roteador.post(
@@ -267,6 +267,7 @@ def editarEmail(
     seja selecionada, todos as sessões serão deslogadas ao trocar a senha.""",
 )
 def editarSenha(
+    tasks: BackgroundTasks,
     id: str,
     dadosSenha: UsuarioAtualizarSenha,
     deslogarAoTrocarSenha: bool,
@@ -275,6 +276,7 @@ def editarSenha(
     if usuario.id == id:
         # efetua troca de senha
         UsuarioControlador.editaSenha(
+            tasks,
             dadosSenha,
             usuario,
         )

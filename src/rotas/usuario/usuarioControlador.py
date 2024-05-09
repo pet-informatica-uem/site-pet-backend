@@ -12,7 +12,12 @@ from src.autenticacao.jwtoken import (
     processaTokenTrocaSenha,
 )
 from src.config import config
-from src.email.operacoesEmail import enviarEmailResetSenha, enviarEmailVerificacao
+from src.email.operacoesEmail import (
+    DadoAlterado,
+    enviarEmailAlteracaoDados,
+    enviarEmailResetSenha,
+    enviarEmailVerificacao,
+)
 from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
 from src.modelos.bd import TokenAutenticacaoBD, UsuarioBD, cliente
 from src.modelos.excecao import (
@@ -118,7 +123,7 @@ class UsuarioControlador:
             pass
 
     @staticmethod
-    def trocarSenha(token: str, senha: str) -> None:
+    def trocarSenha(token: str, senha: str, tasks: BackgroundTasks) -> None:
         # Verifica o token e recupera o email
         email: str = processaTokenTrocaSenha(token)
 
@@ -127,6 +132,8 @@ class UsuarioControlador:
         usuario.senha = hashSenha(senha)
 
         UsuarioBD.atualizar(usuario)
+
+        tasks.add_task(enviarEmailAlteracaoDados, usuario.email, DadoAlterado.SENHA)
 
         logging.info("Senha atualizada para o usuário com ID: " + str(usuario.id))
 
@@ -237,7 +244,9 @@ class UsuarioControlador:
         UsuarioBD.deletar(id)
 
     @staticmethod
-    def editaSenha(dadosSenha: UsuarioAtualizarSenha, usuario: Usuario) -> None:
+    def editaSenha(
+        dadosSenha: UsuarioAtualizarSenha, usuario: Usuario, tasks: BackgroundTasks
+    ) -> None:
         """
         Atualiza a senha de um usuário existente caso a senha antiga seja correta.
 
@@ -246,6 +255,8 @@ class UsuarioControlador:
         if conferirHashSenha(dadosSenha.senha.get_secret_value(), usuario.senha):
             usuario.senha = hashSenha(dadosSenha.novaSenha.get_secret_value())
             UsuarioBD.atualizar(usuario)
+            tasks.add_task(enviarEmailAlteracaoDados, usuario.email, DadoAlterado.SENHA)
+
         else:
             raise APIExcecaoBase(message="Senha incorreta")
 
@@ -265,6 +276,7 @@ class UsuarioControlador:
         usuario = UsuarioControlador.getUsuario(id)
 
         if conferirHashSenha(dadosEmail.senha.get_secret_value(), usuario.senha):
+            emailAntigo = usuario.email
             usuario.email = dadosEmail.novoEmail
             usuario.emailConfirmado = False
 
@@ -272,7 +284,9 @@ class UsuarioControlador:
             mensagemEmail: str = (
                 f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
             )
+
             tasks.add_task(enviarEmailVerificacao, usuario.email, mensagemEmail)
+            tasks.add_task(enviarEmailAlteracaoDados, emailAntigo, DadoAlterado.EMAIL)
         else:
             raise APIExcecaoBase(message="Senha incorreta")
 
