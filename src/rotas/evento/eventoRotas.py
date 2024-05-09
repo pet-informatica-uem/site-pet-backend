@@ -8,6 +8,8 @@ from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
 
+from src.modelos.evento.eventoQuery import EventoQuery
+
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"
 
@@ -16,11 +18,11 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
 @roteador.get(
     "/",
-    name="Recuperar todos os eventos",
-    description="Retorna todos os eventos cadastrados no banco de dados.",
+    name="Recuperar eventos",
+    description="Retorna todos os eventos cadastrados no banco de dados filtrados pelo parâmetro 'query'.",
 )
-def getEventos() -> list[Evento]:
-    return EventoControlador.getEventos()
+def getEventos(query: EventoQuery) -> list[Evento]:
+    return EventoControlador.getEventos(query)
 
 
 @roteador.get(
