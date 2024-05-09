@@ -28,7 +28,7 @@ def enviarEmailVerificacao(emailDestino: str, link: str) -> None:
     mensagem: MIMEMultipart = MIMEMultipart()
     mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
-    mensagem["Subject"] = "Pet-Info - Verficação de Conta"
+    mensagem["Subject"] = "PET-Info - Verficação de Conta"
     content = "Clique no link para verificar sua conta: " + link
     mensagem.attach(MIMEText(content, "plain", "utf-8"))
 

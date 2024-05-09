@@ -2,7 +2,7 @@ import logging
 import time
 from datetime import datetime
 
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 from PIL import Image
 
 from src.config import config
@@ -29,6 +29,7 @@ class InscritosControlador:
         idUsuario: str,
         dadosInscrito: InscritoCriar,
         comprovante: UploadFile | None,
+        tasks: BackgroundTasks,
     ):
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
@@ -54,7 +55,7 @@ class InscritosControlador:
                     raise APIExcecaoBase(message="Comprovante inválido.")
 
                 deletaImagem(idUsuario, ["eventos", evento.id, "comprovantes"])
-                caminhoComprovante: str | None = armazenaComprovante(
+                caminhoComprovante = armazenaComprovante(
                     evento.id, idUsuario, comprovante.file
                 )
             else:
@@ -62,7 +63,7 @@ class InscritosControlador:
                     message="Comprovante obrigatório para eventos pagos."
                 )
         else:
-            caminhoComprovante: str | None = None
+            caminhoComprovante = None
 
         d = {
             "idEvento": idEvento,
@@ -72,7 +73,7 @@ class InscritosControlador:
 
         d.update(**dadosInscrito.model_dump())
         inscrito = Inscrito(**d)
-        inscrito.comprovante = caminhoComprovante  # type: ignore
+        inscrito.comprovante = caminhoComprovante.name if caminhoComprovante else None  # type: ignore
 
         if inscrito.tipoVaga == TipoVaga.COM_NOTE:
             evento.vagasDisponiveisComNote -= 1
@@ -109,7 +110,8 @@ class InscritosControlador:
             raise APIExcecaoBase(message="Erro ao criar inscrito")
 
         # Envia email de confirmação de inscrição
-        enviarEmailConfirmacaoEvento(
+        tasks.add_task(
+            enviarEmailConfirmacaoEvento,
             usuario.email,
             evento.id,
             inscrito.tipoVaga,

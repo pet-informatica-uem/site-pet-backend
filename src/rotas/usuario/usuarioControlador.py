@@ -2,7 +2,7 @@ import logging
 import secrets
 from datetime import datetime, timedelta
 
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
@@ -25,6 +25,7 @@ from src.modelos.excecao import (
     EmailNaoConfirmadoExcecao,
     EmailSenhaIncorretoExcecao,
     ImagemInvalidaExcecao,
+    ImagemNaoSalvaExcecao,
     NaoAtualizadaExcecao,
     NaoAutenticadoExcecao,
     NaoEncontradoExcecao,
@@ -62,7 +63,7 @@ class UsuarioControlador:
             UsuarioBD.atualizar(usuario)
 
     @staticmethod
-    def cadastrarUsuario(dadosUsuario: UsuarioCriar) -> str:
+    def cadastrarUsuario(dadosUsuario: UsuarioCriar, tasks: BackgroundTasks) -> str:
         """
         Cria uma conta com os dados fornecidos, e envia um email
         de confirmação de criação de conta ao endereço fornecido.
@@ -103,7 +104,7 @@ class UsuarioControlador:
             config.CAMINHO_BASE + "/usuario/confirma-email?token=" + token
         )
 
-        enviarEmailVerificacao(dadosUsuario.email, linkConfirmacao)
+        tasks.add_task(enviarEmailVerificacao, dadosUsuario.email, linkConfirmacao)
 
         # cria o usuário no bd
         UsuarioBD.criar(usuario)
@@ -112,14 +113,17 @@ class UsuarioControlador:
 
     # Envia um email para trocar de senha se o email estiver cadastrado no bd
     @staticmethod
-    def recuperarConta(email: str) -> None:
-        UsuarioBD.buscar("email", email)
-        # Gera o link e envia o email se o usuário estiver cadastrado
-        link: str = geraLinkEsqueciSenha(email)
-        enviarEmailResetSenha(email, link)  # Envia o email
+    def recuperarConta(email: str, tasks: BackgroundTasks) -> None:
+        try:
+            UsuarioBD.buscar("email", email)
+            # Gera o link e envia o email se o usuário estiver cadastrado
+            link: str = geraLinkEsqueciSenha(email)
+            tasks.add_task(enviarEmailResetSenha, email, link)  # Envia o email
+        except NaoEncontradoExcecao:
+            pass
 
     @staticmethod
-    def trocarSenha(token: str, senha: str) -> None:
+    def trocarSenha(token: str, senha: str, tasks: BackgroundTasks) -> None:
         # Verifica o token e recupera o email
         email: str = processaTokenTrocaSenha(token)
 
@@ -129,7 +133,7 @@ class UsuarioControlador:
 
         UsuarioBD.atualizar(usuario)
 
-        enviarEmailAlteracaoDados(usuario.email, DadoAlterado.SENHA)
+        tasks.add_task(enviarEmailAlteracaoDados, usuario.email, DadoAlterado.SENHA)
 
         logging.info("Senha atualizada para o usuário com ID: " + str(usuario.id))
 
@@ -240,7 +244,9 @@ class UsuarioControlador:
         UsuarioBD.deletar(id)
 
     @staticmethod
-    def editaSenha(dadosSenha: UsuarioAtualizarSenha, usuario: Usuario) -> None:
+    def editaSenha(
+        dadosSenha: UsuarioAtualizarSenha, usuario: Usuario, tasks: BackgroundTasks
+    ) -> None:
         """
         Atualiza a senha de um usuário existente caso a senha antiga seja correta.
 
@@ -249,13 +255,15 @@ class UsuarioControlador:
         if conferirHashSenha(dadosSenha.senha.get_secret_value(), usuario.senha):
             usuario.senha = hashSenha(dadosSenha.novaSenha.get_secret_value())
             UsuarioBD.atualizar(usuario)
-            enviarEmailAlteracaoDados(usuario.email, DadoAlterado.SENHA)
+            tasks.add_task(enviarEmailAlteracaoDados, usuario.email, DadoAlterado.SENHA)
 
         else:
             raise APIExcecaoBase(message="Senha incorreta")
 
     @staticmethod
-    def editarEmail(dadosEmail: UsuarioAtualizarEmail, id: str) -> None:
+    def editarEmail(
+        dadosEmail: UsuarioAtualizarEmail, id: str, tasks: BackgroundTasks
+    ) -> None:
         """
         Atualiza o email de um usuário existente.
 
@@ -276,9 +284,9 @@ class UsuarioControlador:
             mensagemEmail: str = (
                 f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
             )
-            enviarEmailVerificacao(usuario.email, mensagemEmail)
-            enviarEmailAlteracaoDados(emailAntigo, DadoAlterado.EMAIL)
 
+            tasks.add_task(enviarEmailVerificacao, usuario.email, mensagemEmail)
+            tasks.add_task(enviarEmailAlteracaoDados, emailAntigo, DadoAlterado.EMAIL)
         else:
             raise APIExcecaoBase(message="Senha incorreta")
 
@@ -295,8 +303,12 @@ class UsuarioControlador:
             raise ImagemInvalidaExcecao()
 
         deletaImagem(usuario.id, ["usuarios"])
-        caminhoFotoPerfil: str = armazenaFotoUsuario(usuario.id, foto.file)  # type: ignore
-        usuario.foto = caminhoFotoPerfil  # type: ignore
+
+        caminhoFotoPerfil = armazenaFotoUsuario(usuario.id, foto.file)
+        if not caminhoFotoPerfil:
+            raise ImagemNaoSalvaExcecao()
+
+        usuario.foto = caminhoFotoPerfil.name
 
         # atualiza no bd
         UsuarioBD.atualizar(usuario)

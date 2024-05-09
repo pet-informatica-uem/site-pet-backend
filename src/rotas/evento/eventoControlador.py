@@ -16,7 +16,11 @@ from src.img.operacoesImagem import (
 from src.modelos.bd import EventoBD, InscritoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
-from src.modelos.excecao import APIExcecaoBase, ImagemInvalidaExcecao
+from src.modelos.excecao import (
+    APIExcecaoBase,
+    ImagemInvalidaExcecao,
+    ImagemNaoSalvaExcecao,
+)
 from src.modelos.inscrito.inscrito import Inscrito
 
 
@@ -102,8 +106,12 @@ class EventoControlador:
                 raise ImagemInvalidaExcecao()
 
             deletaImagem(evento.id, ["eventos", evento.id, "arte"])
-            caminhoArte: str | None = armazenaArteEvento(evento.id, arte.file)
-            evento.imagemCapa = caminhoArte
+            caminhoArte = armazenaArteEvento(evento.id, arte.file)
+
+            if not caminhoArte:
+                raise ImagemNaoSalvaExcecao()
+
+            evento.imagemCapa = caminhoArte.name
 
             # atualiza no bd
             EventoBD.atualizar(evento)
@@ -113,8 +121,12 @@ class EventoControlador:
                 raise ImagemInvalidaExcecao()
 
             deletaImagem(evento.id, ["eventos", evento.id, "cracha"])
-            caminhoCracha: str | None = armazenaCrachaEvento(evento.id, cracha.file)
-            evento.imagemCracha = caminhoCracha
+            caminhoCracha = armazenaCrachaEvento(evento.id, cracha.file)
+
+            if not caminhoCracha:
+                raise ImagemNaoSalvaExcecao()
+
+            evento.imagemCracha = caminhoCracha.name
 
             # atualiza no bd
             EventoBD.atualizar(evento)
@@ -141,6 +153,7 @@ class EventoControlador:
             _id=secrets.token_hex(16),
             vagasDisponiveisComNote=dadosEvento.vagasComNote,
             vagasDisponiveisSemNote=dadosEvento.vagasSemNote,
+            inicioEvento=dadosEvento.dias[-1][0],
             fimEvento=dadosEvento.dias[-1][1],
         )
         EventoBD.criar(evento)

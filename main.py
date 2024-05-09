@@ -1,16 +1,19 @@
 import locale
 import logging
 
-from apscheduler.schedulers.background import BackgroundScheduler
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.middleware.tamanhoLimite import TamanhoLimiteMiddleware
+from src.middleware.tempoLimite import TempoLimiteMiddleware
 from src.config import config
 from src.img.criaPastas import criaPastas
-from src.middlewareExcecao import requestHandler as middlewareExcecao
+from src.middleware.excecoes import ExcecaoAPIMiddleware
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
+from src.limiter import limiter
 
 logging.basicConfig(
     handlers=[
@@ -22,11 +25,24 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
-origins = ["*"]
+origins = [
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "http://localhost",
+    "https://localhost",
+    "http://localhost:8000",
+    "https://localhost:8000",
+    "http://www.din.uem.br",
+    "https://www.din.uem.br",
+    "https://www.petinfouem.com.br",
+]
 
 petBack = FastAPI(root_path=config.ROOT_PATH)
+petBack.state.limiter = limiter
 
-petBack.middleware("http")(middlewareExcecao)
+petBack.add_middleware(TamanhoLimiteMiddleware, size_limit=5 * 1024 * 1024)
+petBack.add_middleware(BaseHTTPMiddleware, dispatch=TempoLimiteMiddleware(30))
+petBack.add_middleware(BaseHTTPMiddleware, dispatch=ExcecaoAPIMiddleware)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
