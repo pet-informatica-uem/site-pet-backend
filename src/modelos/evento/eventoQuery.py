@@ -1,6 +1,6 @@
 from enum import Enum
 
-class eventoQuery(str, Enum):
+class EventoQuery(str, Enum):
     PASSADO = 'passados'
     PRESENTE = 'atuais'
     FUTURO = 'futuros'
