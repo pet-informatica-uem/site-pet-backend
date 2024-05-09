@@ -2,7 +2,7 @@ import logging
 import time
 from datetime import datetime
 
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 from PIL import Image
 
 from src.config import config
@@ -29,6 +29,7 @@ class InscritosControlador:
         idUsuario: str,
         dadosInscrito: InscritoCriar,
         comprovante: UploadFile | None,
+        tasks: BackgroundTasks,
     ):
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
@@ -109,7 +110,8 @@ class InscritosControlador:
             raise APIExcecaoBase(message="Erro ao criar inscrito")
 
         # Envia email de confirmação de inscrição
-        enviarEmailConfirmacaoEvento(
+        tasks.add_task(
+            enviarEmailConfirmacaoEvento,
             usuario.email,
             evento.id,
             inscrito.tipoVaga,

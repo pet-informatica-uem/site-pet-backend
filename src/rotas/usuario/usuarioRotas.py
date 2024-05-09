@@ -1,7 +1,16 @@
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+    BackgroundTasks,
+)
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
 
@@ -77,9 +86,11 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
     responses=listaRespostasExcecoes(JaExisteExcecao, APIExcecaoBase),
 )
 @limiter.limit("3/minute")
-def cadastrarUsuario(request: Request, usuario: UsuarioCriar) -> str:
+def cadastrarUsuario(
+    tasks: BackgroundTasks, request: Request, usuario: UsuarioCriar
+) -> str:
     # despacha para controlador
-    usuarioCadastrado = UsuarioControlador.cadastrarUsuario(usuario)
+    usuarioCadastrado = UsuarioControlador.cadastrarUsuario(usuario, tasks)
 
     # retorna os dados do usuario cadastrado
     return usuarioCadastrado
@@ -145,13 +156,15 @@ def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     """,
 )
 @limiter.limit("3/minute")
-def recuperaConta(request: Request, email: Annotated[EmailStr, Form()]):
+def recuperaConta(
+    tasks: BackgroundTasks, request: Request, email: Annotated[EmailStr, Form()]
+):
     # Verifica se o email é válido
     if not ValidacaoCadastro.email(email):
         raise ErroValidacaoExcecao(message="Email inválido.")
 
     # Passa o email para o controlador
-    UsuarioControlador.recuperarConta(email)
+    UsuarioControlador.recuperarConta(email, tasks)
 
 
 @roteador.post(
@@ -224,6 +237,7 @@ def desautenticar(
     description="""O usuário é capaz de editar seu email""",
 )
 def editarEmail(
+    tasks: BackgroundTasks,
     id: str,
     dadosEmail: UsuarioAtualizarEmail,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
@@ -235,7 +249,7 @@ def editarEmail(
         novoEmail = dadosEmail.novoEmail.lower().strip()
         dadosEmail.novoEmail = novoEmail
 
-        UsuarioControlador.editarEmail(dadosEmail, id)
+        UsuarioControlador.editarEmail(dadosEmail, id, tasks)
 
         TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
     else:
@@ -278,6 +292,31 @@ def editarFoto(
 ) -> None:
     if usuario.id == id:
         UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
+
+
+@roteador.post(
+    "/{id}/petiano",
+    name="Promover usuário a petiano",
+    description="Promove o usuário especificado a petiano.",
+)
+def promoverPetiano(
+    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...
+):
+    UsuarioControlador.promoverPetiano(id)
+
+
+@roteador.delete(
+    "/{id}/petiano",
+    name="Rebaixar usuário a não petiano",
+    description="""Remove o status de petiano do usuário especificado.
+        Por padrão, a conta passa a ser do tipo egresso, mas caso o parâmetro egresso seja falso, o usuário é rebaixado a estudante.""",
+)
+def demitirPetiano(
+    id: str,
+    egresso: bool | None = True,
+    _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
+):
+    UsuarioControlador.demitirPetiano(id, egresso if egresso is not None else True)
 
 
 @roteador.get(
