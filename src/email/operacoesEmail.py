@@ -1,5 +1,7 @@
+from enum import Enum
 import logging
 import smtplib
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
@@ -88,6 +90,37 @@ def enviarEmailConfirmacaoEvento(
         )
     )
 
+    return enviarEmail(emailDestino, mensagem)
+
+
+class DadoAlterado(Enum):
+    EMAIL = "email"
+    SENHA = "senha"
+
+
+# Função que envia email assim que senha/email forem trocados
+def enviarEmailAlteracaoDados(emailDestino: str, dadoAlterado: DadoAlterado) -> None:
+    mensagem: MIMEMultipart = MIMEMultipart()
+    mensagem["From"] = config.EMAIL_SMTP
+    mensagem["To"] = emailDestino
+    mensagem["Subject"] = "PET-Info - Alteração de Dados"
+
+    agora = datetime.now()
+    horario_atual = agora.strftime("%H:%M")
+
+    # Verifica o tipo de dado alterado e ajusta a mensagem de acordo
+    if dadoAlterado == DadoAlterado.EMAIL:
+        texto = "Seu email foi alterado com sucesso às " + horario_atual + "."
+    else:  # dadoAlterado == DadoAlterado.SENHA:
+        texto = "Sua senha foi alterada com sucesso às " + horario_atual + "."
+
+    mensagem.attach(
+        MIMEText(
+            texto,
+            "plain",
+            "utf-8",
+        )
+    )
     return enviarEmail(emailDestino, mensagem)
 
 

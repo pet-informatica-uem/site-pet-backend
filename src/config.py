@@ -2,7 +2,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 from pydantic_core import Url
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 # Horario inicio para as rotinas
@@ -80,12 +80,12 @@ class Configuracoes(BaseSettings):
     URL-raiz do servidor.
     """
 
-    class Config:
-        env_prefix = "PET_API_"
-
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_prefix="PET_API_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+    )
 
 
 config: Configuracoes = Configuracoes()
