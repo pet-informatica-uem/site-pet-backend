@@ -1,15 +1,16 @@
 from datetime import datetime
-from pydantic import BaseModel, EmailStr, SecretStr, field_validator
+from typing import Annotated
+from pydantic import BaseModel, EmailStr, SecretStr, StringConstraints, field_validator
 
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 
 
 class UsuarioCriar(BaseModel):
-    nome: str
+    nome: Annotated[str, StringConstraints(max_length=240)]
     email: EmailStr
     cpf: str
     senha: SecretStr
-    curso: str
+    curso: Annotated[str, StringConstraints(max_length=240)]
 
     @field_validator("cpf")
     def cpf_valido(cls, v: str):
@@ -39,6 +40,7 @@ class UsuarioLer(BaseModel):
     github: str | None = None
     linkedin: str | None = None
     instagram: str | None = None
+
 
 class UsuarioLerAdmin(UsuarioLer):
     id: str

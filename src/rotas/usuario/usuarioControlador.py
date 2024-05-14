@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from fastapi import BackgroundTasks, UploadFile
 
+from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
     geraLinkEsqueciSenha,
@@ -129,6 +130,9 @@ class UsuarioControlador:
 
         usuario: Usuario = UsuarioBD.buscar("email", email)
 
+        if not ValidacaoCadastro.senha(senha):
+            raise ValueError("Senha inválida")
+
         usuario.senha = hashSenha(senha)
 
         UsuarioBD.atualizar(usuario)
@@ -181,6 +185,9 @@ class UsuarioControlador:
             raise NaoAutenticadoExcecao()
 
         if usuario := UsuarioBD.buscar("_id", id):
+            if not usuario.emailConfirmado:
+                raise EmailNaoConfirmadoExcecao()
+
             return usuario
         else:
             raise NaoAutenticadoExcecao()

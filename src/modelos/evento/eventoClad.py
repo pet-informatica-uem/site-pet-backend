@@ -1,19 +1,17 @@
 from datetime import datetime
+from typing import Self
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
 
 from src.modelos.evento.evento import Evento
 
 
 class EventoCriar(BaseModel):
     titulo: str
-    "Título do evento."
 
     descricao: str
-    "Descrição do evento."
 
     preRequisitos: list[str] = []
-    "Pré requisitos para participar do evento."
 
     inicioInscricao: datetime
 
@@ -31,6 +29,27 @@ class EventoCriar(BaseModel):
 
     valor: float
 
+    @field_validator("dias")
+    def diasValidos(
+        cls, dias: list[tuple[datetime, datetime]]
+    ) -> list[tuple[datetime, datetime]]:
+        for i, dia in enumerate(dias):
+            if dia[0] > dia[1]:
+                raise ValueError(
+                    f"A data de início do dia {i} deve ser anterior à data de fim do dia {i}."
+                )
+
+        return dias
+
+    @model_validator(mode="after")
+    def inscricoesValidas(self) -> Self:
+        if self.inicioInscricao > self.fimInscricao:
+            raise ValueError(
+                "A data de início das inscrições deve ser anterior à data de fim das inscrições."
+            )
+
+        return self
+
 
 class EventoLer(Evento):
     pass
@@ -38,13 +57,10 @@ class EventoLer(Evento):
 
 class EventoAtualizar(BaseModel):
     titulo: str | None = None
-    "Título do evento."
 
     descricao: str | None = None
-    "Descrição do evento."
 
     preRequisitos: list[str] | None = None
-    "Pré requisitos para participar do evento."
 
     inicioInscricao: datetime | None = None
 
@@ -62,6 +78,28 @@ class EventoAtualizar(BaseModel):
 
     valor: float | None = None
 
+    @field_validator("dias")
+    def diasValidos(
+        cls, dias: list[tuple[datetime, datetime]] | None
+    ) -> list[tuple[datetime, datetime]] | None:
+        if dias:
+            for i, dia in enumerate(dias):
+                if dia[0] > dia[1]:
+                    raise ValueError(
+                        f"A data de início do dia {i} deve ser anterior à data de fim do dia {i}."
+                    )
 
-class EventoDeletar(BaseModel):
-    id: str
+        return dias
+
+    @model_validator(mode="after")
+    def inscricoesValidas(self) -> Self:
+        if (
+            self.inicioInscricao
+            and self.fimInscricao
+            and self.inicioInscricao > self.fimInscricao
+        ):
+            raise ValueError(
+                "A data de início das inscrições deve ser anterior à data de fim das inscrições."
+            )
+
+        return self
