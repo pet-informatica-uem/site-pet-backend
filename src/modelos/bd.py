@@ -11,7 +11,7 @@ from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoEx
 from src.modelos.inscrito.inscrito import Inscrito
 from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
 
-from src.modelos.evento.eventoQuery import EventoQuery
+from src.modelos.evento.eventoQuery import eventoQuery
 
 cliente: MongoClient = MongoClient(str(config.URI_BD))
 
@@ -102,22 +102,23 @@ class EventoBD:
         colecaoEventos.delete_one({"_id": id})
 
     @staticmethod
-    def listar(query: EventoQuery) -> list[Evento]:
+    def listar(query: eventoQuery) -> list[Evento]:
         resultado: list[Evento]
 
-        if query == EventoQuery.PASSADO:
+        
+        if query == eventoQuery.PASSADO:
             dbQuery = {"fimEvento": {"$lt": datetime.now()}}
             resultadoBusca = colecaoEventos.find(dbQuery)
-        elif query == EventoQuery.PRESENTE:
+        elif query == eventoQuery.PRESENTE:
             dbQuery = {
                 "inicioEvento": {"$lt": datetime.now()},
                 "fimEvento": {"$gt": datetime.now()},
             }
             resultadoBusca = colecaoEventos.find(dbQuery)
-        elif query == EventoQuery.FUTURO:
+        elif query == eventoQuery.FUTURO:
             dbQuery = {"inicioEvento": {"$gt": datetime.now()}}
             resultadoBusca = colecaoEventos.find(dbQuery)
-        else:
+        else :
             resultadoBusca = colecaoEventos.find()
 
         resultado = [Evento(**e) for e in resultadoBusca]

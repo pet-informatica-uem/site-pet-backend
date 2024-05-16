@@ -22,12 +22,12 @@ from src.modelos.excecao import (
     ImagemNaoSalvaExcecao,
 )
 from src.modelos.inscrito.inscrito import Inscrito
-from src.modelos.evento.eventoQuery import EventoQuery
+from src.modelos.evento.eventoQuery import eventoQuery
 
 
 class EventoControlador:
     @staticmethod
-    def getEventos(query: EventoQuery) -> list[Evento]:
+    def getEventos(query: eventoQuery) -> list[Evento]:
         return EventoBD.listar(query)
 
     @staticmethod

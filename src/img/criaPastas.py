@@ -4,11 +4,7 @@ from pathlib import Path
 
 def criaPastas():
     """Cria a estrutura de pastas para armazenar as imagens, caso já não exista."""
-    directories = [
-        "img",
-        "img/usuarios",
-        "img/eventos",
-    ]
+    directories = ["img", "img/usuarios", "img/eventos", "logs"]
 
     for directory in directories:
         path = Path.cwd() / directory
