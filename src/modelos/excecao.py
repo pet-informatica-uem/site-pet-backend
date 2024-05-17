@@ -30,6 +30,9 @@ class APIExcecaoBase(Exception):
     def response_model(cls):
         return {cls.code: {"model": cls.model}}
 
+    def __str__(self):
+        return self.message
+
 
 class ImagemInvalidaExcecao(APIExcecaoBase):
     message = "A foto não é válida."

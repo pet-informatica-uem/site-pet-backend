@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
 from typing import Annotated
 
@@ -17,8 +17,8 @@ from pydantic import BaseModel, EmailStr, SecretStr
 
 from src.config import config
 from src.limiter import limiter
-from src.modelos.registro.registro import Registro
-from src.modelos.bd import RegistroBD
+from src.modelos.registro.registroLogin import RegistroLogin
+from src.modelos.bd import RegistroLoginBD
 from src.modelos.bd import TokenAutenticacaoBD
 from src.modelos.excecao import (
     APIExcecaoBase,
@@ -210,7 +210,29 @@ def autenticar(
     email: str = email.lower().strip()
 
     # chama controlador
-    return UsuarioControlador.autenticarUsuario(email, senha)
+    try:
+        token = UsuarioControlador.autenticarUsuario(email, senha)
+
+        reg: RegistroLogin = RegistroLogin(
+            emailUsuario=email,
+            ipUsuario=request.client.host,
+            dataHora=datetime.now(UTC),
+            sucesso=True,
+        )
+        RegistroLoginBD.criar(reg)
+
+        return token
+    except Exception as e:
+        reg: RegistroLogin = RegistroLogin(
+            emailUsuario=email,
+            ipUsuario=request.client.host,
+            dataHora=datetime.now(UTC),
+            sucesso=False,
+            motivo=str(e),
+        )
+        RegistroLoginBD.criar(reg)
+
+        raise e
 
 
 @roteador.delete(
@@ -271,7 +293,6 @@ def editarSenha(
     dadosSenha: UsuarioAtualizarSenha,
     deslogarAoTrocarSenha: bool,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,  # type: ignore
-
 ):
     if usuario.id == id:
         # efetua troca de senha

@@ -2,10 +2,9 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class Registro(BaseModel):
-
-    idUsuario: str
-    "Identificador único."
+class RegistroLogin(BaseModel):
+    emailUsuario: str
+    "E-mail do usuário."
 
     ipUsuario: str
     "Endereço IP do usuário."
@@ -15,3 +14,6 @@ class Registro(BaseModel):
 
     sucesso: bool
     "Indica se o login foi bem sucedido."
+
+    motivo: str = ""
+    "Em caso de falha, o motivo do erro."
