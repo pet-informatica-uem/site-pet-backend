@@ -242,7 +242,7 @@ class RegistroLoginBD:
         if not colecaoRegistro.find_one({"emailUsuario": email}):
             raise NaoEncontradoExcecao(message="Nenhum registro encontrado.")
         else:
-            return [RegistroLogin(**r) for r in colecaoRegistro.find({emailUsuario: email})]  # type: ignore
+            return [RegistroLogin(**r) for r in colecaoRegistro.find({"emailUsuario": email})]  # type: ignore
 
     @staticmethod
     def listarTodos() -> list[RegistroLogin]:

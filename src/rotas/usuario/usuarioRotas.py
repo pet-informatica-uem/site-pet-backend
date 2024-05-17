@@ -402,3 +402,23 @@ def deletaUsuario(
         UsuarioControlador.deletarUsuario(id)
     else:
         raise NaoAutorizadoExcecao()
+
+
+@roteador.get(
+    "/{id}/historico-login",
+    name="Histórico de login do usuário",
+    description="""
+    Retorna o histórico de login do usuário com o ID fornecido.
+
+    Usuários não petianos só podem ver seu próprio histórico.
+    """,
+    status_code=status.HTTP_200_OK,
+    response_model=list[RegistroLogin],
+)
+def getHistoricoLogin(
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str
+):
+    if usuario.id != id and usuario.tipoConta != TipoConta.PETIANO:
+        raise NaoAutorizadoExcecao()
+
+    return UsuarioControlador.getHistoricoLogin(usuario.email)

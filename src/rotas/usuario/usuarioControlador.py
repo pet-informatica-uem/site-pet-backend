@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 from fastapi import BackgroundTasks, UploadFile
 
+from src.modelos.registro.registroLogin import RegistroLogin
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
@@ -20,7 +21,7 @@ from src.email.operacoesEmail import (
     enviarEmailVerificacao,
 )
 from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
-from src.modelos.bd import TokenAutenticacaoBD, UsuarioBD, cliente
+from src.modelos.bd import RegistroLoginBD, TokenAutenticacaoBD, UsuarioBD, cliente
 from src.modelos.excecao import (
     APIExcecaoBase,
     EmailNaoConfirmadoExcecao,
@@ -361,3 +362,10 @@ class UsuarioControlador:
 
         # desautentica o usuário para forçar ressincronização
         TokenAutenticacaoBD.deletarTokensUsuario(id)
+
+    @staticmethod
+    def getHistoricoLogin(email: str) -> list[RegistroLogin]:
+        """
+        Retorna o histórico de logins do usuário.
+        """
+        return RegistroLoginBD.listarRegistrosUsuario(email)
