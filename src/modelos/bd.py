@@ -4,6 +4,7 @@ from datetime import datetime
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 
+from src.modelos.registro.registroLogin import RegistroLogin
 from src.config import config
 from src.modelos.autenticacao.autenticacao import TokenAutenticacao
 from src.modelos.evento.evento import Evento
@@ -26,6 +27,8 @@ colecaoEventos.create_index("titulo", unique=True)
 
 colecaoInscritos = cliente[config.NOME_BD]["inscritos"]
 colecaoInscritos.create_index([("idEvento", 1), ("idUsuario", 1)], unique=True)
+
+colecaoRegistro = cliente[config.NOME_BD]["registros"]
 
 
 class UsuarioBD:
@@ -105,7 +108,6 @@ class EventoBD:
     def listar(query: eventoQuery) -> list[Evento]:
         resultado: list[Evento]
 
-        
         if query == eventoQuery.PASSADO:
             dbQuery = {"fimEvento": {"$lt": datetime.now()}}
             resultadoBusca = colecaoEventos.find(dbQuery)
@@ -118,7 +120,7 @@ class EventoBD:
         elif query == eventoQuery.FUTURO:
             dbQuery = {"inicioEvento": {"$gt": datetime.now()}}
             resultadoBusca = colecaoEventos.find(dbQuery)
-        else :
+        else:
             resultadoBusca = colecaoEventos.find()
 
         resultado = [Evento(**e) for e in resultadoBusca]
@@ -221,3 +223,30 @@ class TokenAutenticacaoBD:
     @staticmethod
     def deletarTokensUsuario(idUsuario: str):
         colecaoTokens.delete_many({"idUsuario": idUsuario})
+
+
+class RegistroLoginBD:
+    @staticmethod
+    def criar(modelo: RegistroLogin):
+        """
+        Cria um registro de login no banco de dados.
+        """
+        colecaoRegistro.insert_one(modelo.model_dump())
+
+    @staticmethod
+    def listarRegistrosUsuario(email: str) -> list[RegistroLogin]:
+        """
+        Lista os registros de login de um usuário.
+        """
+        # Verifica se o email possui algum registro associado
+        if not colecaoRegistro.find_one({"emailUsuario": email}):
+            raise NaoEncontradoExcecao(message="Nenhum registro encontrado.")
+        else:
+            return [RegistroLogin(**r) for r in colecaoRegistro.find({"emailUsuario": email})]  # type: ignore
+
+    @staticmethod
+    def listarTodos() -> list[RegistroLogin]:
+        """
+        Lista todos os registros de login.
+        """
+        return [RegistroLogin(**r) for r in colecaoRegistro.find()]
