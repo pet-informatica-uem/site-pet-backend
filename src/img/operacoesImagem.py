@@ -1,5 +1,5 @@
-from pathlib import Path
 import time
+from pathlib import Path
 from typing import BinaryIO
 
 import PyPDF2
@@ -198,7 +198,7 @@ def __armazenaComprovante(
 
             # Converte o PDF na memória para uma lista de imagens
             imagens = convert_from_bytes(arquivo_pdf)
-            
+
             # Converte as imagens para RGB, caso necessário
             for image in imagens:
                 if image.mode != "RGB":
@@ -222,7 +222,7 @@ def __armazenaComprovante(
             pathDefinitivo = path / nome
             imagem_saida.save(pathDefinitivo)
             return pathDefinitivo
-        
+
         except Exception as e:
             return None
 

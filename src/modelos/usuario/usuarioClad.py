@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Annotated
+
 from pydantic import BaseModel, EmailStr, SecretStr, StringConstraints, field_validator
 
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro

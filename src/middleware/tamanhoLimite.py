@@ -1,6 +1,5 @@
 from fastapi import HTTPException, Request
-
-from starlette.types import ASGIApp, Message, Scope, Receive, Send
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from src.modelos.excecao import TamanhoLimiteExcedidoExcecao
 

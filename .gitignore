@@ -107,4 +107,4 @@ Icon
 /img
 
 # lock file
-.lock
+*.lock

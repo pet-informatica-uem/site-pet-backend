@@ -4,15 +4,14 @@ from datetime import datetime
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
 
-from src.modelos.registro.registroLogin import RegistroLogin
 from src.config import config
 from src.modelos.autenticacao.autenticacao import TokenAutenticacao
 from src.modelos.evento.evento import Evento
+from src.modelos.evento.eventoQuery import eventoQuery
 from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoExcecao
 from src.modelos.inscrito.inscrito import Inscrito
+from src.modelos.registro.registroLogin import RegistroLogin
 from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
-
-from src.modelos.evento.eventoQuery import eventoQuery
 
 cliente: MongoClient = MongoClient(str(config.URI_BD))
 

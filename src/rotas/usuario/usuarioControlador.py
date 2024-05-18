@@ -4,8 +4,6 @@ from datetime import datetime, timedelta
 
 from fastapi import BackgroundTasks, UploadFile
 
-from src.modelos.registro.registroLogin import RegistroLogin
-from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
     geraLinkEsqueciSenha,
@@ -33,6 +31,7 @@ from src.modelos.excecao import (
     NaoEncontradoExcecao,
     UsuarioNaoEncontradoExcecao,
 )
+from src.modelos.registro.registroLogin import RegistroLogin
 from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
 from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizar,
@@ -40,6 +39,7 @@ from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizarSenha,
     UsuarioCriar,
 )
+from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 
 
 class UsuarioControlador:
@@ -289,9 +289,7 @@ class UsuarioControlador:
             usuario.emailConfirmado = False
 
             UsuarioBD.atualizar(usuario)
-            mensagemEmail: str = (
-                f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
-            )
+            mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
 
             tasks.add_task(enviarEmailVerificacao, usuario.email, mensagemEmail)
             tasks.add_task(enviarEmailAlteracaoDados, emailAntigo, DadoAlterado.EMAIL)

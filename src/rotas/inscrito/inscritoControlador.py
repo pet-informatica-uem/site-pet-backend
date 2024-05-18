@@ -119,7 +119,7 @@ class InscritosControlador:
     @staticmethod
     def getInscritos(idEvento: str):
         return InscritoBD.listarInscritosEvento(idEvento)
-    
+
     @staticmethod
     def getInscrito(idEvento: str, idInscrito: str):
         return InscritoBD.buscar(idEvento, idInscrito)

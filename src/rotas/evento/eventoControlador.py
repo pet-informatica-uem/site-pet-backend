@@ -16,13 +16,13 @@ from src.img.operacoesImagem import (
 from src.modelos.bd import EventoBD, InscritoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
+from src.modelos.evento.eventoQuery import eventoQuery
 from src.modelos.excecao import (
     APIExcecaoBase,
     ImagemInvalidaExcecao,
     ImagemNaoSalvaExcecao,
 )
 from src.modelos.inscrito.inscrito import Inscrito
-from src.modelos.evento.eventoQuery import eventoQuery
 
 
 class EventoControlador:
@@ -129,7 +129,7 @@ class EventoControlador:
                 raise ImagemNaoSalvaExcecao()
 
             evento.cracha = str(caminhoCracha)
-            
+
             # atualiza no bd
             EventoBD.atualizar(evento)
 

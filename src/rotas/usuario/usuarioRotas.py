@@ -1,25 +1,23 @@
-from datetime import UTC, datetime
 import logging
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import (
     APIRouter,
+    BackgroundTasks,
     Depends,
     Form,
     HTTPException,
     Request,
     UploadFile,
     status,
-    BackgroundTasks,
 )
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
 
 from src.config import config
 from src.limiter import limiter
-from src.modelos.registro.registroLogin import RegistroLogin
-from src.modelos.bd import RegistroLoginBD
-from src.modelos.bd import TokenAutenticacaoBD
+from src.modelos.bd import RegistroLoginBD, TokenAutenticacaoBD
 from src.modelos.excecao import (
     APIExcecaoBase,
     ErroValidacaoExcecao,
@@ -29,6 +27,7 @@ from src.modelos.excecao import (
     UsuarioNaoEncontradoExcecao,
     listaRespostasExcecoes,
 )
+from src.modelos.registro.registroLogin import RegistroLogin
 from src.modelos.usuario.usuario import TipoConta, Usuario
 from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizar,

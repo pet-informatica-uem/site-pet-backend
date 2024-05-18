@@ -4,11 +4,10 @@ from fastapi import APIRouter, Depends, File, UploadFile, status
 
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar, EventoLer
+from src.modelos.evento.eventoQuery import eventoQuery
 from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
-
-from src.modelos.evento.eventoQuery import eventoQuery
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"

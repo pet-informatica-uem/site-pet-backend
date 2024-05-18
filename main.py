@@ -5,17 +5,17 @@ import logging.handlers
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.config import config
+from src.img.criaPastas import criaPastas
+from src.limiter import limiter
+from src.middleware.excecoes import ExcecaoAPIMiddleware
 from src.middleware.logger import LoggerMiddleware
 from src.middleware.tamanhoLimite import TamanhoLimiteMiddleware
 from src.middleware.tempoLimite import TempoLimiteMiddleware
-from src.config import config
-from src.img.criaPastas import criaPastas
-from src.middleware.excecoes import ExcecaoAPIMiddleware
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
+from src.rotas.img.imgRotas import roteador as roteadorImg
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
-from src.limiter import limiter
-from src.rotas.img.imgRotas import roteador as roteadorImg
 
 # cria pasta logs
 criaPastas()

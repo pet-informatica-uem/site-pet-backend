@@ -1,9 +1,9 @@
-from enum import Enum
 import logging
 import smtplib
 from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from enum import Enum
 
 from src.config import config
 from src.modelos.bd import EventoBD
