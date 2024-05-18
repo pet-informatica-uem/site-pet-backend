@@ -1,14 +1,28 @@
+from datetime import UTC, datetime
 import logging
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    Form,
+    HTTPException,
+    Request,
+    UploadFile,
+    status,
+    BackgroundTasks,
+)
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, SecretStr
 
+from src.config import config
 from src.limiter import limiter
+from src.modelos.registro.registroLogin import RegistroLogin
+from src.modelos.bd import RegistroLoginBD
 from src.modelos.bd import TokenAutenticacaoBD
 from src.modelos.excecao import (
     APIExcecaoBase,
+    ErroValidacaoExcecao,
     JaExisteExcecao,
     NaoAutenticadoExcecao,
     NaoAutorizadoExcecao,
@@ -26,7 +40,6 @@ from src.modelos.usuario.usuarioClad import (
 )
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
-from src.config import config
 
 
 class Token(BaseModel):
@@ -49,6 +62,7 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
     try:
         return UsuarioControlador.getUsuarioAutenticado(token)
     except NaoAutenticadoExcecao:
+        # esse HTTPException é necessário devido ao header incluso.
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Não autenticado",
@@ -57,9 +71,9 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
 
 
 def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
-    if usuario.tipoConta == "petiano":
+    if usuario.tipoConta == TipoConta.PETIANO:
         return usuario
-    raise HTTPException(status_code=401, detail="Acesso negado.")
+    raise NaoAutorizadoExcecao()
 
 
 @roteador.post(
@@ -75,9 +89,11 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
     responses=listaRespostasExcecoes(JaExisteExcecao, APIExcecaoBase),
 )
 @limiter.limit("3/minute")
-def cadastrarUsuario(request: Request, usuario: UsuarioCriar) -> str:
+def cadastrarUsuario(
+    tasks: BackgroundTasks, request: Request, usuario: UsuarioCriar
+) -> str:
     # despacha para controlador
-    usuarioCadastrado = UsuarioControlador.cadastrarUsuario(usuario)
+    usuarioCadastrado = UsuarioControlador.cadastrarUsuario(usuario, tasks)
 
     # retorna os dados do usuario cadastrado
     return usuarioCadastrado
@@ -143,16 +159,15 @@ def getEu(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     """,
 )
 @limiter.limit("3/minute")
-def recuperaConta(request: Request, email: Annotated[EmailStr, Form()]):
+def recuperaConta(
+    tasks: BackgroundTasks, request: Request, email: Annotated[EmailStr, Form()]
+):
     # Verifica se o email é válido
     if not ValidacaoCadastro.email(email):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email inválido.",
-        )
+        raise ErroValidacaoExcecao(message="Email inválido.")
 
     # Passa o email para o controlador
-    UsuarioControlador.recuperarConta(email)
+    UsuarioControlador.recuperarConta(email, tasks)
 
 
 @roteador.post(
@@ -164,13 +179,13 @@ def recuperaConta(request: Request, email: Annotated[EmailStr, Form()]):
     status_code=status.HTTP_200_OK,
     responses=listaRespostasExcecoes(NaoAutenticadoExcecao),
 )
-def trocaSenha(token: str, senha: Annotated[SecretStr, Form()]):
+def trocaSenha(tasks: BackgroundTasks, token: str, senha: Annotated[SecretStr, Form()]):
     # Validacao basica da senha
     if not ValidacaoCadastro.senha(senha.get_secret_value()):
-        raise HTTPException(status_code=400, detail="Senha inválida.")
+        raise ErroValidacaoExcecao(message="Senha inválida.")
 
     # Despacha o token para o controlador
-    UsuarioControlador.trocarSenha(token, senha.get_secret_value())
+    UsuarioControlador.trocarSenha(token, senha.get_secret_value(), tasks)
 
 
 @roteador.post(
@@ -195,7 +210,29 @@ def autenticar(
     email: str = email.lower().strip()
 
     # chama controlador
-    return UsuarioControlador.autenticarUsuario(email, senha)
+    try:
+        token = UsuarioControlador.autenticarUsuario(email, senha)
+
+        reg: RegistroLogin = RegistroLogin(
+            emailUsuario=email,
+            ipUsuario=request.client.host,
+            dataHora=datetime.now(UTC),
+            sucesso=True,
+        )
+        RegistroLoginBD.criar(reg)
+
+        return token
+    except Exception as e:
+        reg: RegistroLogin = RegistroLogin(
+            emailUsuario=email,
+            ipUsuario=request.client.host,
+            dataHora=datetime.now(UTC),
+            sucesso=False,
+            motivo=str(e),
+        )
+        RegistroLoginBD.criar(reg)
+
+        raise e
 
 
 @roteador.delete(
@@ -225,21 +262,19 @@ def desautenticar(
     description="""O usuário é capaz de editar seu email""",
 )
 def editarEmail(
+    tasks: BackgroundTasks,
     id: str,
     dadosEmail: UsuarioAtualizarEmail,
-    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,  # type: ignore
 ):
     if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
         if not ValidacaoCadastro.email(dadosEmail.novoEmail):
-            logging.info("Erro. Novo email não foi validado com sucesso.")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST, detail="Dados inválidos"
-            )
+            raise ErroValidacaoExcecao(message="Email inválido.")
         # normaliza dados
         novoEmail = dadosEmail.novoEmail.lower().strip()
         dadosEmail.novoEmail = novoEmail
 
-        UsuarioControlador.editarEmail(dadosEmail, id)
+        UsuarioControlador.editarEmail(dadosEmail, id, tasks)
 
         TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
     else:
@@ -253,14 +288,16 @@ def editarEmail(
     seja selecionada, todos as sessões serão deslogadas ao trocar a senha.""",
 )
 def editarSenha(
+    tasks: BackgroundTasks,
     id: str,
     dadosSenha: UsuarioAtualizarSenha,
     deslogarAoTrocarSenha: bool,
-    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,  # type: ignore
 ):
     if usuario.id == id:
         # efetua troca de senha
         UsuarioControlador.editaSenha(
+            tasks,
             dadosSenha,
             usuario,
         )
@@ -278,7 +315,7 @@ def editarSenha(
 def editarFoto(
     id: str,
     foto: UploadFile,
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
+    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,  # type: ignore
 ) -> None:
     if usuario.id == id:
         UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
@@ -365,3 +402,23 @@ def deletaUsuario(
         UsuarioControlador.deletarUsuario(id)
     else:
         raise NaoAutorizadoExcecao()
+
+
+@roteador.get(
+    "/{id}/historico-login",
+    name="Histórico de login do usuário",
+    description="""
+    Retorna o histórico de login do usuário com o ID fornecido.
+
+    Usuários não petianos só podem ver seu próprio histórico.
+    """,
+    status_code=status.HTTP_200_OK,
+    response_model=list[RegistroLogin],
+)
+def getHistoricoLogin(
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str
+):
+    if usuario.id != id and usuario.tipoConta != TipoConta.PETIANO:
+        raise NaoAutorizadoExcecao()
+
+    return UsuarioControlador.getHistoricoLogin(usuario.email)

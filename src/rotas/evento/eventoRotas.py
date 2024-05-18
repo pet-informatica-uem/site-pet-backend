@@ -3,10 +3,12 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, UploadFile, status
 
 from src.modelos.evento.evento import Evento
-from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
+from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar, EventoLer
 from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
+
+from src.modelos.evento.eventoQuery import eventoQuery
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"
@@ -16,11 +18,11 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
 @roteador.get(
     "/",
-    name="Recuperar todos os eventos",
-    description="Retorna todos os eventos cadastrados no banco de dados.",
+    name="Recuperar eventos",
+    description="Retorna todos os eventos cadastrados no banco de dados filtrados pelo parâmetro 'query'.",
 )
-def getEventos() -> list[Evento]:
-    return EventoControlador.getEventos()
+def getEventos(query: eventoQuery) -> list[Evento]:
+    return EventoControlador.getEventos(query)
 
 
 @roteador.get(
@@ -30,6 +32,7 @@ def getEventos() -> list[Evento]:
         Recupera um evento cadastrado no banco de dados.
         Falha, caso o evento não exista.
     """,
+    response_model=EventoLer,
 )
 def getEvento(id: str) -> Evento:
     evento: Evento = EventoControlador.getEvento(id)

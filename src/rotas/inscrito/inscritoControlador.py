@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime
 
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 from PIL import Image
 
 from src.config import config
@@ -28,6 +28,7 @@ class InscritosControlador:
         idUsuario: str,
         dadosInscrito: InscritoCriar,
         comprovante: UploadFile | None,
+        tasks: BackgroundTasks,
     ):
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
@@ -71,7 +72,7 @@ class InscritosControlador:
 
         d.update(**dadosInscrito.model_dump())
         inscrito = Inscrito(**d)
-        inscrito.comprovante = caminhoComprovante.name if caminhoComprovante else None  # type: ignore
+        inscrito.comprovante = str(caminhoComprovante) if caminhoComprovante else None  # type: ignore
 
         if inscrito.tipoVaga == TipoVaga.COM_NOTE:
             evento.vagasDisponiveisComNote -= 1
@@ -108,7 +109,8 @@ class InscritosControlador:
             raise APIExcecaoBase(message="Erro ao criar inscrito")
 
         # Envia email de confirmação de inscrição
-        enviarEmailConfirmacaoEvento(
+        tasks.add_task(
+            enviarEmailConfirmacaoEvento,
             usuario.email,
             evento.id,
             inscrito.tipoVaga,
@@ -117,6 +119,10 @@ class InscritosControlador:
     @staticmethod
     def getInscritos(idEvento: str):
         return InscritoBD.listarInscritosEvento(idEvento)
+    
+    @staticmethod
+    def getInscrito(idEvento: str, idInscrito: str):
+        return InscritoBD.buscar(idEvento, idInscrito)
 
     @staticmethod
     def editarInscrito(idEvento: str, idInscrito: str, inscrito: InscritoAtualizar):
@@ -128,12 +134,12 @@ class InscritosControlador:
             # Recupera o evento
             evento: Evento = EventoControlador.getEvento(idEvento)
 
-            if inscrito.tipoVaga:
+            if inscrito.tipoVaga == TipoVaga.COM_NOTE:
                 if evento.vagasDisponiveisComNote == 0:
                     raise APIExcecaoBase(message="Não há vagas disponíveis com note")
                 evento.vagasDisponiveisSemNote += 1
                 evento.vagasDisponiveisComNote -= 1
-            else:
+            elif inscrito.tipoVaga == TipoVaga.SEM_NOTE:
                 if evento.vagasDisponiveisSemNote == 0:
                     raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
                 evento.vagasDisponiveisComNote += 1
@@ -166,9 +172,9 @@ class InscritosControlador:
             inscrito.idEvento, inscrito.idUsuario
         )
 
-        if inscritoRecuperado.tipoVaga:
+        if inscritoRecuperado.tipoVaga == TipoVaga.COM_NOTE:
             evento.vagasDisponiveisComNote += 1
-        else:
+        elif inscritoRecuperado.tipoVaga == TipoVaga.SEM_NOTE:
             evento.vagasDisponiveisSemNote += 1
 
         # Recupera o usuário

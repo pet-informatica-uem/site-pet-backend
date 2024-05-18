@@ -1,5 +1,5 @@
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from jose import JWTError, jwt
 
@@ -31,7 +31,7 @@ def processaTokenAtivaConta(token: str) -> dict[str, str]:
             token, config.SEGREDO_JWT, algorithms=["HS256"]
         )
     except JWTError as e:
-        logging.warning(f"Token inválido, error messagem:\n {str(e)}")
+        logging.warning(f"Token inválido, erro:\n {str(e)}")
         raise TokenInvalidoExcecao()
 
     # Recupera as informações do token
@@ -74,7 +74,8 @@ def processaTokenTrocaSenha(token: str) -> str:
     # Tenta decodificar o token
     try:
         token_info = jwt.decode(token, config.SEGREDO_JWT, algorithms=["HS256"])
-    except JWTError:
+    except JWTError as e:
+        logging.warning(f"Token inválido, erro:\n {str(e)}")
         raise TokenInvalidoExcecao()
 
     # Recupera as informações do token
@@ -83,7 +84,7 @@ def processaTokenTrocaSenha(token: str) -> str:
 
     # Verifica a validade do token
     validade: datetime = datetime.fromtimestamp(validade)  # type: ignore
-    if validade < datetime.utcnow():
+    if validade < datetime.now(UTC):
         raise TokenInvalidoExcecao()
 
     # Retorna o email

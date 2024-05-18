@@ -2,8 +2,10 @@ import logging
 import secrets
 from datetime import datetime, timedelta
 
-from fastapi import UploadFile
+from fastapi import BackgroundTasks, UploadFile
 
+from src.modelos.registro.registroLogin import RegistroLogin
+from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 from src.autenticacao.autenticacao import conferirHashSenha, hashSenha
 from src.autenticacao.jwtoken import (
     geraLinkEsqueciSenha,
@@ -12,15 +14,21 @@ from src.autenticacao.jwtoken import (
     processaTokenTrocaSenha,
 )
 from src.config import config
-from src.email.operacoesEmail import enviarEmailResetSenha, enviarEmailVerificacao
+from src.email.operacoesEmail import (
+    DadoAlterado,
+    enviarEmailAlteracaoDados,
+    enviarEmailResetSenha,
+    enviarEmailVerificacao,
+)
 from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
-from src.modelos.bd import TokenAutenticacaoBD, UsuarioBD, cliente
+from src.modelos.bd import RegistroLoginBD, TokenAutenticacaoBD, UsuarioBD, cliente
 from src.modelos.excecao import (
     APIExcecaoBase,
     EmailNaoConfirmadoExcecao,
     EmailSenhaIncorretoExcecao,
     ImagemInvalidaExcecao,
     ImagemNaoSalvaExcecao,
+    NaoAtualizadaExcecao,
     NaoAutenticadoExcecao,
     NaoEncontradoExcecao,
     UsuarioNaoEncontradoExcecao,
@@ -57,7 +65,7 @@ class UsuarioControlador:
             UsuarioBD.atualizar(usuario)
 
     @staticmethod
-    def cadastrarUsuario(dadosUsuario: UsuarioCriar) -> str:
+    def cadastrarUsuario(dadosUsuario: UsuarioCriar, tasks: BackgroundTasks) -> str:
         """
         Cria uma conta com os dados fornecidos, e envia um email
         de confirmação de criação de conta ao endereço fornecido.
@@ -98,7 +106,7 @@ class UsuarioControlador:
             config.CAMINHO_BASE + "/usuario/confirma-email?token=" + token
         )
 
-        enviarEmailVerificacao(dadosUsuario.email, linkConfirmacao)
+        tasks.add_task(enviarEmailVerificacao, dadosUsuario.email, linkConfirmacao)
 
         # cria o usuário no bd
         UsuarioBD.criar(usuario)
@@ -107,26 +115,30 @@ class UsuarioControlador:
 
     # Envia um email para trocar de senha se o email estiver cadastrado no bd
     @staticmethod
-    def recuperarConta(email: str) -> None:
+    def recuperarConta(email: str, tasks: BackgroundTasks) -> None:
         try:
             UsuarioBD.buscar("email", email)
             # Gera o link e envia o email se o usuário estiver cadastrado
             link: str = geraLinkEsqueciSenha(email)
-            enviarEmailResetSenha(email, link)  # Envia o email
+            tasks.add_task(enviarEmailResetSenha, email, link)  # Envia o email
         except NaoEncontradoExcecao:
             pass
 
-
     @staticmethod
-    def trocarSenha(token: str, senha: str) -> None:
+    def trocarSenha(token: str, senha: str, tasks: BackgroundTasks) -> None:
         # Verifica o token e recupera o email
         email: str = processaTokenTrocaSenha(token)
 
         usuario: Usuario = UsuarioBD.buscar("email", email)
 
+        if not ValidacaoCadastro.senha(senha):
+            raise ValueError("Senha inválida")
+
         usuario.senha = hashSenha(senha)
 
         UsuarioBD.atualizar(usuario)
+
+        tasks.add_task(enviarEmailAlteracaoDados, usuario.email, DadoAlterado.SENHA)
 
         logging.info("Senha atualizada para o usuário com ID: " + str(usuario.id))
 
@@ -174,6 +186,9 @@ class UsuarioControlador:
             raise NaoAutenticadoExcecao()
 
         if usuario := UsuarioBD.buscar("_id", id):
+            if not usuario.emailConfirmado:
+                raise EmailNaoConfirmadoExcecao()
+
             return usuario
         else:
             raise NaoAutenticadoExcecao()
@@ -237,7 +252,9 @@ class UsuarioControlador:
         UsuarioBD.deletar(id)
 
     @staticmethod
-    def editaSenha(dadosSenha: UsuarioAtualizarSenha, usuario: Usuario) -> None:
+    def editaSenha(
+        dadosSenha: UsuarioAtualizarSenha, usuario: Usuario, tasks: BackgroundTasks
+    ) -> None:
         """
         Atualiza a senha de um usuário existente caso a senha antiga seja correta.
 
@@ -246,11 +263,15 @@ class UsuarioControlador:
         if conferirHashSenha(dadosSenha.senha.get_secret_value(), usuario.senha):
             usuario.senha = hashSenha(dadosSenha.novaSenha.get_secret_value())
             UsuarioBD.atualizar(usuario)
+            tasks.add_task(enviarEmailAlteracaoDados, usuario.email, DadoAlterado.SENHA)
+
         else:
             raise APIExcecaoBase(message="Senha incorreta")
 
     @staticmethod
-    def editarEmail(dadosEmail: UsuarioAtualizarEmail, id: str) -> None:
+    def editarEmail(
+        dadosEmail: UsuarioAtualizarEmail, id: str, tasks: BackgroundTasks
+    ) -> None:
         """
         Atualiza o email de um usuário existente.
 
@@ -263,6 +284,7 @@ class UsuarioControlador:
         usuario = UsuarioControlador.getUsuario(id)
 
         if conferirHashSenha(dadosEmail.senha.get_secret_value(), usuario.senha):
+            emailAntigo = usuario.email
             usuario.email = dadosEmail.novoEmail
             usuario.emailConfirmado = False
 
@@ -270,7 +292,9 @@ class UsuarioControlador:
             mensagemEmail: str = (
                 f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
             )
-            enviarEmailVerificacao(usuario.email, mensagemEmail)
+
+            tasks.add_task(enviarEmailVerificacao, usuario.email, mensagemEmail)
+            tasks.add_task(enviarEmailAlteracaoDados, emailAntigo, DadoAlterado.EMAIL)
         else:
             raise APIExcecaoBase(message="Senha incorreta")
 
@@ -292,7 +316,7 @@ class UsuarioControlador:
         if not caminhoFotoPerfil:
             raise ImagemNaoSalvaExcecao()
 
-        usuario.foto = caminhoFotoPerfil.name
+        usuario.foto = str(caminhoFotoPerfil)
 
         # atualiza no bd
         UsuarioBD.atualizar(usuario)
@@ -338,3 +362,10 @@ class UsuarioControlador:
 
         # desautentica o usuário para forçar ressincronização
         TokenAutenticacaoBD.deletarTokensUsuario(id)
+
+    @staticmethod
+    def getHistoricoLogin(email: str) -> list[RegistroLogin]:
+        """
+        Retorna o histórico de logins do usuário.
+        """
+        return RegistroLoginBD.listarRegistrosUsuario(email)

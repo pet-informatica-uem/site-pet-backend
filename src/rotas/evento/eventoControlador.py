@@ -22,12 +22,13 @@ from src.modelos.excecao import (
     ImagemNaoSalvaExcecao,
 )
 from src.modelos.inscrito.inscrito import Inscrito
+from src.modelos.evento.eventoQuery import eventoQuery
 
 
 class EventoControlador:
     @staticmethod
-    def getEventos() -> list[Evento]:
-        return EventoBD.listar()
+    def getEventos(query: eventoQuery) -> list[Evento]:
+        return EventoBD.listar(query)
 
     @staticmethod
     def getEvento(id: str) -> Evento:
@@ -106,12 +107,13 @@ class EventoControlador:
                 raise ImagemInvalidaExcecao()
 
             deletaImagem(evento.id, ["eventos", evento.id, "arte"])
+
             caminhoArte = armazenaArteEvento(evento.id, arte.file)
 
             if not caminhoArte:
                 raise ImagemNaoSalvaExcecao()
 
-            evento.imagemCapa = caminhoArte.name
+            evento.arte = str(caminhoArte)
 
             # atualiza no bd
             EventoBD.atualizar(evento)
@@ -126,8 +128,8 @@ class EventoControlador:
             if not caminhoCracha:
                 raise ImagemNaoSalvaExcecao()
 
-            evento.imagemCracha = caminhoCracha.name
-
+            evento.cracha = str(caminhoCracha)
+            
             # atualiza no bd
             EventoBD.atualizar(evento)
 
@@ -153,7 +155,7 @@ class EventoControlador:
             _id=secrets.token_hex(16),
             vagasDisponiveisComNote=dadosEvento.vagasComNote,
             vagasDisponiveisSemNote=dadosEvento.vagasSemNote,
-            inicioEvento=dadosEvento.dias[-1][0],
+            inicioEvento=dadosEvento.dias[0][0],
             fimEvento=dadosEvento.dias[-1][1],
         )
         EventoBD.criar(evento)
