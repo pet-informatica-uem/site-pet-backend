@@ -1,5 +1,3 @@
-import fnmatch
-import os
 from pathlib import Path
 import time
 from typing import BinaryIO
@@ -221,7 +219,7 @@ def __armazenaComprovante(
 
             # Salva a imagem de saída
             nome = __geraNomeImagem(nomeBase, "png")
-            pathDefinitivo = os.path.join(path, nome)
+            pathDefinitivo = path / nome
             imagem_saida.save(pathDefinitivo)
             return pathDefinitivo
         
