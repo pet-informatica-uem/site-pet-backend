@@ -15,6 +15,7 @@ from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
 from src.limiter import limiter
+from src.rotas.img.imgRotas import roteador as roteadorImg
 
 # cria pasta logs
 criaPastas()
@@ -53,6 +54,7 @@ petBack.add_middleware(TamanhoLimiteMiddleware, size_limit=5 * 1024 * 1024)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
+petBack.include_router(roteadorImg)
 
 petBack.add_middleware(
     CORSMiddleware,

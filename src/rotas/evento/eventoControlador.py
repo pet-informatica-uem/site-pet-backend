@@ -107,12 +107,13 @@ class EventoControlador:
                 raise ImagemInvalidaExcecao()
 
             deletaImagem(evento.id, ["eventos", evento.id, "arte"])
+
             caminhoArte = armazenaArteEvento(evento.id, arte.file)
 
             if not caminhoArte:
                 raise ImagemNaoSalvaExcecao()
 
-            evento.imagemCapa = caminhoArte.name
+            evento.arte = str(caminhoArte)
 
             # atualiza no bd
             EventoBD.atualizar(evento)
@@ -127,8 +128,8 @@ class EventoControlador:
             if not caminhoCracha:
                 raise ImagemNaoSalvaExcecao()
 
-            evento.imagemCracha = caminhoCracha.name
-
+            evento.cracha = str(caminhoCracha)
+            
             # atualiza no bd
             EventoBD.atualizar(evento)
 

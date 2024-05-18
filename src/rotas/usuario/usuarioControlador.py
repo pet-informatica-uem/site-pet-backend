@@ -315,7 +315,7 @@ class UsuarioControlador:
         if not caminhoFotoPerfil:
             raise ImagemNaoSalvaExcecao()
 
-        usuario.foto = caminhoFotoPerfil.name
+        usuario.foto = str(caminhoFotoPerfil)
 
         # atualiza no bd
         UsuarioBD.atualizar(usuario)
