@@ -3,14 +3,14 @@ from typing import Literal
 
 from pydantic import BaseModel
 
-from src.modelos.inscrito.inscrito import Inscrito, TipoVaga
+from src.modelos.inscrito.inscrito import Inscrito, TipoVaga, NivelConhecimento
 
 
 class InscritoCriar(BaseModel):
     tipoVaga: TipoVaga
     "Tipo de vaga: True para com notebook e False para sem notebook."
 
-    nivelConhecimento: Literal[1, 2, 3, 4, 5]
+    nivelConhecimento: NivelConhecimento
     "Nível de conhecimento do usuário (1 a 5)."
 
 

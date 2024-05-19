@@ -9,6 +9,14 @@ class TipoVaga(str, Enum):
     SEM_NOTE = "semNotebook"
 
 
+class NivelConhecimento(str, Enum):
+    NENHUM = "1"
+    BASICO = "2"
+    INTERMEDIARIO = "3"
+    AVANCADO = "4"
+    ESPECIALISTA = "5"
+
+
 class Inscrito(BaseModel):
     """
     Classe que representa os inscritos de um evento.
