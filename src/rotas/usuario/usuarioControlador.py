@@ -103,7 +103,7 @@ class UsuarioControlador:
         # manda email de ativação
         # não é necessário fazer urlencode pois jwt é url-safe
         linkConfirmacao: str = (
-            config.CAMINHO_BASE + "/usuario/confirma-email?token=" + token
+            config.CAMINHO_BASE + "/usuarios/confirma-email?token=" + token
         )
 
         tasks.add_task(enviarEmailVerificacao, dadosUsuario.email, linkConfirmacao)
@@ -289,7 +289,7 @@ class UsuarioControlador:
             usuario.emailConfirmado = False
 
             UsuarioBD.atualizar(usuario)
-            mensagemEmail: str = f"{config.CAMINHO_BASE}/?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            mensagemEmail: str = f"{config.CAMINHO_BASE}/usuarios/confirma-email?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
 
             tasks.add_task(enviarEmailVerificacao, usuario.email, mensagemEmail)
             tasks.add_task(enviarEmailAlteracaoDados, emailAntigo, DadoAlterado.EMAIL)
