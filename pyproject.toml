@@ -17,12 +17,13 @@ pymongo = "^4.3.3"
 passlib = {version = "^1.7.4", extras = ["argon2"]}
 python-jose = {version = "^3.3.0", extras = ["cryptography"]}
 email-validator = "^2.0.0.post2"
-python-dotenv = "^1.0.0"
 python-multipart = "^0.0.6"
 isort = "^5.12.0"
 pydantic-settings = "^2.0.2"
 apscheduler = "^3.10.4"
 pypdf2 = "^3.0.1"
+slowapi = "^0.1.9"
+pdf2image = "^1.17.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.3.0"

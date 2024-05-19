@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -9,7 +10,7 @@ class InscritoCriar(BaseModel):
     tipoVaga: TipoVaga
     "Tipo de vaga: True para com notebook e False para sem notebook."
 
-    nivelConhecimento: int
+    nivelConhecimento: Literal[1, 2, 3, 4, 5]
     "Nível de conhecimento do usuário (1 a 5)."
 
 

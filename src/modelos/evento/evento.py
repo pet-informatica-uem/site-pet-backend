@@ -29,6 +29,9 @@ class Evento(BaseModel):
     dias: list[tuple[datetime, datetime]]
     "Lista de tuplas de data e hora de início e fim de cada dia do evento."
 
+    inicioEvento: datetime
+    "Primeiro dia e hora do evento (gerado automaticamente a partir de 'dias')."
+
     fimEvento: datetime
     "Último dia e hora do evento (gerado automaticamente a partir de 'dias')."
 
@@ -53,8 +56,8 @@ class Evento(BaseModel):
     valor: float
     "Valor da inscrição."
 
-    imagemCapa: str | None = None
+    arte: str | None = None
     "Caminho para a imagem de capa do evento."
 
-    imagemCracha: str | None = None
+    cracha: str | None = None
     "Caminho para a imagem do crachá do evento."

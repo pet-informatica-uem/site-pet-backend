@@ -1,9 +1,9 @@
-import fnmatch
-import os
 import time
+from pathlib import Path
 from typing import BinaryIO
 
 import PyPDF2
+from pdf2image import convert_from_bytes
 from PIL import Image
 
 from src.config import config
@@ -54,7 +54,7 @@ def validaComprovante(comprovante: bytes | BinaryIO | str) -> bool:
     return eh_valida
 
 
-def armazenaFotoUsuario(idUsuario: str, arquivo: str | bytes) -> str | None:
+def armazenaFotoUsuario(idUsuario: str, arquivo: str | bytes | BinaryIO) -> Path | None:
     """Armazena a imagem em "images/usuario" usando um nome base para o arquivo.
 
     :param idUsuario -- nome do usuario relacionado a imagem
@@ -62,13 +62,13 @@ def armazenaFotoUsuario(idUsuario: str, arquivo: str | bytes) -> str | None:
 
     :return -- caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
-    path = os.path.join(config.CAMINHO_IMAGEM, "usuarios")
+    path = config.CAMINHO_IMAGEM / "usuarios"
     retorno = __armazenaImagem(path, idUsuario, arquivo)
 
     return retorno
 
 
-def armazenaArteEvento(idEvento: str, arquivo: bytes | BinaryIO) -> str | None:
+def armazenaArteEvento(idEvento: str, arquivo: bytes | BinaryIO) -> Path | None:
     """Armazena a imagem em "images/eventos/{evento}/arte" usando um nome base para o arquivo.
 
     :param idEvento -- nome do evento relacionada a imagem
@@ -76,13 +76,13 @@ def armazenaArteEvento(idEvento: str, arquivo: bytes | BinaryIO) -> str | None:
 
     :return -- caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
-    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", idEvento, "arte")
+    path = config.CAMINHO_IMAGEM / "eventos" / idEvento / "arte"
     retorno = __armazenaImagem(path, idEvento, arquivo)
 
     return retorno
 
 
-def armazenaCrachaEvento(idEvento: str, arquivo: bytes | BinaryIO) -> str | None:
+def armazenaCrachaEvento(idEvento: str, arquivo: bytes | BinaryIO) -> Path | None:
     """Armazena a imagem em "images/eventos/{evento}/cracha" usando um nome base para o arquivo.
 
     :param idEvento -- nome do evento relacionado a imagem
@@ -90,7 +90,7 @@ def armazenaCrachaEvento(idEvento: str, arquivo: bytes | BinaryIO) -> str | None
 
     :return -- caminho para a imagem salva -> str. None, se a imagem for inválida.
     """
-    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", idEvento, "cracha")
+    path = config.CAMINHO_IMAGEM / "eventos" / idEvento / "cracha"
     retorno = __armazenaImagem(path, idEvento, arquivo)
 
     return retorno
@@ -98,7 +98,7 @@ def armazenaCrachaEvento(idEvento: str, arquivo: bytes | BinaryIO) -> str | None
 
 def armazenaComprovante(
     idEvento: str, idUsuario: str, arquivo: bytes | BinaryIO
-) -> str | None:
+) -> Path | None:
     """Armazena a imagem em "images/eventos/{evento}/comprovantes" usando um nome base para o arquivo.
 
     :param idEvento -- nome do evento relacionado ao comprovante
@@ -107,13 +107,13 @@ def armazenaComprovante(
 
     :return -- caminho para o comprovante salvo -> str. None, se o comprovante for inválido.
     """
-    path = os.path.join(config.CAMINHO_IMAGEM, "eventos", idEvento, "comprovantes")
+    path = config.CAMINHO_IMAGEM / "eventos" / idEvento / "comprovantes"
     retorno = __armazenaComprovante(path, idUsuario, arquivo)
 
     return retorno
 
 
-def procuraImagem(nomeImagem: str, searchPath: list[str] = []) -> list[str]:
+def procuraImagem(nomeImagem: str, searchPath: list[str] = []) -> list[Path]:
     """Retorna uma lista com os caminhos para as imagens que
     contenham 'nomeImagem' em seu nome. Retorna uma lista vazia
     caso não encontre nada.
@@ -126,19 +126,13 @@ def procuraImagem(nomeImagem: str, searchPath: list[str] = []) -> list[str]:
 
     path = config.CAMINHO_IMAGEM
     if searchPath:
-        path = os.path.join(config.CAMINHO_IMAGEM, *searchPath)
+        path = path.joinpath(*searchPath)
 
-    ls = os.walk(path)
-    matches: list[str] = []
-    for grupo in ls:
-        root, _, files = grupo
-        for file in files:
-            if fnmatch.fnmatch(file, f"*{nomeImagem}*"):
-                matches.append(os.path.join(root, file))
+    matches = [p for p in path.rglob(f"*{nomeImagem}*") if p.is_file()]
     return matches
 
 
-def deletaImagem(nomeImagem: str, path: list[str] = []) -> list[str] | None:
+def deletaImagem(nomeImagem: str, path: list[str] = []) -> list[Path] | None:
     """Deleta uma imagem. Caso seja encontrado mais de uma imagem com o termo de busca, todas serão deletadas.
 
     :param nomeImagem -- nome da imagem para ser removida
@@ -148,17 +142,17 @@ def deletaImagem(nomeImagem: str, path: list[str] = []) -> list[str] | None:
     """
     imagens = procuraImagem(nomeImagem, path)
     if imagens:
-        deletados: list[str] = []
+        deletados: list[Path] = []
         for imagem in imagens:
-            os.remove(imagem)
+            imagem.unlink()
             deletados.append(imagem)
         return deletados
     return None
 
 
 def __armazenaImagem(
-    path: str, nomeBase: str, imagem: bytes | BinaryIO | str
-) -> str | None:
+    path: Path, nomeBase: str, imagem: bytes | BinaryIO | str
+) -> Path | None:
     """Armazena a imagem no path fornecido usando um nome base.
 
     :param path -- caminho onde será armazenado a imagem
@@ -172,7 +166,7 @@ def __armazenaImagem(
         with Image.open(imagem, formats=["PNG", "JPEG"]) as img:
             extensao = img.format.lower()  # type: ignore
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
-            pathDefinitivo = os.path.join(path, nome)
+            pathDefinitivo = path / nome
             img.save(pathDefinitivo)
         return pathDefinitivo
     except IOError:
@@ -180,8 +174,8 @@ def __armazenaImagem(
 
 
 def __armazenaComprovante(
-    path: str, nomeBase: str, comprovante: bytes | BinaryIO | str
-) -> str | None:
+    path: Path, nomeBase: str, comprovante: bytes | BinaryIO | str
+) -> Path | None:
     """Armazena o comprovante no path fornecido usando um nome base.
 
     :param path -- caminho onde será armazenado o comprovante
@@ -194,28 +188,39 @@ def __armazenaComprovante(
         with Image.open(comprovante, formats=["PNG", "JPEG"]) as img:
             extensao = img.format.lower()  # type: ignore
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
-            pathDefinitivo = os.path.join(path, nome)
+            pathDefinitivo = path / nome
             img.save(pathDefinitivo)
         return pathDefinitivo
     except IOError:
         try:
-            # Abre o PDF
-            pdf_reader = PyPDF2.PdfReader(comprovante)  # type: ignore
+            # Lê o arquivo, em binário, do PDF
+            arquivo_pdf = comprovante.read()
 
-            # Cria um PDF Writer
-            pdf_writer = PyPDF2.PdfWriter()
+            # Converte o PDF na memória para uma lista de imagens
+            imagens = convert_from_bytes(arquivo_pdf)
 
-            # Adiciona as páginas do PDF
-            for page_num in range(len(pdf_reader.pages)):
-                page = pdf_reader.pages[page_num]
-                pdf_writer.add_page(page)
+            # Converte as imagens para RGB, caso necessário
+            for image in imagens:
+                if image.mode != "RGB":
+                    image = image.convert("RGB")
 
-            nome = __geraNomeImagem(nomeBase, extensao="pdf")
-            pathDefinitivo = os.path.join(path, nome)
+            # Define as dimensões máximas das imagens
+            largura_saida = max(image.width for image in imagens)
+            altura_saida = sum(image.height for image in imagens)
 
-            # Salva o PDF
-            with open(pathDefinitivo, "wb") as output_file:
-                pdf_writer.write(output_file)
+            # Cria a imagem de saída
+            imagem_saida = Image.new("RGB", (largura_saida, altura_saida))
+
+            # Concatena as imagens na vertical
+            pos_y = 0
+            for imagem_chunk in imagens:
+                imagem_saida.paste(imagem_chunk, (0, pos_y))
+                pos_y += imagem_chunk.height
+
+            # Salva a imagem de saída
+            nome = __geraNomeImagem(nomeBase, "png")
+            pathDefinitivo = path / nome
+            imagem_saida.save(pathDefinitivo)
             return pathDefinitivo
 
         except Exception as e:

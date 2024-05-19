@@ -16,14 +16,19 @@ from src.img.operacoesImagem import (
 from src.modelos.bd import EventoBD, InscritoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
-from src.modelos.excecao import APIExcecaoBase, ImagemInvalidaExcecao
+from src.modelos.evento.eventoQuery import eventoQuery
+from src.modelos.excecao import (
+    APIExcecaoBase,
+    ImagemInvalidaExcecao,
+    ImagemNaoSalvaExcecao,
+)
 from src.modelos.inscrito.inscrito import Inscrito
 
 
 class EventoControlador:
     @staticmethod
-    def getEventos() -> list[Evento]:
-        return EventoBD.listar()
+    def getEventos(query: eventoQuery) -> list[Evento]:
+        return EventoBD.listar(query)
 
     @staticmethod
     def getEvento(id: str) -> Evento:
@@ -102,8 +107,13 @@ class EventoControlador:
                 raise ImagemInvalidaExcecao()
 
             deletaImagem(evento.id, ["eventos", evento.id, "arte"])
-            caminhoArte: str | None = armazenaArteEvento(evento.id, arte.file)
-            evento.imagemCapa = caminhoArte
+
+            caminhoArte = armazenaArteEvento(evento.id, arte.file)
+
+            if not caminhoArte:
+                raise ImagemNaoSalvaExcecao()
+
+            evento.arte = str(caminhoArte)
 
             # atualiza no bd
             EventoBD.atualizar(evento)
@@ -113,8 +123,12 @@ class EventoControlador:
                 raise ImagemInvalidaExcecao()
 
             deletaImagem(evento.id, ["eventos", evento.id, "cracha"])
-            caminhoCracha: str | None = armazenaCrachaEvento(evento.id, cracha.file)
-            evento.imagemCracha = caminhoCracha
+            caminhoCracha = armazenaCrachaEvento(evento.id, cracha.file)
+
+            if not caminhoCracha:
+                raise ImagemNaoSalvaExcecao()
+
+            evento.cracha = str(caminhoCracha)
 
             # atualiza no bd
             EventoBD.atualizar(evento)
@@ -141,6 +155,7 @@ class EventoControlador:
             _id=secrets.token_hex(16),
             vagasDisponiveisComNote=dadosEvento.vagasComNote,
             vagasDisponiveisSemNote=dadosEvento.vagasSemNote,
+            inicioEvento=dadosEvento.dias[0][0],
             fimEvento=dadosEvento.dias[-1][1],
         )
         EventoBD.criar(evento)

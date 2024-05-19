@@ -1,20 +1,30 @@
 import locale
 import logging
+import logging.handlers
 
-from apscheduler.schedulers.background import BackgroundScheduler
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.config import config
 from src.img.criaPastas import criaPastas
-from src.middlewareExcecao import requestHandler as middlewareExcecao
+from src.limiter import limiter
+from src.middleware.excecoes import ExcecaoAPIMiddleware
+from src.middleware.logger import LoggerMiddleware
+from src.middleware.tamanhoLimite import TamanhoLimiteMiddleware
+from src.middleware.tempoLimite import TempoLimiteMiddleware
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
+from src.rotas.img.imgRotas import roteador as roteadorImg
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
 
+# cria pasta logs
+criaPastas()
+
 logging.basicConfig(
     handlers=[
-        logging.FileHandler("output.log", encoding="utf-8"),
+        logging.handlers.TimedRotatingFileHandler(
+            "logs/output.log", when="midnight", interval=1
+        ),
         logging.StreamHandler(),
     ],
     encoding="utf-8",
@@ -22,14 +32,29 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
-origins = ["*"]
+origins = [
+    "http://localhost:3000",
+    "https://localhost:3000",
+    "http://localhost",
+    "https://localhost",
+    "http://localhost:8000",
+    "https://localhost:8000",
+    "http://www.din.uem.br",
+    "https://www.din.uem.br",
+    "https://www.petinfouem.com.br",
+]
 
 petBack = FastAPI(root_path=config.ROOT_PATH)
+petBack.state.limiter = limiter
 
-petBack.middleware("http")(middlewareExcecao)
+petBack.add_middleware(ExcecaoAPIMiddleware)
+petBack.add_middleware(LoggerMiddleware)
+petBack.add_middleware(TempoLimiteMiddleware, request_timeout=30)
+petBack.add_middleware(TamanhoLimiteMiddleware, size_limit=5 * 1024 * 1024)
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
+petBack.include_router(roteadorImg)
 
 petBack.add_middleware(
     CORSMiddleware,
@@ -39,8 +64,6 @@ petBack.add_middleware(
     allow_headers=["*"],
 )
 
-# Caso não existam, cria as pastas para armazenar imagens.
-criaPastas()
 
 logging.info("Backend inicializado")
 

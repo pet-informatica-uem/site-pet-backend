@@ -30,10 +30,18 @@ class APIExcecaoBase(Exception):
     def response_model(cls):
         return {cls.code: {"model": cls.model}}
 
+    def __str__(self):
+        return self.message
+
 
 class ImagemInvalidaExcecao(APIExcecaoBase):
     message = "A foto não é válida."
     code = status.HTTP_400_BAD_REQUEST
+
+
+class ImagemNaoSalvaExcecao(APIExcecaoBase):
+    message = "Erro no processamento da imagem."
+    code = status.HTTP_500_INTERNAL_SERVER_ERROR
 
 
 class NaoAutenticadoExcecao(APIExcecaoBase):
@@ -86,12 +94,6 @@ class ErroValidacaoExcecao(APIExcecaoBase):
     model = ErroBase
 
 
-class ErroAutenticacaoExcecao(APIExcecaoBase):
-    message = "Ocorreu um erro de autenticação."
-    code = status.HTTP_401_UNAUTHORIZED
-    model = ErroBase
-
-
 class NaoAtualizadaExcecao(APIExcecaoBase):  # conflito
     message = "Não foi possível atualizar."
     code = status.HTTP_404_NOT_FOUND
@@ -117,19 +119,19 @@ class TipoVagaInvalidoExcecao(APIExcecaoBase):  # conflito
 
 
 class EmailNaoFoiEnviadoExcecao(APIExcecaoBase):
-    message = "Não foi possível enviar o E-mail"
+    message = "Não foi possível enviar o email"
     code = status.HTTP_500_INTERNAL_SERVER_ERROR
     model = AcaoNaoCompletaErro
 
 
 class TipoDeInscricaoErradoExcecao(APIExcecaoBase):
-    message = "Tipo de inscricao errada, deveria ser <com notebook> ou <sem notebook>"
+    message = "Tipo de inscrição errada, deveria ser <com notebook> ou <sem notebook>"
     code = status.HTTP_400_BAD_REQUEST
     model = AcaoNaoCompletaErro
 
 
 class NivelDeConhecimentoErradoExcecao(APIExcecaoBase):
-    message = "Nivel de conhecimento erradao, deveria ser 1,2,3,4 ou 5"
+    message = "Nivel de conhecimento inválido. Valores válidos são 1, 2, 3, 4 ou 5"
     code = status.HTTP_400_BAD_REQUEST
     model = AcaoNaoCompletaErro
 
@@ -137,6 +139,16 @@ class NivelDeConhecimentoErradoExcecao(APIExcecaoBase):
 class TokenInvalidoExcecao(APIExcecaoBase):
     message = "O token é inválido."
     code = status.HTTP_400_BAD_REQUEST
+
+
+class TamanhoLimiteExcedidoExcecao(APIExcecaoBase):
+    message = "O tamanho da requisição ultrapassou o limite."
+    code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+
+
+class TempoLimiteExcedidoExcecao(APIExcecaoBase):
+    message = "Tempo limite excedido."
+    code = status.HTTP_408_REQUEST_TIMEOUT
 
 
 def listaRespostasExcecoes(

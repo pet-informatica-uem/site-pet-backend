@@ -98,9 +98,13 @@ Icon
 
 # logs
 *.log
+/logs
 
-#pyenv
+# pyenv
 .python-version
 
 # fotos
 /img
+
+# lock file
+*.lock

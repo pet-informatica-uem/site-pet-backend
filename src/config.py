@@ -1,8 +1,8 @@
-import os
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from pydantic_core import Url
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 # Horario inicio para as rotinas
@@ -50,9 +50,7 @@ class Configuracoes(BaseSettings):
     para serem exibidos e enviados aos usuários.
     """
 
-    CAMINHO_IMAGEM: str = os.path.join(
-        os.path.abspath(os.path.dirname(os.path.dirname(__file__))), "img"
-    )
+    CAMINHO_IMAGEM: Path = Path.cwd() / "img"
     """
     Caminho onde serão armazenadas as imagens (.../img/). 
     """
@@ -82,12 +80,12 @@ class Configuracoes(BaseSettings):
     URL-raiz do servidor.
     """
 
-    class Config:
-        env_prefix = "PET_API_"
-
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    model_config = SettingsConfigDict(
+        env_prefix="PET_API_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+    )
 
 
 config: Configuracoes = Configuracoes()
