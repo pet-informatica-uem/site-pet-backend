@@ -75,6 +75,11 @@ class Configuracoes(BaseSettings):
     Caso verdadeiro, não envia emails mas imprime o conteúdo deles na saída padrão.
     """
 
+    MOCK_BD: bool = False
+    """
+    Caso verdadeiro, usa um banco de dados de teste.
+    """
+
     ROOT_PATH: str = ""
     """
     URL-raiz do servidor.

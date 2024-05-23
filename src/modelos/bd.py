@@ -15,6 +15,10 @@ from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
 
 cliente: MongoClient = MongoClient(str(config.URI_BD))
 
+if config.MOCK_BD:
+    config.NOME_BD = "petBD-test"
+    cliente.drop_database(config.NOME_BD)
+
 colecaoTokens = cliente[config.NOME_BD]["authTokens"]
 
 colecaoUsuarios = cliente[config.NOME_BD]["usuarios"]
