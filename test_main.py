@@ -1,21 +1,17 @@
 import os
 import random
-import json
 
 from cpf_generator import CPF
-from jsonschema import validate, ValidationError
 
 # Configurações de ambiente para testes
 os.environ["PET_API_MOCK_EMAIL"] = "true"
 os.environ["PET_API_MOCK_BD"] = "true"
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 
 from main import petBack
 from src.modelos.bd import UsuarioBD
-from src.modelos.usuario.usuario import Usuario
-
 
 testClient = TestClient(petBack)
 
@@ -40,8 +36,8 @@ def test_usuario_atualizar():
     auth_header = loga_usuario(data["email"])
 
     response = testClient.patch(
-        f"/usuarios/{data["id"]}", json={"nome": "Novo Nome"}, headers=auth_header)
-    
+        f"/usuarios/{data[id]}", json={"nome": "Novo Nome"}, headers=auth_header
+    )
     assert response.status_code == 200
 
     response = testClient.get("/usuarios/eu", headers=auth_header)
@@ -65,9 +61,9 @@ def test_usuario_listar(auth_usuario_petiano):
     assert response.status_code == 200
     assert len(response.json()) == 3
 
-    unique_ids = set([response.json()[0]["id"], 
-                      response.json()[1]["id"], 
-                      response.json()[2]["id"]])
+    unique_ids = set(
+        [response.json()[0]["id"], response.json()[1]["id"], response.json()[2]["id"]]
+    )
 
     assert len(unique_ids) == 3
 
