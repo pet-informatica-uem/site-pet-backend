@@ -296,9 +296,9 @@ def editarSenha(
     if usuario.id == id:
         # efetua troca de senha
         UsuarioControlador.editaSenha(
-            tasks,
             dadosSenha,
             usuario,
+            tasks,
         )
 
         # efetua logout de todas as sessões, caso o usuário desejar
@@ -326,7 +326,7 @@ def editarFoto(
     description="Promove o usuário especificado a petiano.",
 )
 def promoverPetiano(
-    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...
+    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ... 
 ):
     UsuarioControlador.promoverPetiano(id)
 
