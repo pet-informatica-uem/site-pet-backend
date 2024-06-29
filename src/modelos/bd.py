@@ -64,14 +64,14 @@ class UsuarioBD:
         colecaoUsuarios.delete_one({"_id": id})
 
     @staticmethod
-    def listar(petiano: bool = False) -> list[Usuario]:
-        if not petiano:
-            return [Usuario(**u) for u in colecaoUsuarios.find()]
-        else:
-            return [
-                Usuario(**u)
-                for u in colecaoUsuarios.find({"tipoConta": TipoConta.PETIANO})
-            ]
+    def listar() -> list[Usuario]:
+        return [Usuario(**u) for u in colecaoUsuarios.find()]
+
+    @staticmethod
+    def listarPetianos() -> list[Usuario]:
+        return [
+            Usuario(**u) for u in colecaoUsuarios.find({"tipoConta": TipoConta.PETIANO})
+        ]
 
 
 class EventoBD:
