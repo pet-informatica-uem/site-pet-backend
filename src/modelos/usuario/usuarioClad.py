@@ -37,7 +37,6 @@ class UsuarioLer(BaseModel):
     email: EmailStr
     curso: str
 
-    foto: str | None = None
     github: str | None = None
     linkedin: str | None = None
     instagram: str | None = None

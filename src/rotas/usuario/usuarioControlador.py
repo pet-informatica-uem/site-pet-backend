@@ -205,8 +205,23 @@ class UsuarioControlador:
         raise UsuarioNaoEncontradoExcecao()
 
     @staticmethod
-    def getUsuarios(petiano: bool = False) -> list[Usuario]:
-        return UsuarioBD.listar(petiano)
+    def getUsuarios() -> list[Usuario]:
+        return UsuarioBD.listar()
+
+    @staticmethod
+    def getPetianos() -> list[Petiano]:
+        petianos = []
+        for petiano in UsuarioBD.listarPetianos():
+            petianos.append(
+                Petiano(
+                    nome=petiano.nome,
+                    github=petiano.github,
+                    linkedin=petiano.linkedin,
+                    instagram=petiano.instagram,
+                    foto=f"{config.CAMINHO_BASE}/img/usuarios/{petiano.id}/foto",
+                )
+            )
+        return petianos
 
     @staticmethod
     def editarUsuario(
@@ -289,7 +304,9 @@ class UsuarioControlador:
             usuario.emailConfirmado = False
 
             UsuarioBD.atualizar(usuario)
-            mensagemEmail: str = f"{config.CAMINHO_BASE}/usuarios/confirma-email?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            mensagemEmail: str = (
+                f"{config.CAMINHO_BASE}/usuarios/confirma-email?token={geraTokenAtivaConta(usuario.id, usuario.email, timedelta(hours=24))}"
+            )
 
             tasks.add_task(enviarEmailVerificacao, usuario.email, mensagemEmail)
             tasks.add_task(enviarEmailAlteracaoDados, emailAntigo, DadoAlterado.EMAIL)
