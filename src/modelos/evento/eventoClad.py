@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Self
 
-from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, field_validator, Field, model_validator
 
 from src.modelos.evento.evento import Evento
 
@@ -52,6 +52,12 @@ class EventoCriar(BaseModel):
 
 
 class EventoLer(Evento):
+    # id requerido por causa do seguinte bug
+    # https://github.com/pydantic/pydantic/issues/1869
+    
+    id: str
+    "Identificador único."
+    
     pass
 
 

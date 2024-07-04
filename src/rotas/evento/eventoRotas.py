@@ -19,9 +19,10 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
     "/",
     name="Recuperar eventos",
     description="Retorna todos os eventos cadastrados no banco de dados filtrados pelo parâmetro 'query'.",
+    response_model=list[EventoLer],
 )
-def getEventos(query: eventoQuery) -> list[Evento]:
-    return EventoControlador.getEventos(query)
+def getEventos(query: eventoQuery) -> list[EventoLer]:
+    return [EventoLer(**e.model_dump()) for e in EventoControlador.getEventos(query)]
 
 
 @roteador.get(
@@ -33,10 +34,8 @@ def getEventos(query: eventoQuery) -> list[Evento]:
     """,
     response_model=EventoLer,
 )
-def getEvento(id: str) -> Evento:
-    evento: Evento = EventoControlador.getEvento(id)
-
-    return evento
+def getEvento(id: str) -> EventoLer:
+    return EventoLer(**EventoControlador.getEvento(id).model_dump())
 
 
 @roteador.post(
