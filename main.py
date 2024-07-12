@@ -16,7 +16,7 @@ from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.img.imgRotas import roteador as roteadorImg
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
-
+# comentario
 # cria pasta logs
 criaPastas()
 
