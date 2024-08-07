@@ -31,7 +31,6 @@ def getEventos(query: eventoQuery) -> list[Evento]:
         Recupera um evento cadastrado no banco de dados.
         Falha, caso o evento não exista.
     """,
-    response_model=EventoLer,
 )
 def getEvento(id: str) -> Evento:
     evento: Evento = EventoControlador.getEvento(id)
