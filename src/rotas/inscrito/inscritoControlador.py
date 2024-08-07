@@ -2,14 +2,18 @@ import logging
 from datetime import datetime
 
 from fastapi import BackgroundTasks, UploadFile
-from PIL import Image
 
-from src.config import config
 from src.email.operacoesEmail import enviarEmailConfirmacaoEvento
 from src.img.operacoesImagem import armazenaComprovante, deletaImagem, validaComprovante
 from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, cliente
 from src.modelos.evento.evento import Evento
-from src.modelos.excecao import APIExcecaoBase
+from src.modelos.excecao import (
+    APIExcecaoBase,
+    ComprovanteInvalido,
+    ComprovanteObrigatorioExcecao,
+    ForaDoPeriodoDeInscricaoExcecao,
+    SemVagasDisponiveisExcecao,
+)
 from src.modelos.inscrito.inscrito import Inscrito
 from src.modelos.inscrito.inscritoClad import (
     InscritoAtualizar,
@@ -38,29 +42,27 @@ class InscritosControlador:
             evento.inicioInscricao > datetime.now()
             and evento.fimInscricao < datetime.now()
         ):
-            raise APIExcecaoBase(message="Fora do período de inscrição")
+            raise ForaDoPeriodoDeInscricaoExcecao()
 
         # Verifica se há vagas disponíveis
         if dadosInscrito.tipoVaga == TipoVaga.COM_NOTE:
             if evento.vagasDisponiveisComNote == 0:
-                raise APIExcecaoBase(message="Não há vagas disponíveis com note")
+                raise SemVagasDisponiveisExcecao()
         else:
             if evento.vagasDisponiveisSemNote == 0:
-                raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
+                raise SemVagasDisponiveisExcecao()
 
         if evento.valor != 0:
             if comprovante:
                 if not validaComprovante(comprovante.file):
-                    raise APIExcecaoBase(message="Comprovante inválido.")
+                    raise ComprovanteInvalido()
 
                 deletaImagem(idUsuario, ["eventos", evento.id, "comprovantes"])
                 caminhoComprovante = armazenaComprovante(
                     evento.id, idUsuario, comprovante.file
                 )
             else:
-                raise APIExcecaoBase(
-                    message="Comprovante obrigatório para eventos pagos."
-                )
+                raise ComprovanteObrigatorioExcecao()
         else:
             caminhoComprovante = None
 
@@ -136,12 +138,12 @@ class InscritosControlador:
 
             if inscrito.tipoVaga == TipoVaga.COM_NOTE:
                 if evento.vagasDisponiveisComNote == 0:
-                    raise APIExcecaoBase(message="Não há vagas disponíveis com note")
+                    raise SemVagasDisponiveisExcecao()
                 evento.vagasDisponiveisSemNote += 1
                 evento.vagasDisponiveisComNote -= 1
             elif inscrito.tipoVaga == TipoVaga.SEM_NOTE:
                 if evento.vagasDisponiveisSemNote == 0:
-                    raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
+                    raise SemVagasDisponiveisExcecao()
                 evento.vagasDisponiveisComNote += 1
                 evento.vagasDisponiveisSemNote -= 1
 
@@ -165,7 +167,7 @@ class InscritosControlador:
             evento.inicioInscricao > datetime.now()
             or evento.fimInscricao < datetime.now()
         ):
-            raise APIExcecaoBase(message="Fora do período de inscrição")
+            raise ForaDoPeriodoDeInscricaoExcecao()
 
         # Recupera o inscrito
         inscritoRecuperado: Inscrito = InscritoBD.buscar(
