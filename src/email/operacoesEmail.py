@@ -14,6 +14,12 @@ from src.modelos.inscrito.inscritoClad import TipoVaga
 
 # Função para enviar email customizado
 def enviarEmailGenerico(emailDestino: str, titulo: str, texto: str) -> None:
+    """"
+    Função para enviar email customizado. Para isso, é necessário os seguintes parâmetros:
+        :emailDestino: str -> Email do destinatário.
+        :titulo: str -> Título do email.
+        :texto: str -> Texto do email.
+    """
     mensagem: MIMEMultipart = MIMEMultipart()
     mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
@@ -25,6 +31,11 @@ def enviarEmailGenerico(emailDestino: str, titulo: str, texto: str) -> None:
 
 # Função para enviar verificação de email
 def enviarEmailVerificacao(emailDestino: str, link: str) -> None:
+    """"
+    Função para enviar email de verificação de email. Para isso, é necessário os seguintes parâmetros:
+        :emailDestino: str -> Email do destinatário.
+        :link: str -> Link para verificação do email.
+    """
     mensagem: MIMEMultipart = MIMEMultipart()
     mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
@@ -37,6 +48,11 @@ def enviarEmailVerificacao(emailDestino: str, link: str) -> None:
 
 # Função para enviar link troca de senha
 def enviarEmailResetSenha(emailDestino: str, link: str) -> None:
+    """"
+    Função para enviar email de reset de senha. Para isso, é necessário os seguintes parâmetros:
+        :emailDestino: str -> Email do destinatário.
+        :link: str -> Link para reset de senha.
+    """
     mensagem: MIMEMultipart = MIMEMultipart()
     mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
@@ -53,6 +69,14 @@ def enviarEmailConfirmacaoEvento(
     idEvento: str,
     tipoVaga: TipoVaga,
 ) -> None:
+    """"
+    Função para enviar email de confirmação de inscrição em evento. Para isso, é necessário os seguintes parâmetros:
+        :emailDestino: str -> Email do destinatário.
+        :idEvento: str -> ID do evento.
+        :tipoVaga: TipoVaga -> Tipo de vaga escolhida pelo inscrito.
+
+    Recupera o evento pelo ID e envia um email com as informações do evento e a vaga escolhida.
+    """
     # Recupera o evento
     evento: Evento = EventoBD.buscar("_id", idEvento)
 
@@ -94,12 +118,20 @@ def enviarEmailConfirmacaoEvento(
 
 
 class DadoAlterado(Enum):
+    """""
+    Enum para representar o tipo de dado a ser alterado
+    """
     EMAIL = "email"
     SENHA = "senha"
 
 
 # Função que envia email assim que senha/email forem trocados
 def enviarEmailAlteracaoDados(emailDestino: str, dadoAlterado: DadoAlterado) -> None:
+    """"
+    Função para enviar email de confirmação de alteração de dados. Para isso, é necessário os seguintes parâmetros:
+        :emailDestino: str -> Email do destinatário.
+        :dadoAlterado: DadoAlterado -> Tipo de dado alterado.
+    """
     mensagem: MIMEMultipart = MIMEMultipart()
     mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
@@ -126,6 +158,14 @@ def enviarEmailAlteracaoDados(emailDestino: str, dadoAlterado: DadoAlterado) -> 
 
 # Função que faz o envio de emails
 def enviarEmail(emailDestino: str, mensagem: MIMEMultipart) -> None:
+    """"
+    Função para enviar email. Para isso, é necessário os seguintes parâmetros:
+        :emailDestino: str -> Email do destinatário.
+        :mensagem: MIMEMultipart -> Mensagem a ser enviada.
+
+    Essa função é chamada por outras funções desse arquivo, que preparam a mensagem a ser enviada.
+    Quando o MOCK_EMAIL está ativado, a função apenas imprime o email no log, não enviando de fato.
+    """
     if config.MOCK_EMAIL:
         logging.info("Envio de email para " + str(emailDestino) + "\n\n")
 
