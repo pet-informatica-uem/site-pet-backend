@@ -3,7 +3,7 @@ from typing import Self
 
 from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
 
-from src.modelos.evento.evento import Evento
+from src.modelos.evento.evento import Evento, TipoVaga, NivelConhecimento
 
 
 class EventoCriar(BaseModel):
@@ -103,3 +103,27 @@ class EventoAtualizar(BaseModel):
             )
 
         return self
+
+class InscritoCriar(BaseModel):
+    tipoVaga: TipoVaga
+    "Tipo de vaga: True para com notebook e False para sem notebook."
+
+    nivelConhecimento: NivelConhecimento
+    "Nível de conhecimento do usuário (1 a 5)."
+
+
+class InscritoLer(Evento): #PODE ESTAR ERRADO 
+    pass
+
+
+class InscritoAtualizar(BaseModel):
+    tipoVaga: TipoVaga | None = None
+    "Tipo de vaga: True para com notebook e False para sem notebook."
+
+
+class InscritoDeletar(BaseModel):
+    idEvento: str
+    "Identificador único do evento."
+
+    idUsuario: str
+    "Identificador único do usuário."
