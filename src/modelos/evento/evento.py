@@ -16,7 +16,7 @@ class NivelConhecimento(str, Enum):
 class Inscrito(BaseModel):
     idUsuario: str
     tipoVaga: TipoVaga
-    nivelConhecimento: NivelConhecimento
+    nivelConhecimento: NivelConhecimento | None = None
     comprovante: str | None = None
     dataHoraInscricao: datetime
 

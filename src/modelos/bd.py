@@ -6,10 +6,9 @@ from pymongo.errors import DuplicateKeyError
 
 from src.config import config
 from src.modelos.autenticacao.autenticacao import TokenAutenticacao
-from src.modelos.evento.evento import Evento, Inscrito
+from src.modelos.evento.evento import Evento, Inscrito, TipoVaga
 from src.modelos.evento.eventoQuery import eventoQuery
 from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoExcecao
-#from src.modelos.inscrito.inscrito import Inscrito
 from src.modelos.registro.registroLogin import RegistroLogin
 from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
 
@@ -29,10 +28,8 @@ colecaoUsuarios.create_index("cpf", unique=True)
 colecaoEventos = cliente[config.NOME_BD]["eventos"]
 colecaoEventos.create_index("titulo", unique=True)
 
-#colecaoInscritos = cliente[config.NOME_BD]["inscritos"]
-#colecaoInscritos.create_index([("idEvento", 1), ("idUsuario", 1)], unique=True)
-
 colecaoRegistro = cliente[config.NOME_BD]["registros"]
+
 
 
 class UsuarioBD:
@@ -47,8 +44,8 @@ class UsuarioBD:
             raise JaExisteExcecao(message="Usuário já existe no banco de dados")
 
     @staticmethod
-    def busca(indice: str, chave: str) -> Usuario:
-        # Verifarica se o usuário está cadastrado no bd
+    def buscar(indice: str, chave: str) -> Usuario:
+        # Verifica se o usuário está cadastrado no bd
         if not colecaoUsuarios.find_one({indice: chave}):
             raise NaoEncontradoExcecao(message="O Usuário não foi encontrado.")
         else:
@@ -73,7 +70,6 @@ class UsuarioBD:
                 Usuario(**u)
                 for u in colecaoUsuarios.find({"tipoConta": TipoConta.PETIANO})
             ]
-
     '''@staticmethod            #talvez apagar, tem q ver se dá pra usar o buscar do usuario
     def listarEventosUsuario(idUsuario: str) -> list[Evento]:
         return [Evento(**e) for e in colecaoUsuarios.find({"eventosInscrito": idUsuario})]'''
@@ -135,14 +131,170 @@ class EventoBD:
         return resultado
 
 
-class InscritoBD:
     @staticmethod
-    def registrar(modelo: Evento):   
+    def criarInscrito(id_evento: str, inscrito: Inscrito):
         try:
-            colecaoEventos.insert_one(modelo.model_dump())
+            # Busca o evento pelo id
+            evento = colecaoEventos.find_one({"_id": id_evento})
+            
+            if not evento:
+                raise Exception("Evento não encontrado")
+
+            # Verifica se o usuário já está inscrito
+            for i in evento.get("inscritos", []):
+                if i["idUsuario"] == inscrito.idUsuario:
+                    logging.error("Inscrito já existe no evento")
+                    raise JaExisteExcecao(message="Inscrito já existe no evento")
+
+            # Adiciona o novo inscrito à lista de inscritos do evento
+            novo_inscrito = inscrito.model_dump()
+            evento.get("inscritos", []).append(novo_inscrito)
+
+            # Atualiza o documento no MongoDB
+            colecaoEventos.update_one(
+                {"_id": id_evento},
+                {"$push": {"inscritos": novo_inscrito},
+                 "$inc": {"vagasDisponiveisComNote": -1} if inscrito.tipoVaga == TipoVaga.COM_NOTE else {"vagasDisponiveisSemNote": -1}}
+            )
         except DuplicateKeyError:
             logging.error("Inscrito já existe no evento")
             raise JaExisteExcecao(message="Inscrito já existe no evento")
+        except Exception as e:
+            logging.error(f"Erro inesperado: {str(e)}")
+            raise
+        
+
+    # @staticmethod
+    # def criar(inscrito: Inscrito, evento: Evento, usuario: Usuario) -> None:
+    #     """Cria um inscrito no banco de dados.
+
+    #     - inscrito -- inscrito a ser cadastrado
+    #     - evento -- evento a ser atualizado
+    #     - usuario -- usuário a ser atualizado
+
+    #     Return: None
+    #     """
+
+    #     session = cliente.start_session()
+
+    #     # Realiza as operações no BD usando uma transação
+    #     try:
+    #         session.start_transaction()
+
+    #         InscritoBD._criar(inscrito)
+    #         EventoBD.atualizar(evento)
+    #         UsuarioBD.atualizar(usuario)
+
+    #         # Commita as operações
+    #         session.commit_transaction()
+    #     except Exception as e:
+    #         logging.error(f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}")
+
+    #         # Aborta a transação
+    #         session.abort_transaction()
+    #         raise APIExcecaoBase(message="Erro ao criar inscrito")
+
+    #VER DEPOISSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+    @staticmethod
+    def buscarInscrito(idEvento: str, idUsuario: str) -> bool: #Aqui retornava inscritos
+        # Verifica se o inscrito está cadastrado no bd 
+        if evento := colecaoEventos.find_one({"id": idEvento, "inscritos.idUsuario": idUsuario} #PODE ESTAR ERRADO                                      
+        ):
+            for inscrito in evento.get("inscritos", []):
+                if inscrito.get("idUsuario") == idUsuario:
+                    return inscrito
+        else:
+            raise NaoEncontradoExcecao(message="O inscrito não foi encontrado.")
+    
+
+    '''
+    @staticmethod  
+    def atualizar(modelo: Evento):       #já tem
+        colecaoEventos.update_one(
+            {"idEvento": modelo.idEvento, "idUsuario": modelo.idUsuario},
+            {"$set": modelo.model_dump()},
+        )
+    '''
+
+    @staticmethod
+    def deletarInscrito(idEvento: str, idUsuario: str):  #deleta a inscricao
+        colecaoEventos.delete_one({"idEvento": idEvento, "Inscrito.idUsuario": idUsuario})
+
+
+    @staticmethod
+    def listarInscritosEvento(id: str) -> list[Inscrito]:
+        return [Inscrito(**e) for e in colecaoEventos.find({"idEvento": id})]
+
+
+class TokenAutenticacaoBD:
+    @staticmethod
+    def buscar(id: str) -> TokenAutenticacao:
+        documento = colecaoTokens.find_one({"_id": id})
+        if not documento:
+            raise NaoEncontradoExcecao()
+
+        return TokenAutenticacao(**documento)
+
+    @staticmethod
+    def deletar(id: str):
+        resultado = colecaoTokens.delete_one({"_id": id})
+        if resultado.deleted_count != 1:
+            raise NaoEncontradoExcecao()
+
+    @staticmethod
+    def criar(id: str, idUsuario: str, validade: datetime) -> TokenAutenticacao:
+        documento = {"_id": id, "idUsuario": idUsuario, "validade": validade}
+
+        resultado = colecaoTokens.insert_one(documento)
+        assert resultado.acknowledged
+
+        return TokenAutenticacaoBD.buscar(str(resultado.inserted_id))
+
+    @staticmethod
+    def deletarTokensUsuario(idUsuario: str):
+        colecaoTokens.delete_many({"idUsuario": idUsuario})
+
+
+class RegistroLoginBD:
+    @staticmethod
+    def criar(modelo: RegistroLogin):
+        """
+        Cria um registro de login no banco de dados.
+        """
+        colecaoRegistro.insert_one(modelo.model_dump())
+
+    @staticmethod
+    def listarRegistrosUsuario(email: str) -> list[RegistroLogin]:
+        """
+        Lista os registros de login de um usuário.
+        """
+        # Verifica se o email possui algum registro associado
+        if not colecaoRegistro.find_one({"emailUsuario": email}):
+            raise NaoEncontradoExcecao(message="Nenhum registro encontrado.")
+        else:
+            return [RegistroLogin(**r) for r in colecaoRegistro.find({"emailUsuario": email})]  # type: ignore
+
+    @staticmethod
+    def listarTodos() -> list[RegistroLogin]:
+        """
+        Lista todos os registros de login.
+        """
+        return [RegistroLogin(**r) for r in colecaoRegistro.find()]
+
+
+
+
+#APAGAR DPS:
+
+
+class InscritoBD:
+    @staticmethod
+    def criar(modelo: Inscrito):
+        try:
+            colecaoInscritos.insert_one(modelo.model_dump())
+        except DuplicateKeyError:
+            logging.error("Inscrito já existe no banco de dados")
+            raise JaExisteExcecao(message="Inscrito já existe no banco de dados")
 
     # @staticmethod
     # def criar(inscrito: Inscrito, evento: Evento, usuario: Usuario) -> None:
@@ -175,30 +327,33 @@ class InscritoBD:
     #         raise APIExcecaoBase(message="Erro ao criar inscrito")
 
     @staticmethod
-    def buscar(idEvento: str, idUsuario: str) -> bool: #Aqui retornava inscritos
-        # Verifica se o inscrito está cadastrado no bd 
-        if idUsuario := colecaoEventos.find_one({"id": idEvento, "inscritos.idUsuario": idUsuario} #PODE ESTAR ERRADO                                      
+    def buscar(idEvento: str, idUsuario: str) -> Inscrito:
+        # Verifica se o inscrito está cadastrado no bd
+        if inscrito := colecaoInscritos.find_one(
+            {"idEvento": idEvento, "idUsuario": idUsuario}
         ):
-            return True
+            return Inscrito(**inscrito)  # type: ignore
         else:
             raise NaoEncontradoExcecao(message="O inscrito não foi encontrado.")
 
-    '''@staticmethod  
-    def atualizar(modelo: Evento):       #já tem
-        colecaoEventos.update_one(
+    @staticmethod
+    def atualizar(modelo: Inscrito):
+        colecaoInscritos.update_one(
             {"idEvento": modelo.idEvento, "idUsuario": modelo.idUsuario},
             {"$set": modelo.model_dump()},
         )
-    '''
 
     @staticmethod
-    def deletar(idEvento: str, idUsuario: str):  #deleta a inscricao
-        colecaoEventos.delete_one({"idEvento": idEvento, "Inscrito.idUsuario": idUsuario})
+    def deletar(idEvento: str, idUsuario: str):
+        colecaoInscritos.delete_one({"idEvento": idEvento, "idUsuario": idUsuario})
 
+    @staticmethod
+    def listarEventosUsuario(id: str) -> list[Inscrito]:
+        return [Inscrito(**e) for e in colecaoInscritos.find({"idUsuario": id})]
 
     @staticmethod
     def listarInscritosEvento(id: str) -> list[Inscrito]:
-        return [Inscrito(**e) for e in colecaoEventos.find({"idEvento": id})]
+        return [Inscrito(**e) for e in colecaoInscritos.find({"idEvento": id})]
 
 
 class TokenAutenticacaoBD:

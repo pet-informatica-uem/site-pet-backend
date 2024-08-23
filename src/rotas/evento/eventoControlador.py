@@ -13,7 +13,7 @@ from src.img.operacoesImagem import (
     deletaImagem,
     validaImagem,
 )
-from src.modelos.bd import EventoBD, InscritoBD
+from src.modelos.bd import EventoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
 from src.modelos.evento.eventoQuery import eventoQuery
@@ -22,7 +22,126 @@ from src.modelos.excecao import (
     ImagemInvalidaExcecao,
     ImagemNaoSalvaExcecao,
 )
-from src.modelos.inscrito.inscrito import Inscrito
+
+
+#Inscritos:
+from src.modelos.evento.eventoClad import (
+    InscritoAtualizar,
+    InscritoCriar,
+    InscritoDeletar,
+    InscritoLer
+)
+
+from src.modelos.evento.evento import TipoVaga
+import logging
+from datetime import datetime
+from fastapi import BackgroundTasks, UploadFile
+from PIL import Image
+
+from src.config import config
+from src.email.operacoesEmail import enviarEmailConfirmacaoEvento
+from src.img.operacoesImagem import armazenaComprovante, deletaImagem, validaComprovante
+from src.modelos.bd import EventoBD, InscritoBD, UsuarioBD, cliente
+from src.modelos.evento.evento import Evento
+from src.modelos.excecao import APIExcecaoBase
+from src.modelos.usuario.usuario import Usuario
+
+
+class InscritosControlador:
+    @staticmethod
+    def cadastrarInscrito(
+        idEvento: str,
+        idUsuario: str,
+        dadosInscrito: InscritoCriar,
+        comprovante: UploadFile | None,
+        tasks: BackgroundTasks,
+    ):
+        # Recupera o evento
+        evento: Evento = EventoControlador.getEvento(idEvento)
+
+        # Verifica se está no período de inscrição
+        if (
+            evento.inicioInscricao > datetime.now()
+            and evento.fimInscricao < datetime.now()
+        ):
+            raise APIExcecaoBase(message="Fora do período de inscrição")
+
+        # Verifica se há vagas disponíveis
+        if dadosInscrito.tipoVaga == TipoVaga.COM_NOTE:
+            if evento.vagasDisponiveisComNote == 0:
+                raise APIExcecaoBase(message="Não há vagas disponíveis com note")
+        else:
+            if evento.vagasDisponiveisSemNote == 0:
+                raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
+
+        if evento.valor != 0:
+            if comprovante:
+                if not validaComprovante(comprovante.file):
+                    raise APIExcecaoBase(message="Comprovante inválido.")
+
+                deletaImagem(idUsuario, ["eventos", evento.id, "comprovantes"])
+                caminhoComprovante = armazenaComprovante(
+                    evento.id, idUsuario, comprovante.file
+                )
+            else:
+                raise APIExcecaoBase(
+                    message="Comprovante obrigatório para eventos pagos."
+                )
+        else:
+            caminhoComprovante = None
+
+        dictInscrito = {
+            "idUsuario": idUsuario,
+            #"tipovaga": None,
+            #"nivelConhecimento": None,
+            #"comprovante": comprovante,
+            "dataInscricao": datetime.now(),
+        }
+
+        dictInscrito.update(**dadosInscrito.model_dump())
+        dictInscrito.comprovante = str(caminhoComprovante) if caminhoComprovante else None  # type: ignore
+
+        if dictInscrito.tipoVaga == TipoVaga.COM_NOTE:
+            evento.vagasDisponiveisComNote -= 1
+        else:
+            evento.vagasDisponiveisSemNote -= 1
+
+        # Recupera o usuário
+        usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
+
+        # Adiciona o evento na lista de eventos inscritos do usuário
+        usuario.eventosInscrito.append(idEvento)
+
+        # Realiza as operações no BD usando uma transação
+        session = cliente.start_session()
+        try:
+            session.start_transaction()
+
+            EventoBD.criarInscrito(idEvento,dictInscrito) 
+            EventoBD.atualizar(evento)
+            UsuarioBD.atualizar(usuario)
+
+            # Commita a transação se der tudo certo
+            session.commit_transaction()
+            session.end_session()
+
+        # Aborta a transação caso ocorra algum erro
+        except Exception as e:
+            logging.error(
+                f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}"
+            )
+
+            session.abort_transaction()
+            session.end_session()
+            raise APIExcecaoBase(message="Erro ao criar inscrito")
+
+        # Envia email de confirmação de inscrição
+        tasks.add_task(
+            enviarEmailConfirmacaoEvento,
+            usuario.email,
+            evento.id,
+            inscrito.tipoVaga,
+        )
 
 
 class EventoControlador:
@@ -164,3 +283,6 @@ class EventoControlador:
         criaPastaEvento(evento.id)
 
         return evento.id
+
+
+
