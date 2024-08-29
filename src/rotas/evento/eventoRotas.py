@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, File, UploadFile, status
 
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar, EventoLer
-from src.modelos.evento.eventoQuery import eventoQuery
+from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
@@ -20,7 +20,7 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
     name="Recuperar eventos",
     description="Retorna todos os eventos cadastrados no banco de dados filtrados pelo parâmetro 'query'.",
 )
-def getEventos(query: eventoQuery) -> list[Evento]:
+def getEventos(query: IntervaloBusca) -> list[Evento]:
     return EventoControlador.getEventos(query)
 
 

@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class eventoQuery(str, Enum):
+class IntervaloBusca(str, Enum):
     """
     Determina o intervalo de tempo em que eventos podem ser recuperados.
     """
