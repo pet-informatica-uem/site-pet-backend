@@ -85,6 +85,16 @@ class Configuracoes(BaseSettings):
     URL-raiz do servidor.
     """
 
+    SERVIDOR_SMTP: str = "smtp.gmail.com"
+    """
+    Servidor SMTP a ser utilizado.
+    """
+
+    PORTA_SMTP: int = 587
+    """
+    Porta do servidor SMTP a ser utilizada.
+    """
+
     model_config = SettingsConfigDict(
         env_prefix="PET_API_",
         env_file=".env",
