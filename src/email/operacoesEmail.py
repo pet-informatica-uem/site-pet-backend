@@ -187,7 +187,8 @@ def enviarEmail(emailDestino: str, mensagem: MIMEMultipart) -> None:
 
     try:
         with smtplib.SMTP(config.SERVIDOR_SMTP, config.PORTA_SMTP) as server:
-            server.starttls()
+            if config.SMTP_TLS:
+                server.starttls()
             server.login(config.EMAIL_SMTP, config.SENHA_SMTP)
             text = mensagem.as_string()
             server.sendmail(config.EMAIL_SMTP, emailDestino, text)

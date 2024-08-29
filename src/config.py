@@ -95,6 +95,11 @@ class Configuracoes(BaseSettings):
     Porta do servidor SMTP a ser utilizada.
     """
 
+    SMTP_TLS: bool = True
+    """
+    Caso verdadeiro, utiliza TLS na conexão com o servidor SMTP.
+    """
+
     model_config = SettingsConfigDict(
         env_prefix="PET_API_",
         env_file=".env",
