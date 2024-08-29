@@ -8,7 +8,7 @@ from src.modelos.evento.evento import Evento
 
 class EventoCriar(BaseModel):
     """
-    Classe que representa um evento do sistema.
+    Dados de um pedido de criação de evento no sistema.
     """
 
     titulo: str
@@ -18,7 +18,7 @@ class EventoCriar(BaseModel):
     "Descrição do evento."
 
     preRequisitos: list[str] = []
-    "Pré requisitos para participar do evento."
+    "Pré-requisitos para participar do evento."
 
     inicioInscricao: datetime
     "Data e hora de início das inscrições."
@@ -49,7 +49,7 @@ class EventoCriar(BaseModel):
         cls, dias: list[tuple[datetime, datetime]]
     ) -> list[tuple[datetime, datetime]]:
         """
-        Função para verificar se as datas de início e fim de cada dia do evento são válidas.
+        Verifica se as datas de início e fim de cada dia do evento são válidas.
             :cls: EventoCriar -> referência à classe EventoCriar, na qual o método está sendo definido.
             :dias: list[tuple[datetime, datetime]] -> a data e a hora de início e fim de cada dia do evento.
         """
@@ -64,7 +64,7 @@ class EventoCriar(BaseModel):
     @model_validator(mode="after")
     def inscricoesValidas(self) -> Self:
         """
-        Função para verificar se as datas das inscrições do evento são válidas.
+        Verifica se as datas das inscrições do evento são válidas.
             :self: EventoCriar -> referência à classe EventoCriar, na qual o método está sendo definido.
         """
         if self.inicioInscricao > self.fimInscricao:
@@ -81,7 +81,7 @@ class EventoLer(Evento):
 
 class EventoAtualizar(BaseModel):
     """
-    Classe que representa a atualização de um evento do sistema.
+    Dados de um pedido de atualização de um evento no sistema.
     """
     
     titulo: str | None = None
@@ -91,7 +91,7 @@ class EventoAtualizar(BaseModel):
     "Descrição do evento."
 
     preRequisitos: list[str] | None = None
-    "Pré requisitos para participar do evento."
+    "Pré-requisitos para participar do evento."
 
     inicioInscricao: datetime | None = None
     "Data e hora de início das inscrições."
@@ -122,7 +122,7 @@ class EventoAtualizar(BaseModel):
         cls, dias: list[tuple[datetime, datetime]] | None
     ) -> list[tuple[datetime, datetime]] | None:
         """
-        Função para verificar se as datas a serem atualizar de início e fim de cada dia do evento são válidas.
+        Verifica se as datas a serem atualizar de início e fim de cada dia do evento são válidas.
             :cls: EventoCriar -> referência à classe EventoCriar, na qual o método está sendo definido.
             :dias: list[tuple[datetime, datetime]] -> a data e a hora de início e fim de cada dia do evento.
         """
@@ -138,7 +138,7 @@ class EventoAtualizar(BaseModel):
     @model_validator(mode="after")
     def inscricoesValidas(self) -> Self:
         """
-        Função para verificar se as datas a serem atualizadas das inscrições do evento são válidas.
+        Verifica se as datas a serem atualizadas das inscrições do evento são válidas.
             :self: EventoCriar -> referência à classe EventoCriar, na qual o método está sendo definido.
         """
         if (
