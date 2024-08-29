@@ -7,7 +7,7 @@ from pymongo.errors import DuplicateKeyError
 from src.config import config
 from src.modelos.autenticacao.autenticacao import TokenAutenticacao
 from src.modelos.evento.evento import Evento
-from src.modelos.evento.eventoQuery import eventoQuery
+from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoExcecao
 from src.modelos.inscrito.inscrito import Inscrito
 from src.modelos.registro.registroLogin import RegistroLogin
@@ -108,19 +108,19 @@ class EventoBD:
         colecaoEventos.delete_one({"_id": id})
 
     @staticmethod
-    def listar(query: eventoQuery) -> list[Evento]:
+    def listar(query: IntervaloBusca) -> list[Evento]:
         resultado: list[Evento]
 
-        if query == eventoQuery.PASSADO:
+        if query == IntervaloBusca.PASSADO:
             dbQuery = {"fimEvento": {"$lt": datetime.now()}}
             resultadoBusca = colecaoEventos.find(dbQuery)
-        elif query == eventoQuery.PRESENTE:
+        elif query == IntervaloBusca.PRESENTE:
             dbQuery = {
                 "inicioEvento": {"$lt": datetime.now()},
                 "fimEvento": {"$gt": datetime.now()},
             }
             resultadoBusca = colecaoEventos.find(dbQuery)
-        elif query == eventoQuery.FUTURO:
+        elif query == IntervaloBusca.FUTURO:
             dbQuery = {"inicioEvento": {"$gt": datetime.now()}}
             resultadoBusca = colecaoEventos.find(dbQuery)
         else:
