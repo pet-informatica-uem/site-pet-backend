@@ -3,22 +3,28 @@ from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, SecretStr, StringConstraints, field_validator
 
+from src.modelos.usuario.usuario import TipoConta
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 
 
 class UsuarioCriar(BaseModel):
     """""
-    Classe que valida o email, cpf e senha do usuário.
-        :EmailStr é uma função do pydantic que valida o email
-        :SecretStr é uma função do pydantic que encripta a senha
-        :StringConstraints é uma função do pydantic que valida o tamanho da string
-        :@field_validator("campo") é um decorador do pydantic que valida o campo
+    Dados de um pedido de criação de um usuário no sistema.
     """
     nome: Annotated[str, StringConstraints(max_length=240)]
+    """Nome completo do usuário."""
+
     email: EmailStr
+    """Endereço de e-mail do usuário. O e-mail deve ser válido."""
+
     cpf: str
+    """CPF do usuário. O CPF deve ser válido."""
+
     senha: SecretStr
+    """Senha do usuário. A senha deve obedecer às regras de complexidade."""
+
     curso: Annotated[str, StringConstraints(max_length=240)]
+    """Curso do usuário."""
 
     @field_validator("cpf")
     def cpf_valido(cls, v: str):
@@ -40,51 +46,91 @@ class UsuarioCriar(BaseModel):
 
 
 class UsuarioLer(BaseModel):
-    """"
-    Classe que representa um usuário no sistema
+    """
+    Dados básicos de um usuário cadastrado no sistema.
     """
     nome: str
+    """Nome completo do usuário."""
+
     email: EmailStr
+    """Endereço de e-mail do usuário."""
+
     curso: str
+    """Curso do usuário."""
 
     foto: str | None = None
+    """URL da foto de perfil do usuário, caso seja petiano."""
+    
     github: str | None = None
+    """URL do perfil do GitHub do usuário, caso seja petiano."""
+
     linkedin: str | None = None
+    """URL do perfil do LinkedIn do usuário, caso seja petiano."""
+
     instagram: str | None = None
+    """URL do perfil do Instagram do usuário, caso seja petiano."""
 
 
 class UsuarioLerAdmin(UsuarioLer):
-    """"
-    Classe que representa um usuário no sistema, com informações adicionais para administrador
+    """
+    Dados de um usuário cadastrado no sistema, incluindo informações sensíveis.
     """
     id: str
+    """Identificador único do usuário."""
+
     cpf: str
+    """CPF do usuário."""
+
     emailConfirmado: bool
-    tipoConta: str
+    """Indica se o e-mail do usuário foi confirmado."""
+
+    tipoConta: TipoConta
+    """Tipo de conta do usuário. """
+
     eventosInscrito: list[str]
+    """Lista de identificadores dos eventos nos quais o usuário está inscrito."""
+
     dataCriacao: datetime
+    """Timestamp de criação do usuário."""
+
     inicioPet: datetime | None = None
+    """Timestamp de ingresso no PET, caso seja petiano ou egresso."""
+
     fimPet: datetime | None = None
+    """Timestamp de saída do PET, caso seja petiano ou egresso."""
 
 
 class UsuarioAtualizar(BaseModel):
-    """"
-    Classe usada para atualizar um usuário
+    """
+    Dados de um pedido de atualização de um usuário no sistema.
+
+    Se um campo for `None`, significa que o campo não será atualizado.
     """
     nome: str | None = None
+    """Nome completo do usuário."""
+
     curso: str | None = None
+    """Curso do usuário."""
+
     github: str | None = None
+    """URL do perfil do GitHub do usuário, caso seja petiano."""
+
     linkedin: str | None = None
+    """URL do perfil do LinkedIn do usuário, caso seja petiano."""
+
     instagram: str | None = None
+    """URL do perfil do Instagram do usuário, caso seja petiano."""
 
 
 class UsuarioAtualizarSenha(BaseModel):
-    """"
-    Classe usada para atualizar a senha de um usuário
-        :senhaStr é uma função do pydantic que encripta a senha
+    """
+    Dados de um pedido de atualização de senha de um usuário.
     """
     senha: SecretStr
+    """Senha atual do usuário."""
+
     novaSenha: SecretStr
+    """Nova senha do usuário. A senha deve obedecer às regras de complexidade."""
 
     @field_validator("novaSenha")
     def novaSenha_valida(cls, v: SecretStr):
@@ -94,13 +140,14 @@ class UsuarioAtualizarSenha(BaseModel):
 
 
 class UsuarioAtualizarEmail(BaseModel):
-    """""
-    Classe usada para atualizar o email de um usuário
-        :EmailStr é uma função do pydantic que valida o email
-        :senhaStr é uma função do pydantic que encripta a senha
+    """
+    Dados de um pedido de atualização do email de um usuário.
     """
     senha: SecretStr
+    """Senha do usuário."""
+
     novoEmail: EmailStr
+    """Novo endereço de e-mail do usuário. O e-mail deve ser válido."""
 
     @field_validator("novoEmail")
     def novoEmail_valido(cls, v: EmailStr):
@@ -111,6 +158,7 @@ class UsuarioAtualizarEmail(BaseModel):
 
 class UsuarioDeletar(BaseModel):
     """"
-    Classe usada para deletar um usuário
+    Dados de um pedido de remoção de um usuário no sistema.
     """
     id: str
+    """Identificador único do usuário a ser removido."""
