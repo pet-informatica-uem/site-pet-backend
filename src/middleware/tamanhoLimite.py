@@ -5,6 +5,13 @@ from src.modelos.excecao import TamanhoLimiteExcedidoExcecao
 
 
 class TamanhoLimiteMiddleware:
+    """
+    Limita o tamanho da mensagem recebida pelo usuário a `tamLimite` bytes.
+    A intenção é prevenir ataques de negação de serviço por exaustão de memória.
+
+    Caso o tamanho ultrapasse esse limite, o middleware gera uma HTTPException
+    com o conteúdo de um TamahoLimiteExcedidoExcecao.
+    """
     tamLimite: int | None
 
     def __init__(self, app: ASGIApp, *, size_limit: int | None = None) -> None:
