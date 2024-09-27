@@ -30,6 +30,8 @@ colecaoEventos.create_index("titulo", unique=True)
 
 colecaoRegistro = cliente[config.NOME_BD]["registros"]
 
+colecaoInscritos = cliente[config.NOME_BD]["inscritos"]
+
 
 
 class UsuarioBD:
@@ -282,10 +284,7 @@ class RegistroLoginBD:
         return [RegistroLogin(**r) for r in colecaoRegistro.find()]
 
 
-
-
 #APAGAR DPS:
-
 
 class InscritoBD:
     @staticmethod

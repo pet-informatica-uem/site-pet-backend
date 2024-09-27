@@ -1,13 +1,19 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
-
+from fastapi import APIRouter, Depends, File, UploadFile, status, BackgroundTasks
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar, EventoLer
 from src.modelos.evento.eventoQuery import eventoQuery
 from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
+
+from src.modelos.inscrito.inscritoClad import (
+    InscritoAtualizar,
+    InscritoCriar,
+    InscritoDeletar,
+    InscritoLer,
+)
 
 # Especifica o formato das datas para serem convertidos
 formatoString = "%d/%m/%Y %H:%M"
@@ -93,3 +99,26 @@ def deletarEvento(
 ):
     # Despacha para o controlador
     EventoControlador.deletarEvento(id)
+
+#INSCRITOS
+
+@roteador.post(
+    "/{idEvento}/inscritos",
+    name="Cadastrar inscrito",
+    description="Cadastra um novo inscrito.\n\n "
+    "- tipoVaga = comNotebook para vaga com note.\n\n"
+    "- tipoVaga = semNotebook para vaga sem note.\n\n"
+    "- nivelConhecimento 1-5",
+    status_code=status.HTTP_201_CREATED,
+)
+def cadastrarInscrito(
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+    idEvento: str,
+    inscrito: InscritoCriar = Depends(),
+    comprovante: UploadFile | None = None,
+):
+    # Despacha para o controlador
+    EventoControlador.cadastrarInscrito(
+        idEvento, usuario.id, inscrito, comprovante, tasks
+    )
+

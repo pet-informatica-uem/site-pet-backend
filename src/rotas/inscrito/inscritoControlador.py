@@ -19,6 +19,8 @@ from src.modelos.inscrito.inscritoClad import (
     InscritoDeletar,
     TipoVaga,
 )
+
+
 from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 
@@ -32,6 +34,8 @@ class InscritosControlador:
     @staticmethod
     def getInscrito(idEvento: str, idInscrito: str):
         return InscritoBD.buscar(idEvento, idInscrito)
+
+    
 
     @staticmethod
     def editarInscrito(idEvento: str, idInscrito: str, inscrito: InscritoAtualizar):

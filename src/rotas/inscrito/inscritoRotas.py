@@ -16,28 +16,6 @@ from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAute
 roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
 
-@roteador.post(
-    "/{idEvento}/inscritos",
-    name="Cadastrar inscrito",
-    description="Cadastra um novo inscrito.\n\n "
-    "- tipoVaga = comNotebook para vaga com note.\n\n"
-    "- tipoVaga = semNotebook para vaga sem note.\n\n"
-    "- nivelConhecimento 1-5",
-    status_code=status.HTTP_201_CREATED,
-)
-def cadastrarInscrito(
-    tasks: BackgroundTasks,
-    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
-    idEvento: str,
-    inscrito: InscritoCriar = Depends(),
-    comprovante: UploadFile | None = None,
-):
-    # Despacha para o controlador
-    InscritosControlador.cadastrarInscrito(
-        idEvento, usuario.id, inscrito, comprovante, tasks
-    )
-
-
 @roteador.get(
     "/{idEvento}/inscritos",
     name="Recuperar inscritos",
