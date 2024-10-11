@@ -4,6 +4,10 @@ from pydantic import BaseModel
 
 
 class RegistroLogin(BaseModel):
+    """
+    Dados do registro de login de um usuário.
+    """
+
     emailUsuario: str
     "E-mail do usuário."
 
