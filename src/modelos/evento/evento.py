@@ -1,6 +1,8 @@
 from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field
+from bson.objectid import ObjectId
+from uuid import uuid4
 
 class TipoVaga(str, Enum):
     COM_NOTE = "comNotebook"
@@ -14,7 +16,7 @@ class NivelConhecimento(str, Enum):
     ESPECIALISTA = "5"
 
 class Inscrito(BaseModel):
-    idUsuario: str
+    idUsuario: str = Field(..., alias="_id")
     tipoVaga: TipoVaga
     nivelConhecimento: NivelConhecimento | None = None
     comprovante: str | None = None
@@ -35,7 +37,7 @@ class Evento(BaseModel):
     "Descrição do evento."
 
     preRequisitos: list[str] = []
-    "Pré requisitos para participar do evento."
+    "Pré-requisitos para participar do evento."
 
     inicioInscricao: datetime
     "Data e hora de início das inscrições."
@@ -67,8 +69,8 @@ class Evento(BaseModel):
     vagasDisponiveisSemNote: int
     "Quantidade de vagas sem notebook disponíveis."
 
-    inscritos: list[Inscrito] | None = None  #PODE ESTAR ERRADO ESSE TipoVaga e NivelConhecimento
-    "Pessoas inscritas no evento. Tupla(idUsuario, TipoVaga, NivelConhecimento, comprovante, data e hora da inscrição )"
+    inscritos: list[Inscrito] = []
+    "Pessoas inscritas no evento."
 
     cargaHoraria: int
     "Carga horária do evento."

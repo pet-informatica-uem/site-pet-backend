@@ -9,7 +9,7 @@ from src.config import config
 from src.modelos.bd import EventoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.excecao import EmailNaoFoiEnviadoExcecao
-from src.modelos.inscrito.inscritoClad import TipoVaga
+from src.modelos.evento.eventoClad import TipoVaga
 
 
 # Função para enviar email customizado

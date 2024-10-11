@@ -2,21 +2,18 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, UploadFile, status, BackgroundTasks
 from src.modelos.evento.evento import Evento
-from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar, EventoLer
-from src.modelos.evento.eventoQuery import eventoQuery
-from src.modelos.usuario.usuario import Usuario
-from src.rotas.evento.eventoControlador import EventoControlador
-from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
-
-from src.modelos.inscrito.inscritoClad import (
+from src.modelos.evento.eventoClad import (
+    EventoAtualizar,
+    EventoCriar,
+    EventoLer,
     InscritoAtualizar,
     InscritoCriar,
-    InscritoDeletar,
     InscritoLer,
 )
-
-# Especifica o formato das datas para serem convertidos
-formatoString = "%d/%m/%Y %H:%M"
+from src.modelos.evento.eventoQuery import eventoQuery
+from src.modelos.usuario.usuario import Usuario, TipoConta
+from src.rotas.evento.eventoControlador import EventoControlador
+from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
 
 roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
@@ -41,9 +38,7 @@ def getEventos(query: eventoQuery) -> list[Evento]:
 )
 def getEvento(id: str) -> Evento:
     evento: Evento = EventoControlador.getEvento(id)
-
     return evento
-
 
 @roteador.post(
     "/",
@@ -100,8 +95,8 @@ def deletarEvento(
     # Despacha para o controlador
     EventoControlador.deletarEvento(id)
 
-#INSCRITOS
 
+##########################################################INSCRITOS
 @roteador.post(
     "/{idEvento}/inscritos",
     name="Cadastrar inscrito",
@@ -112,13 +107,51 @@ def deletarEvento(
     status_code=status.HTTP_201_CREATED,
 )
 def cadastrarInscrito(
+    tasks: BackgroundTasks,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
     idEvento: str,
     inscrito: InscritoCriar = Depends(),
     comprovante: UploadFile | None = None,
 ):
     # Despacha para o controlador
-    EventoControlador.cadastrarInscrito(
+    EventoControlador.cadastrarInscrito(    
         idEvento, usuario.id, inscrito, comprovante, tasks
     )
 
+@roteador.get(
+    "/{idEvento}/inscritos",
+    name="Recuperar inscritos",
+    description="Recupera os inscritos de um evento.",
+    response_model=list[InscritoLer],
+)
+def getInscritos(
+    idEvento: str, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]
+):
+    # Despacha para o controlador
+    return EventoControlador.getInscritos(idEvento)
+
+
+@roteador.patch(
+    "/{idEvento}/inscritos/{idInscrito}",
+    name="Editar inscrito",
+    description="Edita um inscrito.",
+)
+def editarInscrito(
+    idEvento: str,
+    idInscrito: str,
+    inscrito: InscritoAtualizar,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+):
+    return EventoControlador.editarInscrito(idEvento, idInscrito, inscrito)
+
+@roteador.delete(
+    "/{idEvento}/inscritos/{idInscrito}",
+    name="Remover inscrito",
+    description="Remove um inscrito.",
+)
+def removerInscrito(
+    idEvento: str,
+    idInscrito: str,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+):
+    return    EventoControlador.removerInscrito(idEvento, idInscrito)
