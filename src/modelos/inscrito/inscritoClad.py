@@ -7,6 +7,10 @@ from src.modelos.inscrito.inscrito import Inscrito, TipoVaga, NivelConhecimento
 
 
 class InscritoCriar(BaseModel):
+    """
+    Criação de um inscrito no evento.
+    """
+
     tipoVaga: TipoVaga
     "Tipo de vaga: True para com notebook e False para sem notebook."
 
@@ -19,11 +23,19 @@ class InscritoLer(Inscrito):
 
 
 class InscritoAtualizar(BaseModel):
+    """
+    Atualiza um dado em um inscrito no evento.
+    """
+
     tipoVaga: TipoVaga | None = None
     "Tipo de vaga: True para com notebook e False para sem notebook."
 
 
 class InscritoDeletar(BaseModel):
+    """
+    Deleta um inscrito de um evento.
+    """
+    
     idEvento: str
     "Identificador único do evento."
 
