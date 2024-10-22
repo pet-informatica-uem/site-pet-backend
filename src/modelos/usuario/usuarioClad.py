@@ -58,9 +58,6 @@ class UsuarioLer(BaseModel):
     curso: str
     """Curso do usuário."""
 
-    foto: str | None = None
-    """URL da foto de perfil do usuário, caso seja petiano."""
-    
     github: str | None = None
     """URL do perfil do GitHub do usuário, caso seja petiano."""
 

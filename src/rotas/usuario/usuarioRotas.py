@@ -28,7 +28,7 @@ from src.modelos.excecao import (
     listaRespostasExcecoes,
 )
 from src.modelos.registro.registroLogin import RegistroLogin
-from src.modelos.usuario.usuario import TipoConta, Usuario
+from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
 from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizar,
     UsuarioAtualizarEmail,
@@ -114,10 +114,10 @@ def listarUsuarios(
     "/petiano",
     name="Recuperar petianos cadastrados",
     description="Lista todos os petianos cadastrados.",
-    response_model=list[UsuarioLer],
+    response_model=list[Petiano],
 )
 def listarPetianos():
-    return UsuarioControlador.getUsuarios(petiano=True)
+    return UsuarioControlador.getPetianos()
 
 
 @roteador.get(
@@ -326,7 +326,7 @@ def editarFoto(
     description="Promove o usuário especificado a petiano.",
 )
 def promoverPetiano(
-    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ... 
+    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...
 ):
     UsuarioControlador.promoverPetiano(id)
 
