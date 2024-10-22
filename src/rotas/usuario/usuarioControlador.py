@@ -206,10 +206,16 @@ class UsuarioControlador:
 
     @staticmethod
     def getUsuarios() -> list[Usuario]:
+        """
+        Retorna uma lista de todos os usuários cadastrados.
+        """
         return UsuarioBD.listar()
 
     @staticmethod
     def getPetianos() -> list[Petiano]:
+        """
+        Retorna uma lista de todos os petianos cadastrados.
+        """
         petianos = []
         for petiano in UsuarioBD.listarPetianos():
             petianos.append(

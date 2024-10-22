@@ -200,8 +200,18 @@ class InscritoBD:
 
 
 class TokenAutenticacaoBD:
+    """
+    Encapsula operações do banco de dados de tokens de autenticação.
+    """
     @staticmethod
     def buscar(id: str) -> TokenAutenticacao:
+        """
+        Busca um token de autenticação pelo id `id` no banco de dados e o retorna, caso exista.
+        
+        :param id: Identificador do token.
+        :return: Token de autenticação.
+        :raises NaoEncontradoExcecao: Caso o token não seja encontrado.
+        """
         documento = colecaoTokens.find_one({"_id": id})
         if not documento:
             raise NaoEncontradoExcecao()
@@ -210,12 +220,27 @@ class TokenAutenticacaoBD:
 
     @staticmethod
     def deletar(id: str):
+        """
+        Deleta o token de autenticação de id `id` do banco de dados.
+
+        :param id: Identificador do token.
+        :raises NaoEncontradoExcecao: Caso o token não seja encontrado.
+        """
         resultado = colecaoTokens.delete_one({"_id": id})
         if resultado.deleted_count != 1:
             raise NaoEncontradoExcecao()
 
     @staticmethod
     def criar(id: str, idUsuario: str, validade: datetime) -> TokenAutenticacao:
+        """
+        Cria um token de autenticação com id `id` no banco de dados.
+        O token é associado ao usuário de id `idUsuario` e é válido até `validade`.
+
+        :param id: Identificador do token.
+        :param idUsuario: Identificador do usuário associado ao token.
+        :param validade: Data de validade do token.
+        :return: Token de autenticação criado.
+        """
         documento = {"_id": id, "idUsuario": idUsuario, "validade": validade}
 
         resultado = colecaoTokens.insert_one(documento)
@@ -225,6 +250,11 @@ class TokenAutenticacaoBD:
 
     @staticmethod
     def deletarTokensUsuario(idUsuario: str):
+        """
+        Remove todos os tokens de autenticação do usuário com id `idUsuario`.
+
+        :param idUsuario: Identificador do usuário.
+        """
         colecaoTokens.delete_many({"idUsuario": idUsuario})
 
 

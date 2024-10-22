@@ -51,13 +51,29 @@ roteador: APIRouter = APIRouter(
     tags=["Usuário"],
 )
 
+## Para mais detalhes sobre a autenticação, confira o documento
+## [docs/auth](docs/auth.md).
 
 tokenAcesso: OAuth2PasswordBearer = OAuth2PasswordBearer(
     tokenUrl=config.ROOT_PATH + "/usuarios/login"
 )
+"""
+Portador de token de acesso.
+
+Se especificado como dependência de uma rota, torna-a autenticada.
+"""
 
 
 def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
+    """
+    Recupera o token de acesso fornecido na solicitação e retorna um objeto usuário cujo
+    token lhe pertence.
+    
+    Caso o token seja inválido ou não exista, retorna uma resposta HTTP 401.
+
+    Pode ser especificada como dependência para obter o usuário autenticado em rotas
+    que precisam de autorização.
+    """
     try:
         return UsuarioControlador.getUsuarioAutenticado(token)
     except NaoAutenticadoExcecao:
@@ -70,6 +86,14 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
 
 
 def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
+    """
+    Verifica se o usuário autenticado é um petiano e retorna o usuário.
+
+    Caso o usuário não seja um petiano, retorna uma resposta HTTP 403.
+
+    Pode ser especificada como dependência para obter o usuário autenticado em rotas
+    que precisam de autorização de petiano.
+    """
     if usuario.tipoConta == TipoConta.PETIANO:
         return usuario
     raise NaoAutorizadoExcecao()
