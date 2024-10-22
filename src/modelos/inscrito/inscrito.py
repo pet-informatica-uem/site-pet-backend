@@ -5,11 +5,19 @@ from pydantic import BaseModel
 
 
 class TipoVaga(str, Enum):
+    """
+    Determina se o inscrito utilizará ou não o próprio notebook durante o evento.
+    """
+
     COM_NOTE = "comNotebook"
     SEM_NOTE = "semNotebook"
 
 
 class NivelConhecimento(str, Enum):
+    """
+    Determina o nível de conhecimento de um inscrito a respeito do tema do evento, em uma escala de 1 a 5.
+    """
+
     NENHUM = "1"
     BASICO = "2"
     INTERMEDIARIO = "3"
@@ -19,7 +27,7 @@ class NivelConhecimento(str, Enum):
 
 class Inscrito(BaseModel):
     """
-    Classe que representa os inscritos de um evento.
+    Dados de um inscrito em um evento.
     """
 
     idEvento: str
@@ -29,10 +37,10 @@ class Inscrito(BaseModel):
     "Identificador único do usuário."
 
     tipoVaga: TipoVaga
-    "Tipo de vaga: True para com notebook e False para sem notebook."
+    "Indica se o inscrito utilizará ou não o próprio notebook no evento."
 
-    nivelConhecimento: int
-    "Nível de conhecimento do usuário (1 a 5)."
+    nivelConhecimento: NivelConhecimento
+    "Nível de conhecimento do usuário."
 
     comprovante: str | None = None
     "Comprovante de pagamento da inscrição."
