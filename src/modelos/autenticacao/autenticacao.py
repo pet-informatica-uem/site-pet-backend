@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 
 class TokenAutenticacao(BaseModel):
     """
-    Classe que representa um token de autenticação.
+    Um token de autenticação.
     """
 
     id: str = Field(..., alias="_id")
