@@ -14,6 +14,14 @@ from src.modelos.inscrito.inscritoClad import TipoVaga
 
 # Função para enviar email customizado
 def enviarEmailGenerico(emailDestino: str, titulo: str, texto: str) -> None:
+    """
+    Envia um e-mail ao destino com o título e texto fornecidos, utilizando
+    a conta de e-mail configurada no arquivo de configuração.
+
+        :param emailDestino: E-mail do destinatário.
+        :param titulo: Título do e-mail.
+        :param texto: Texto do e-mail.
+    """
     mensagem: MIMEMultipart = MIMEMultipart()
     mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
@@ -25,6 +33,12 @@ def enviarEmailGenerico(emailDestino: str, titulo: str, texto: str) -> None:
 
 # Função para enviar verificação de email
 def enviarEmailVerificacao(emailDestino: str, link: str) -> None:
+    """
+    Envia um e-mail ao destino com um link para verificação da conta.
+
+        :param emailDestino: Email do destinatário.
+        :param link: Link para verificação do e-mail.
+    """
     mensagem: MIMEMultipart = MIMEMultipart()
     mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
@@ -37,6 +51,12 @@ def enviarEmailVerificacao(emailDestino: str, link: str) -> None:
 
 # Função para enviar link troca de senha
 def enviarEmailResetSenha(emailDestino: str, link: str) -> None:
+    """
+    Envia um e-mail contendo um link para redefinição de senha ao destinatário.
+    
+        :param emailDestino: E-mail do destinatário.
+        :param link: Link para redefinição da senha.
+    """
     mensagem: MIMEMultipart = MIMEMultipart()
     mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
@@ -53,6 +73,16 @@ def enviarEmailConfirmacaoEvento(
     idEvento: str,
     tipoVaga: TipoVaga,
 ) -> None:
+    """
+    Envia um e-mail ao destinatário informando a sua inscrição em um evento, contendo
+    informações sobre o evento e a vaga escolhida.
+
+    As informações do evento são recuperadas do banco de dados pelo identificador.
+
+        :param emailDestino: E-mail do destinatário.
+        :param idEvento: Identificador único do evento.
+        :param tipoVaga: Tipo de vaga escolhida pelo inscrito.
+    """
     # Recupera o evento
     evento: Evento = EventoBD.buscar("_id", idEvento)
 
@@ -94,12 +124,20 @@ def enviarEmailConfirmacaoEvento(
 
 
 class DadoAlterado(Enum):
+    """""
+    Qual dado foi alterado no perfil do usuário.
+    """
     EMAIL = "email"
     SENHA = "senha"
 
 
 # Função que envia email assim que senha/email forem trocados
 def enviarEmailAlteracaoDados(emailDestino: str, dadoAlterado: DadoAlterado) -> None:
+    """
+    Envia um e-mail ao destinatário informando de alterações feitas em seu perfil.
+        :param emailDestino: E-mail do destinatário.
+        :param dadoAlterado: Tipo de dado alterado.
+    """
     mensagem: MIMEMultipart = MIMEMultipart()
     mensagem["From"] = config.EMAIL_SMTP
     mensagem["To"] = emailDestino
@@ -126,8 +164,18 @@ def enviarEmailAlteracaoDados(emailDestino: str, dadoAlterado: DadoAlterado) -> 
 
 # Função que faz o envio de emails
 def enviarEmail(emailDestino: str, mensagem: MIMEMultipart) -> None:
+    """
+    Envia um e-mail ao destinatário com a mensagem fornecida.
+
+    Essa função é chamada por outras funções desse arquivo, que preparam a mensagem a ser enviada.
+    Quando o MOCK_EMAIL está ativado, a função apenas imprime o e-mail no log, não enviando de fato.
+
+        :param emailDestino: E-mail do destinatário.
+        :param mensagem: Mensagem a ser enviada.
+
+    """
     if config.MOCK_EMAIL:
-        logging.info("Envio de email para " + str(emailDestino) + "\n\n")
+        logging.info("Envio de e-mail para " + str(emailDestino) + "\n\n")
 
         # print MIME text with logging.info
         imprimir = {"text/plain", "text/html"}
@@ -138,8 +186,9 @@ def enviarEmail(emailDestino: str, mensagem: MIMEMultipart) -> None:
         return
 
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587) as server:
-            server.starttls()
+        with smtplib.SMTP(config.SERVIDOR_SMTP, config.PORTA_SMTP) as server:
+            if config.SMTP_TLS:
+                server.starttls()
             server.login(config.EMAIL_SMTP, config.SENHA_SMTP)
             text = mensagem.as_string()
             server.sendmail(config.EMAIL_SMTP, emailDestino, text)

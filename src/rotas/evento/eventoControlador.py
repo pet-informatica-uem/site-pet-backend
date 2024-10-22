@@ -16,7 +16,7 @@ from src.img.operacoesImagem import (
 from src.modelos.bd import EventoBD, InscritoBD
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
-from src.modelos.evento.eventoQuery import eventoQuery
+from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import (
     APIExcecaoBase,
     ImagemInvalidaExcecao,
@@ -27,7 +27,7 @@ from src.modelos.inscrito.inscrito import Inscrito
 
 class EventoControlador:
     @staticmethod
-    def getEventos(query: eventoQuery) -> list[Evento]:
+    def getEventos(query: IntervaloBusca) -> list[Evento]:
         return EventoBD.listar(query)
 
     @staticmethod

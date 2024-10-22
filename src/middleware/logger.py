@@ -7,10 +7,12 @@ from src.rotas.usuario.usuarioControlador import UsuarioControlador
 
 
 class LoggerMiddleware(BaseHTTPMiddleware):
+    """
+    Registra todas as requisições que passam por este middleware em um arquivo de texto.
+
+    Caso a requisição seja autenticada, o usuário associado a ela é gravado também.
+    """
     async def dispatch(self, request: Request, call_next):
-        """
-        Middleware para logar as requisições.
-        """
         log_dict = {}
         response = await call_next(request)
 
