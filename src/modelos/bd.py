@@ -83,10 +83,12 @@ class EventoBD:
     @staticmethod
     def buscar(indice: str, chave: str) -> Evento:
         # Verifica se o evento está cadastrado no bd
-        if not colecaoEventos.find_one({indice: chave}):
+        evento = colecaoEventos.find_one({indice: chave})
+        if not evento:
             raise NaoEncontradoExcecao(message="O evento não foi encontrado.")
         else:
-            return Evento(**colecaoEventos.find_one({indice: chave}))  # type: ignore
+            #return Evento(**evento).model_dump(by_alias=True)  # type: ignore
+            return Evento(**evento)  # type: ignore 
 
     @staticmethod
     def atualizar(modelo: Evento):

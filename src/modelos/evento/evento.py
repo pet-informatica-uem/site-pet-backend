@@ -8,7 +8,7 @@ class TipoVaga(str, Enum):
     COM_NOTE = "comNotebook"
     SEM_NOTE = "semNotebook"
 
-class NivelConhecimento(str, Enum):
+class NivelConhecimento(str, Enum): 
     NENHUM = "1"
     BASICO = "2"
     INTERMEDIARIO = "3"
@@ -83,3 +83,7 @@ class Evento(BaseModel):
 
     cracha: str | None = None
     "Caminho para a imagem do crachá do evento."
+
+    class Config:
+        allow_population_by_field_name = True  # Permite usar alias ao popular campos
+        json_encoders = {datetime: lambda v: v.isoformat()}  # Serializa datetimes corretamente

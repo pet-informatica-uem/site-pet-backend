@@ -37,8 +37,8 @@ def getEventos(query: eventoQuery) -> list[Evento]:
     response_model=EventoLer,
 )
 def getEvento(id: str) -> Evento:
-    evento: Evento = EventoControlador.getEvento(id)
-    return evento
+    evento: Evento = EventoControlador.getEvento(id)  
+    return evento.model_dump(by_alias=True)  # type: ignore
 
 @roteador.post(
     "/",

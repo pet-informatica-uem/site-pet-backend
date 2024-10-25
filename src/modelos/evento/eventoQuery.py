@@ -6,4 +6,3 @@ class eventoQuery(str, Enum):
     PRESENTE = "atuais"
     FUTURO = "futuros"
     TODOS = "todos"
-
