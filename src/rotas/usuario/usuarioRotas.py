@@ -73,6 +73,10 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
 
     Pode ser especificada como dependência para obter o usuário autenticado em rotas
     que precisam de autorização.
+
+    :param token: Token de acesso.
+    :return Usuario: Objeto contendo informações do usuário autenticado.
+    :raises NaoAutenticadoExcecao: Caso o token seja inválido ou não exista.
     """
     try:
         return UsuarioControlador.getUsuarioAutenticado(token)
@@ -93,6 +97,11 @@ def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutentic
 
     Pode ser especificada como dependência para obter o usuário autenticado em rotas
     que precisam de autorização de petiano.
+    
+    :param usuario: Objeto contendo informações do usuário autenticado.
+    :return Usuario: Objeto contendo informações do usuário autenticado, caso ele seja petiano.
+    :raises NaoAutorizadoExcecao: Caso o usuário não seja petiano.
+    :raises NaoAutenticadoExcecao: Caso o usuário não esteja autenticado ou não exista.
     """
     if usuario.tipoConta == TipoConta.PETIANO:
         return usuario

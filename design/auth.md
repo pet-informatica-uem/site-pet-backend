@@ -66,6 +66,8 @@ Os *tokens* armazenados no banco de dados possuem uma data de validade.
 
 Esse é o padrão definido no esquema de autorização *OAuth2*, o qual é implementado em partes pelo site.
 
+
+
 ### Autenticação via JWT
 
 O outro processo de autenticação é via JWTs (*JSON Web Tokens*). Um JWT é uma sequência objetos JSON codificados em Base64url, de modo que eles podem ser passados em URLs de modo seguro.
@@ -101,6 +103,31 @@ def editarFoto(
 ```
 
 A anotação `Depends` faz com que o FastAPI automaticamente chame essas funções quando a rota é chamada e o parâmetro é populado com uma instância do objeto.
+
+## Aparte: *hashing* e *salting*?
+
+Uma prática comum de segurança é **nunca** armazenar as senhas textualmente ("texto simples") no banco de dados. Se não fizermos isso:
+
+1) Qualquer um com acesso ao banco de dados descobriria a senha dos usuários e poderia acessar as suas contas, e bancos de dados são exfiltrados cotidianamente (até mesmo por membros internos à organização).
+2) Como as pessoas reutilizam senhas (isto é fato), um vazamento de banco de dados de um site com senhas em texto simples pode compromoter as contas dos usuários em outros sites.
+
+No lugar de texto simples, armazenamos **hashes**: uma *função hash* mapeia dados digitais para *strings* de tamanho fixo. A *string* (*hash*) é como uma impressão digital dos dados: apenas[^1] os dados originais são capazes de gerar aquela *string*.
+
+Na prática, a transformação é unidrecional e portanto é impossível obter os dados originais a partir do *hash*. O melhor jeito de descobrir os dados originais é testando todos os dados possíveis até que o *hash* desejado seja encontrado.
+
+Por exemplo, a palavra `hello` em ASCII tem um *hash* MD5 `5d41402abc4b2a76b9719d911017c592`. Se observarmos uma mensagem com o mesmo *hash*, é bem provável que a mensagem seja `hello`.[^1] Assim, ao invés de armazenarmos e compararmos senhas no banco de dados, armazenamos apenas os seus *hashes*.
+
+Todavia, apenas *hashing* não basta: um atacante poderia gerar uma tabela com *hashes* para as senhas mais comuns e comparar essa tabela com o banco de dados para obter as senhas originais. Além disso, se o atacante visse o mesmo *hash* em duas aplicações diferentes, ele poderia inferir que o usuário colocou a mesma senha nos dois.
+
+Para resolver este problema, usamos um **salt**: uma *string* aleatória que é armazenada junto com o *hash* da senha. Quando computamos o *hash* da senha, adicionamos o *salt* antes de passá-la para a função *hash*. Deste modo, cada senha em um banco de dados precisaria de uma tabela diferente, o que é impraticável.
+
+É importante usar funções *hash* criptograficamente seguras, que sejam resistentes a ataques criptoanalíticos (que levam tempo para computar e possuam boas propriedades estatísticas) e que sejam projetadas especificamente para senhas.
+
+- Exemplos: Argon2id, scrypt, bcrypt, PBKDF2
+- Anti-exemplos: MD5, SHA-1, cifra de César
+
+[^1]: Pode acontecer de duas mensagens diferentes terem o mesmo *hash*, pois o *hash* tem tamanho fixo e a função pode receber uma quantidade infinita de dados; como há muito mais sequências de dados possíveis do que hashes, necessariamente haverá repetições ("colisões"). Na prática, essas colisões são extremamente raras (existem $2^{256}$ hashes SHA256 diferentes, o que é... bastante)
+
 
 ## Referências
 
