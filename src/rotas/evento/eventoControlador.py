@@ -1,10 +1,10 @@
 import logging
 import secrets
 from typing import BinaryIO
-
 from bson.objectid import ObjectId
 from fastapi import UploadFile
 
+# Importações dos módulos internos
 from src.config import config
 from src.img.criaPastas import criaPastaEvento
 from src.img.operacoesImagem import (
@@ -26,22 +26,64 @@ from src.modelos.inscrito.inscrito import Inscrito
 
 
 class EventoControlador:
+    """
+    Classe controlador para gerenciar operações sobre eventos, incluindo
+    criação, atualização, remoção e manipulação de dados e imagens.
+    """
+     
     @staticmethod
     def getEventos(query: IntervaloBusca) -> list[Evento]:
+        """
+        Lista todos os eventos de acordo com os parâmetros de busca.
+
+        Parâmetros:
+            query (IntervaloBusca): Objeto contendo os parâmetros de busca para filtrar eventos.
+
+        Retorno:
+            list[Evento]: Lista de eventos que correspondem aos filtros aplicados.
+        """
         return EventoBD.listar(query)
 
     @staticmethod
     def getEvento(id: str) -> Evento:
+        """
+        Recupera um evento específico pelo seu ID.
+
+        Parâmetros:
+            id (str): Identificador único do evento.
+
+        Retorno:
+            Evento: Instância do evento encontrado.
+        """
         return EventoBD.buscar("_id", id)
 
     @staticmethod
     def deletarEvento(id: str):
+        """
+        Deleta um evento do banco de dados.
+
+        Parâmetros:
+            id (str): Identificador único do evento a ser deletado.
+        """
         EventoControlador.getEvento(id)
 
         EventoBD.deletar(id)
 
     @staticmethod
     def editarEvento(id: str, dadosEvento: EventoAtualizar) -> Evento:
+        """
+        Edita um evento existente com base nos novos dados fornecidos.
+
+        Parâmetros:
+            id (str): Identificador do evento a ser atualizado.
+            dadosEvento (EventoAtualizar): Objeto com dados atualizados do evento.
+
+        Retorno:
+            Evento: Evento atualizado.
+
+        Exceções:
+            APIExcecaoBase: Lançada se o número de vagas especificado é inferior ao número de inscritos existentes.
+        """
         # obtém evento
         eventoOld: Evento = EventoControlador.getEvento(id)
 
@@ -99,6 +141,18 @@ class EventoControlador:
     def atualizarImagensEvento(
         id: str, arte: UploadFile | None, cracha: UploadFile | None
     ):
+        """
+        Atualiza as imagens de arte e crachá associadas ao evento.
+
+        Parâmetros:
+            id (str): Identificador do evento.
+            arte (UploadFile | None): Imagem opcional para a arte do evento.
+            cracha (UploadFile | None): Imagem opcional para o crachá do evento.
+
+        Exceções:
+            ImagemInvalidaExcecao: Lançada se a imagem fornecida for inválida.
+            ImagemNaoSalvaExcecao: Lançada se houver erro ao salvar a imagem.
+        """
         # obtém evento
         evento: Evento = EventoControlador.getEvento(id)
 
@@ -136,12 +190,13 @@ class EventoControlador:
     @staticmethod
     def cadastrarEvento(dadosEvento: EventoCriar):
         """
-        Cria uma conta com os dados fornecidos, e envia um email
-        de confirmação de criação de conta ao endereço fornecido.
+        Cadastra um novo evento e cria a estrutura de diretórios associada.
 
-        A criação da conta pode não suceder por erro na validação de dados,
-        por já haver uma conta cadastrada com tal CPF ou email ou por falha
-        de conexão com o banco de dados.
+        Parâmetros:
+            dadosEvento (EventoCriar): Objeto com os dados do evento a ser criado.
+
+        Retorno:
+            str: ID do evento recém-criado.
         """
 
         # normaliza dados
