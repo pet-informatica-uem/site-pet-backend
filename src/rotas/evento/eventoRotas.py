@@ -130,7 +130,6 @@ def getInscritos(
     # Despacha para o controlador
     return EventoControlador.getInscritos(idEvento)
 
-
 @roteador.patch(
     "/{idEvento}/inscritos/{idInscrito}",
     name="Editar inscrito",
@@ -154,4 +153,5 @@ def removerInscrito(
     idInscrito: str,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
 ):
+        
     return    EventoControlador.removerInscrito(idEvento, idInscrito)

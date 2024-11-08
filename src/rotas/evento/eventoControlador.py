@@ -71,7 +71,6 @@ class EventoControlador:
             eventoOld.vagasComNote - eventoOld.vagasDisponiveisComNote
         )
 
-        print("SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS")
         qtdInscritosSemNote: int = (
             eventoOld.vagasSemNote - eventoOld.vagasDisponiveisSemNote
         )
@@ -200,6 +199,7 @@ class EventoControlador:
         comprovante: UploadFile | None,
         tasks: BackgroundTasks,
     ):
+        
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
 
@@ -234,22 +234,27 @@ class EventoControlador:
         else:
             caminhoComprovante = None
 
+##PRA BAIXO
         dictInscrito = {
-            "idUsuario": idUsuario,
-            "dataHoraInscricao": datetime.now(),
+            "_id": idUsuario,
+            "tipoVaga": dadosInscrito.tipoVaga,
+            "nivelConhecimento": dadosInscrito.nivelConhecimento,
+            "comprovante": comprovante,
+            "dataHoraInscricao": datetime.now()
         }
 
         dictInscrito.update(**dadosInscrito.model_dump())
         dictInscrito["comprovante"] = (
             str(caminhoComprovante) if caminhoComprovante else None
         )
-
+     
         inscrito = Inscrito(**dictInscrito)
 
         if inscrito.tipoVaga == TipoVaga.COM_NOTE:
             evento.vagasDisponiveisComNote -= 1
         else:
             evento.vagasDisponiveisSemNote -= 1
+
 
         # Recupera o usuário
         usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
@@ -281,12 +286,14 @@ class EventoControlador:
             raise APIExcecaoBase(message="Erro ao criar inscrito")
 
         # Envia email de confirmação de inscrição
+        '''
         tasks.add_task(
             enviarEmailConfirmacaoEvento,
             usuario.email,
             evento.id,
             dadosInscrito.tipoVaga,
         )
+        '''
 
     # Métodos adicionados do InscritosControlador
     @staticmethod

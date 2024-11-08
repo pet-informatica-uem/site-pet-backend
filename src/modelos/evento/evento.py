@@ -16,7 +16,8 @@ class NivelConhecimento(str, Enum):
     ESPECIALISTA = "5"
 
 class Inscrito(BaseModel):
-    idUsuario: str = Field(..., alias="_id")
+    #idUsuario: str = Field(..., alias="_id")
+    _id: str
     tipoVaga: TipoVaga
     nivelConhecimento: NivelConhecimento | None = None
     comprovante: str | None = None
@@ -85,5 +86,5 @@ class Evento(BaseModel):
     "Caminho para a imagem do crachá do evento."
 
     class Config:
-        allow_population_by_field_name = True  # Permite usar alias ao popular campos
+        populate_by_name = True  # Permite usar alias ao popular campos
         json_encoders = {datetime: lambda v: v.isoformat()}  # Serializa datetimes corretamente
