@@ -1,3 +1,8 @@
+"""
+Controladores para rotas de gerenciamento de usuários.
+"""
+
+from enum import StrEnum
 import logging
 import secrets
 from datetime import datetime, timedelta
@@ -46,9 +51,11 @@ class UsuarioControlador:
     @staticmethod
     def ativarConta(token: str) -> None:
         """
-        Recebe um token JWT de ativação de conta.
+        Recebe um token de ativação de conta e ativa a conta associada ao token, caso válido.
 
-        Caso o token seja válido, ativa a conta.
+        :param token: token JWT de ativação de conta.
+        :raises TokenInvalidoExcecao: Se o token for inválido.
+        :raises UsuarioNaoEncontradoExcecao: Se o usuário associado ao token não for encontrado.
         """
 
         # Verifica o token e recupera o email
@@ -67,12 +74,20 @@ class UsuarioControlador:
     @staticmethod
     def cadastrarUsuario(dadosUsuario: UsuarioCriar, tasks: BackgroundTasks) -> str:
         """
-        Cria uma conta com os dados fornecidos, e envia um email
+        Cria uma conta com os dados `dadosUsuario` fornecidos, e envia um email
         de confirmação de criação de conta ao endereço fornecido.
+        
+        Um objeto `BackgroundTasks` deve ser fornecido para o envio do email.
 
             A criação da conta pode não suceder por erro na validação de dados,
             por já haver uma conta cadastrada com tal CPF ou email ou por falha
             de conexão com o banco de dados.
+        
+        :param dadosUsuario: Dados do usuário a serem cadastrados.
+        :param tasks: Objeto `BackgroundTasks` para envio de email.
+
+        :return id: ID do usuário criado.
+        :raises JaExisteExcecao: Se já houver uma conta cadastrada com o CPF ou email fornecidos.
         """
 
         # normaliza dados
@@ -116,6 +131,14 @@ class UsuarioControlador:
     # Envia um email para trocar de senha se o email estiver cadastrado no bd
     @staticmethod
     def recuperarConta(email: str, tasks: BackgroundTasks) -> None:
+        """
+        Envia um email de recuperação de senha para o endereço fornecido, se o endereço
+        estiver associado a uma conta cadastrada. Se o endereço não estiver associado a
+        uma conta, a função não faz nada.
+
+        :param email: Endereço de email associado à conta.
+        :param tasks: Objeto `BackgroundTasks` para envio de email.
+        """
         try:
             UsuarioBD.buscar("email", email)
             # Gera o link e envia o email se o usuário estiver cadastrado
@@ -126,6 +149,18 @@ class UsuarioControlador:
 
     @staticmethod
     def trocarSenha(token: str, senha: str, tasks: BackgroundTasks) -> None:
+        """
+        Realiza a troca de senha de um usuário com o token JWT de troca de senha fornecido.
+        O usuário tem sua senha alterada para a senha fornecida.
+
+        :param token: Token JWT de troca de senha.
+        :param senha: Nova senha do usuário.
+        :param tasks: Objeto `BackgroundTasks` para envio de email.
+
+        :raises ValueError: Se a senha fornecida for inválida.
+        :raises TokenInvalidoExcecao: Se o token fornecido for inválido.
+        :raises NaoEncontradoExcecao: Se não houver um usuário associado ao token fornecido.
+        """
         # Verifica o token e recupera o email
         email: str = processaTokenTrocaSenha(token)
 
@@ -145,8 +180,17 @@ class UsuarioControlador:
     @staticmethod
     def autenticarUsuario(email: str, senha: str) -> dict[str, str]:
         """
-        Autentica e gera um token de autenticação para o usuário com email e senha
-        indicados.
+        Verifica se o email e senha fornecidos correspondem a um usuário cadastrado e ativo e
+        retorna um novo token de autenticação, neste caso.
+
+        :param email: Email do usuário.
+        :param senha: Senha do usuário a ser conferida.
+
+        :return: Dicionário contendo o token de autenticação, com os campos `access_token`
+        contendo o token e `token_type` = "bearer".
+
+        :raises EmailSenhaIncorretoExcecao: Se o email ou senha fornecidos estiverem incorretos,
+        ou se o usuário não estiver ativo ou não existir.
         """
 
         # verifica senha e usuario
@@ -178,6 +222,11 @@ class UsuarioControlador:
         """
         Obtém dados do usuário dono do token fornecido. Falha se o token estiver expirado
         ou for inválido.
+
+        :param token: Token de autenticação do usuário.
+        :return usuario: Dados do usuário autenticado.
+        :raises NaoAutenticadoExcecao: Se o token fornecido for inválido ou se o usuário não existir.
+        :raises EmailNaoConfirmadoExcecao: Se o email do usuário associado ao token não estiver confirmado.
         """
 
         try:
@@ -197,6 +246,10 @@ class UsuarioControlador:
     def getUsuario(id: str) -> Usuario:
         """
         Obtém dados do usuário com o id fornecido.
+
+        :param id: ID do usuário a ser obtido.
+        :return usuario: Dados do usuário.
+        :raises UsuarioNaoEncontradoExcecao: Se o usuário com o ID fornecido não existir.
         """
 
         if usuario := UsuarioBD.buscar("_id", id):
@@ -208,6 +261,8 @@ class UsuarioControlador:
     def getUsuarios() -> list[Usuario]:
         """
         Retorna uma lista de todos os usuários cadastrados.
+
+        :return usuarios: Lista de usuários.
         """
         return UsuarioBD.listar()
 
@@ -215,6 +270,8 @@ class UsuarioControlador:
     def getPetianos() -> list[Petiano]:
         """
         Retorna uma lista de todos os petianos cadastrados.
+
+        :return petianos: Lista de petianos.
         """
         petianos = []
         for petiano in UsuarioBD.listarPetianos():
@@ -240,6 +297,11 @@ class UsuarioControlador:
         Este controlador assume que as redes sociais estejam no formato de links ou None.
 
         A atualização da conta pode não suceder por erro na validação de dados.
+
+        :param id: ID do usuário a ser atualizado.
+        :param dadosUsuario: Dados do usuário a serem atualizados.
+        :return usuario: Dados do usuário atualizados.
+        :raises UsuarioNaoEncontradoExcecao: Se o usuário com o ID fornecido não existir.
         """
 
         # obtém usuário
@@ -267,7 +329,13 @@ class UsuarioControlador:
         return usuario
 
     @staticmethod
-    def deletarUsuario(id: str):
+    def deletarUsuario(id: str) -> None:
+        """
+        Deleta um usuário existente (*hard delete*).
+
+        :param id: ID do usuário a ser deletado.
+        :raises UsuarioNaoEncontradoExcecao: Se o usuário com o ID fornecido não existir.
+        """
         UsuarioControlador.getUsuario(id)
 
         UsuarioBD.deletar(id)
@@ -278,8 +346,15 @@ class UsuarioControlador:
     ) -> None:
         """
         Atualiza a senha de um usuário existente caso a senha antiga seja correta.
+        Causa um envio de email de confirmação de alteração de senha.
 
         A atualização da conta pode não suceder por erro na validação de dados.
+
+        :param dadosSenha: Dados de senha a serem atualizados.
+        :param usuario: Usuário a ser atualizado.
+        :param tasks: Objeto `BackgroundTasks` para envio de email.
+
+        :raises NaoAutenticadoExcecao: Se a senha antiga fornecida estiver incorreta.
         """
         if conferirHashSenha(dadosSenha.senha.get_secret_value(), usuario.senha):
             usuario.senha = hashSenha(dadosSenha.novaSenha.get_secret_value())
@@ -287,7 +362,7 @@ class UsuarioControlador:
             tasks.add_task(enviarEmailAlteracaoDados, usuario.email, DadoAlterado.SENHA)
 
         else:
-            raise APIExcecaoBase(message="Senha incorreta")
+            raise NaoAutenticadoExcecao(message="Senha incorreta")
 
     @staticmethod
     def editarEmail(
@@ -301,6 +376,11 @@ class UsuarioControlador:
         O usuário sempre é deslogado quando troca seu email, pois sua conta deve ser reativada.
 
         A atualização da conta pode não suceder por erro na validação de dados.
+
+        :param dadosEmail: Dados de email a serem atualizados.
+        :param id: ID do usuário a ser atualizado.
+        :param tasks: Objeto `BackgroundTasks` para envio de email.
+        :raises NaoAutenticadoExcecao: Se a senha fornecida estiver incorreta.
         """
         usuario = UsuarioControlador.getUsuario(id)
 
@@ -317,7 +397,7 @@ class UsuarioControlador:
             tasks.add_task(enviarEmailVerificacao, usuario.email, mensagemEmail)
             tasks.add_task(enviarEmailAlteracaoDados, emailAntigo, DadoAlterado.EMAIL)
         else:
-            raise APIExcecaoBase(message="Senha incorreta")
+            raise NaoAutenticadoExcecao(message="Senha incorreta")
 
     @staticmethod
     def editarFoto(usuario: Usuario, foto: UploadFile) -> None:
@@ -327,6 +407,11 @@ class UsuarioControlador:
         Para UsuarioBD.atualizar a foto, o usuário deve inserir uma foto.
 
         A atualização da conta pode não suceder por erro na validação de dados.
+
+        :param usuario: Usuário a ser atualizado.
+        :param foto: Foto a ser atualizada.
+        :raises ImagemInvalidaExcecao: Se a imagem fornecida for inválida.
+        :raises ImagemNaoSalvaExcecao: Se a imagem fornecida não puder ser salva.
         """
         if not validaImagem(foto.file):
             raise ImagemInvalidaExcecao()
@@ -345,7 +430,10 @@ class UsuarioControlador:
     @staticmethod
     def promoverPetiano(id: str) -> None:
         """
-        Promove um usuário a petiano.
+        Promove um usuário a petiano (altera seu tipo de conta para TipoConta.PETIANO).
+
+        :param id: Id do usuário a ser promovido.
+        :raises UsuarioNaoEncontradoExcecao: Se o usuário com o id fornecido não existir.
         """
 
         usuario = UsuarioControlador.getUsuario(id)
@@ -357,11 +445,31 @@ class UsuarioControlador:
 
         # desautentica o usuário para evitar que tokens antigas ganhem permissões novas
         TokenAutenticacaoBD.deletarTokensUsuario(id)
+    
+    class DemitirPetianoPara(StrEnum):
+        """
+        Tipo de demissão de petiano.
+        """
+
+        ESTUDANTE = "estudante"
+        """
+        Demite um petiano a estudante.
+        """
+
+        EGRESSO = "egresso"
+        """
+        Demite um petiano a egresso.
+        """
 
     @staticmethod
-    def demitirPetiano(id: str, egresso: bool) -> None:
+    def demitirPetiano(id: str, egresso: DemitirPetianoPara) -> None:
         """
         Demite um usuário petiano ou egresso a egresso, caso `egresso` seja verdadeiro, ou a estudante caso contrário.
+
+        :param id: Id do usuário a ser demitido.
+        :param egresso: Se verdadeiro, demite o usuário a egresso; caso contrário, demite a estudante.
+        :raises UsuarioNaoEncontradoExcecao: Se o usuário com o id fornecido não existir.
+        :raises NaoAtualizadaExcecao: Se o usuário não for petiano nem egresso.
         """
 
         usuario = UsuarioControlador.getUsuario(id)
@@ -372,10 +480,10 @@ class UsuarioControlador:
         ):
             raise NaoAtualizadaExcecao(message="Usuário não é petiano nem egresso")
 
-        if egresso:
+        if egresso == UsuarioControlador.DemitirPetianoPara.EGRESSO:
             logging.info(f"Demitindo usuário {usuario.id} a egresso")
             usuario.tipoConta = TipoConta.EGRESSO
-        else:
+        elif egresso == UsuarioControlador.DemitirPetianoPara.ESTUDANTE:
             logging.info(f"Demitindo usuário {usuario.id} a estudante")
             usuario.tipoConta = TipoConta.ESTUDANTE
 
@@ -387,6 +495,9 @@ class UsuarioControlador:
     @staticmethod
     def getHistoricoLogin(email: str) -> list[RegistroLogin]:
         """
-        Retorna o histórico de logins do usuário.
+        Retorna o histórico de logins do usuário com o email fornecido.
+
+        :param email: Email do usuário.
+        :return historico: Lista de registros de login.
         """
         return RegistroLoginBD.listarRegistrosUsuario(email)

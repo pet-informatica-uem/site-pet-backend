@@ -1,3 +1,7 @@
+"""
+Contém funções para geração e processamento de tokens JWT.
+"""
+
 import logging
 from datetime import UTC, datetime, timedelta
 
@@ -8,7 +12,15 @@ from src.modelos.excecao import TokenInvalidoExcecao
 
 
 def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
-    """Gera e retorna um token JWT que pode ser usado para confirmar um email."""
+    """
+    Gera um token JWT para ativação da conta do usuário com id `idUsuario`, email `email`, e duração `duracao`.
+
+    :param idUsuario: ID do usuário.
+    :param email: Email do usuário.
+    :param duracao: Duração do token.
+
+    :return token: Token JWT gerado.
+    """
     afirmacoes = {"sub": idUsuario, "email": email, "exp": datetime.now() + duracao}
 
     token = jwt.encode(afirmacoes, config.SEGREDO_JWT, algorithm="HS256")
@@ -20,10 +32,9 @@ def processaTokenAtivaConta(token: str) -> dict[str, str]:
     Verifica a validade do token e retorna o email e id de usuário nele contidos.
     Falha, se o token for inválido (expirado ou corrompido).
 
-    Retorna um dicionário contendo campos "status" e "mensagem".
-    - "status" == "200" se e somente se o token for válido.
-    - "mensagem" é um dicionário contendo chaves "idUsuario" e "email"
-      caso o token seja válido, ou uma mensagem de erro caso contrário.
+    :param token: Token JWT a ser processado.
+    :return tokenData: Dicionário contendo os campos "idUsuario" e "email", onde "idUsuario" é o id do usuário e "email" é o email do usuário.
+    :raises TokenInvalidoExcecao: Se o token for inválido.
     """
     # Tenta decodificar o token
     try:
@@ -45,9 +56,10 @@ def processaTokenAtivaConta(token: str) -> dict[str, str]:
 def geraLinkEsqueciSenha(email: str) -> str:
     """
     Gera um link contendo o email do usuário, na forma de um token, (com
-    prazo de validade) para a troca de senha.
+    prazo de validade) para a troca de senha e o retorna.
 
-    Retorna o link na forma str.
+    :param email: Email do usuário.
+    :return url: Link contendo o token.
     """
     # Data de validade do token
     validade = datetime.utcnow() + timedelta(minutes=15)
@@ -66,10 +78,9 @@ def processaTokenTrocaSenha(token: str) -> str:
     Verifica a validade do token e resgata o email nele contido.
     Falha, se o token for inválido (expirado ou corrompido).
 
-    Retorna um dicionário contendo os campos "status" e "mensagem".
-    - "status" == "200" se e somente se o token for válido.
-    - "mensagem" contém o email do usuário, ou uma mensagem de
-    erro caso o token não seja válido.
+    :param token: Token JWT a ser processado.
+    :return email: Email do usuário.
+    :raises TokenInvalidoExcecao: Se o token for inválido.
     """
     # Tenta decodificar o token
     try:
