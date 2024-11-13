@@ -125,7 +125,7 @@ class ForaDoPeriodoDeInscricaoExcecao(APIExcecaoBase):  # conflito
 
 class SemVagasDisponiveisExcecao(APIExcecaoBase):  # conflito
     message = "Não há vagas disponíveis."
-    code = status.HTTP_423_LOCKED
+    code = status.HTTP_409_CONFLICT
     model = AcaoNaoCompletaErro
 
 
