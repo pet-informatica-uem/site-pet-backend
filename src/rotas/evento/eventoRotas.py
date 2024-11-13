@@ -24,11 +24,9 @@ def getEventos(query: IntervaloBusca) -> list[Evento]:
     """
     Retorna todos os eventos cadastrados no banco de dados, aplicando filtros conforme o parâmetro 'query'.
 
-    Parâmetros:
-        query (IntervaloBusca): Parâmetro de filtro para busca dos eventos.
+    :param query (IntervaloBusca): Parâmetro de filtro para busca dos eventos.
 
-    Retorno:
-        list[Evento]: Lista de objetos Evento que correspondem aos filtros especificados.
+    :return list[Evento]: Lista de objetos Evento que correspondem aos filtros especificados.
     """
     return EventoControlador.getEventos(query)
 
@@ -37,7 +35,7 @@ def getEventos(query: IntervaloBusca) -> list[Evento]:
     "/{id}",
     name="Recuperar evento por ID",
     description="""
-        Recupera um evento cadastrado no banco de dados.
+        Recupera um evento cadastrado no banco de dados pelo seu id.
         Falha, caso o evento não exista.
     """,
 )
@@ -45,14 +43,11 @@ def getEvento(id: str) -> Evento:
     """
     Recupera um evento específico pelo ID.
 
-    Parâmetros:
-        id (str): O identificador único do evento a ser recuperado.
+    :param id (str): O identificador único do evento a ser recuperado.
 
-    Retorno:
-        Evento: Objeto do tipo Evento correspondente ao ID fornecido.
+    :return Evento: Objeto do tipo Evento correspondente ao ID fornecido.
 
-    Exceções:
-        HTTPException: Lançada se o evento com o ID especificado não for encontrado.
+    :raises HTTPException: Lançada se o evento com o ID especificado não for encontrado.
     """
     evento: Evento = EventoControlador.getEvento(id)
 
@@ -71,13 +66,9 @@ def cadastrarEvento(
     """
     Cadastra um novo evento no sistema.
 
-    Parâmetros:
-        evento (EventoCriar): Objeto contendo os dados do evento a ser cadastrado.
-        usuario (Usuario): Usuário autenticado responsável pela criação do evento. 
-                            Apenas um petiano pode criar um evento.
-
-    Retorno:
-        None: A função não retorna nenhum valor, mas cria um novo evento no banco de dados.
+    :param evento: Objeto contendo os dados do evento a ser cadastrado.
+    :param usuario: Usuário autenticado responsável pela criação do evento. 
+                    Apenas um petiano pode criar um evento.
     """
     # Despacha para o controlador
     EventoControlador.cadastrarEvento(evento)
@@ -96,14 +87,10 @@ def editarEvento(
     """
     Edita um evento existente.
 
-    Parâmetros:
-        id (str): Identificador único do evento a ser editado.
-        evento (EventoAtualizar): Dados atualizados do evento.
-        usuario (Usuario): Usuário autenticado responsável pela edição.
-                            Apenas um petiano pode editar um evento.
-
-    Retorno:
-        None: A função não retorna nenhum valor, mas atualiza o evento no banco de dados.
+    :param id: Identificador único do evento a ser editado.
+    :param evento: Dados atualizados do evento.
+    :param usuario: Usuário autenticado responsável pela edição.
+                    Apenas um petiano pode editar um evento.
     """
     # Despacha para o controlador
     EventoControlador.editarEvento(id, evento)
@@ -124,15 +111,11 @@ def atualizarImagensEvento(
     """
     Atualiza as imagens de arte e crachá associadas a um evento.
 
-    Parâmetros:
-        id (str): Identificador do evento.
-        usuario (Usuario): Usuário autenticado responsável pela atualização.
-                            Apenas um petiano pode atualizar as imagens de um evento.
-        arte (UploadFile | None): Arquivo opcional de imagem para arte.
-        cracha (UploadFile | None): Arquivo opcional de imagem para crachá.
-
-    Retorno:
-        None: A função não retorna nenhum valor, mas atualiza as imagens do evento.
+    :param id: Identificador do evento.
+    :param usuario: Usuário autenticado responsável pela atualização.
+                    Apenas um petiano pode atualizar as imagens de um evento.
+    :param arte: Arquivo opcional de imagem para arte.
+    :param cracha: Arquivo opcional de imagem para crachá.
     """
     # Despacha para o controlador
     EventoControlador.atualizarImagensEvento(id, arte, cracha)
@@ -150,13 +133,9 @@ def deletarEvento(
     """
     Exclui um evento específico do banco de dados.
 
-    Parâmetros:
-        id (str): Identificador do evento a ser deletado.
-        usuario (Usuario): Usuário autenticado que solicita a exclusão.
-                            Apenas um petiano pode deletar um evento.
-
-    Retorno:
-        None: A função não retorna nenhum valor, mas remove o evento do banco de dados.
+    :param id: Identificador do evento a ser deletado.
+    :param usuario: Usuário autenticado que solicita a exclusão.
+                    Apenas um petiano pode deletar um evento.
     """
     # Despacha para o controlador
     EventoControlador.deletarEvento(id)

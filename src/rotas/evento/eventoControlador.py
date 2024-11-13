@@ -18,16 +18,16 @@ from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar
 from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import (
-    APIExcecaoBase,
     ImagemInvalidaExcecao,
     ImagemNaoSalvaExcecao,
+    SemVagasDisponiveisExcecao,
 )
 from src.modelos.inscrito.inscrito import Inscrito
 
 
 class EventoControlador:
     """
-    Classe controlador para gerenciar operações sobre eventos, incluindo
+    Classe controladora para gerenciar operações sobre eventos, incluindo
     criação, atualização, remoção e manipulação de dados e imagens.
     """
      
@@ -36,11 +36,9 @@ class EventoControlador:
         """
         Lista todos os eventos de acordo com os parâmetros de busca.
 
-        Parâmetros:
-            query (IntervaloBusca): Objeto contendo os parâmetros de busca para filtrar eventos.
+        :param query: Objeto contendo os parâmetros de busca para filtrar eventos.
 
-        Retorno:
-            list[Evento]: Lista de eventos que correspondem aos filtros aplicados.
+        :return eventos: Lista de eventos que correspondem aos filtros aplicados.
         """
         return EventoBD.listar(query)
 
@@ -49,11 +47,11 @@ class EventoControlador:
         """
         Recupera um evento específico pelo seu ID.
 
-        Parâmetros:
-            id (str): Identificador único do evento.
+        :param id: Identificador único do evento.
 
-        Retorno:
-            Evento: Instância do evento encontrado.
+        :return evento: Instância do evento encontrado.
+
+        :raises NaoEncontradoExcecao: Lançada se o evento com o ID especificado não for encontrado.
         """
         return EventoBD.buscar("_id", id)
 
@@ -62,8 +60,9 @@ class EventoControlador:
         """
         Deleta um evento do banco de dados.
 
-        Parâmetros:
-            id (str): Identificador único do evento a ser deletado.
+        :param id: Identificador único do evento a ser deletado.
+
+        :raises NaoEncontradoExcecao: Lançada se o evento com o ID especificado não for encontrado.
         """
         EventoControlador.getEvento(id)
 
@@ -74,15 +73,13 @@ class EventoControlador:
         """
         Edita um evento existente com base nos novos dados fornecidos.
 
-        Parâmetros:
-            id (str): Identificador do evento a ser atualizado.
-            dadosEvento (EventoAtualizar): Objeto com dados atualizados do evento.
+        :param id: Identificador do evento a ser atualizado.
+        :param dadosEvento: Objeto com dados atualizados do evento.
 
-        Retorno:
-            Evento: Evento atualizado.
+        :return Evento: Evento atualizado.
 
-        Exceções:
-            APIExcecaoBase: Lançada se o número de vagas especificado é inferior ao número de inscritos existentes.
+        :raises NaoEncontradoExcecao: Lançada se o evento com o ID especificado não for encontrado.
+        :raises SemVagasDisponiveisExcecao: Lançada se o número de vagas especificado é inferior ao número de inscritos existentes.
         """
         # obtém evento
         eventoOld: Evento = EventoControlador.getEvento(id)
@@ -98,7 +95,7 @@ class EventoControlador:
             dadosEvento.vagasComNote != None
             and dadosEvento.vagasComNote < qtdInscritosNote
         ):
-            raise APIExcecaoBase(
+            raise SemVagasDisponiveisExcecao(
                 message="Erro ao alterar vagas com note: numero de inscritos superior ao total de vagas com note."
             )
 
@@ -106,7 +103,7 @@ class EventoControlador:
             dadosEvento.vagasSemNote != None
             and dadosEvento.vagasSemNote < qtdInscritosSemNote
         ):
-            raise APIExcecaoBase(
+            raise SemVagasDisponiveisExcecao(
                 message="Erro ao alterar vagas sem note: numero de inscritos superior ao total de vagas sem note."
             )
 
@@ -144,14 +141,13 @@ class EventoControlador:
         """
         Atualiza as imagens de arte e crachá associadas ao evento.
 
-        Parâmetros:
-            id (str): Identificador do evento.
-            arte (UploadFile | None): Imagem opcional para a arte do evento.
-            cracha (UploadFile | None): Imagem opcional para o crachá do evento.
+        :param id: Identificador do evento.
+        :param arte: Imagem opcional para a arte do evento.
+        :param cracha: Imagem opcional para o crachá do evento.
 
-        Exceções:
-            ImagemInvalidaExcecao: Lançada se a imagem fornecida for inválida.
-            ImagemNaoSalvaExcecao: Lançada se houver erro ao salvar a imagem.
+        :raises NaoEncontradoExcecao: Lançada se o evento com o ID especificado não for encontrado.
+        :raises ImagemInvalidaExcecao: Lançada se a imagem fornecida for inválida.
+        :raises ImagemNaoSalvaExcecao: Lançada se houver erro ao salvar a imagem.
         """
         # obtém evento
         evento: Evento = EventoControlador.getEvento(id)
@@ -192,11 +188,11 @@ class EventoControlador:
         """
         Cadastra um novo evento e cria a estrutura de diretórios associada.
 
-        Parâmetros:
-            dadosEvento (EventoCriar): Objeto com os dados do evento a ser criado.
+        :param dadosEvento: Objeto com os dados do evento a ser criado.
 
-        Retorno:
-            str: ID do evento recém-criado.
+        :return str: ID do evento recém-criado.
+
+        :raises JaExisteExcecao: Lançada se já existir um evento com o mesmo título.
         """
 
         # normaliza dados
