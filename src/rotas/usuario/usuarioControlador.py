@@ -54,6 +54,7 @@ class UsuarioControlador:
         Recebe um token de ativação de conta e ativa a conta associada ao token, caso válido.
 
         :param token: token JWT de ativação de conta.
+        
         :raises TokenInvalidoExcecao: Se o token for inválido.
         :raises UsuarioNaoEncontradoExcecao: Se o usuário associado ao token não for encontrado.
         """
