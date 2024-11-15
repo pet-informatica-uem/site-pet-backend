@@ -1,4 +1,7 @@
-import logging
+"""
+Rotas relacionadas a gerenciamento de usuários.
+"""
+
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -42,8 +45,15 @@ from src.rotas.usuario.usuarioControlador import UsuarioControlador
 
 
 class Token(BaseModel):
+    """
+    Um token de acesso.
+    """
+
     access_token: str
+    """O token de acesso em si."""
+
     token_type: str
+    """O tipo de token. Sempre "bearer"."""
 
 
 roteador: APIRouter = APIRouter(
@@ -291,7 +301,7 @@ def desautenticar(
 @roteador.put(
     "/{id}/email",
     name="Editar email do usuário autenticado",
-    description="""O usuário é capaz de editar seu email""",
+    description="""Realiza a troca de email do usuário autenticado.""",
 )
 def editarEmail(
     tasks: BackgroundTasks,
@@ -316,7 +326,7 @@ def editarEmail(
 @roteador.put(
     "/{id}/senha",
     name="Editar senha do usuário autenticado",
-    description="""O usuário é capaz de editar sua senha. Caso a opção deslogarAoTrocarSenha 
+    description="""Realiza a troca de senha do usuário autenticado. Caso a opção deslogarAoTrocarSenha 
     seja selecionada, todos as sessões serão deslogadas ao trocar a senha.""",
 )
 def editarSenha(
@@ -342,7 +352,7 @@ def editarSenha(
 @roteador.put(
     "/{id}/foto",
     name="Atualizar foto de perfil",
-    description="O usuário petiano é capaz de editar sua foto de perfil",
+    description="Edita a foto de perfil do usuário autenticado. O usuário deve ser um petiano, e deve ser dono da conta.",
 )
 def editarFoto(
     id: str,
@@ -375,7 +385,7 @@ def demitirPetiano(
     egresso: bool | None = True,
     _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
 ):
-    UsuarioControlador.demitirPetiano(id, egresso if egresso is not None else True)
+    UsuarioControlador.demitirPetiano(id, UsuarioControlador.DemitirPetianoPara.ESTUDANTE if egresso is not None else UsuarioControlador.DemitirPetianoPara.EGRESSO)
 
 
 @roteador.get(
