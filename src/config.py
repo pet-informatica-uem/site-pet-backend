@@ -6,7 +6,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 # Horario inicio para as rotinas
-def horarioInicio():
+def horarioInicio() -> datetime:
+    """
+    Retorna o próximo horário de início das rotinas.
+    """
+
     hoje = datetime.now()
     amanha = hoje + timedelta(days=1)
     amanhaMeiaNoite = datetime.combine(

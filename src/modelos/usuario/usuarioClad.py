@@ -1,3 +1,7 @@
+"""
+Modelos de dados relacionados a operações de CRUD de usuários.
+"""
+
 from datetime import datetime
 from typing import Annotated
 
@@ -28,18 +32,27 @@ class UsuarioCriar(BaseModel):
 
     @field_validator("cpf")
     def cpf_valido(cls, v: str):
+        """
+        Valida o campo CPF.
+        """
         if not ValidacaoCadastro.cpf(v):
             raise ValueError("CPF inválido")
         return v
 
     @field_validator("email")
     def email_valido(cls, v: EmailStr):
+        """
+        Valida o email.
+        """
         if not ValidacaoCadastro.email(v):
             raise ValueError("Email inválido")
         return v
 
     @field_validator("senha")
     def senha_valida(cls, v: SecretStr):
+        """
+        Valida a senha.
+        """
         if not ValidacaoCadastro.senha(v.get_secret_value()):
             raise ValueError("Senha inválida")
         return v
@@ -131,6 +144,9 @@ class UsuarioAtualizarSenha(BaseModel):
 
     @field_validator("novaSenha")
     def novaSenha_valida(cls, v: SecretStr):
+        """
+        Valida se a nova senha é válida.
+        """
         if not ValidacaoCadastro.senha(v.get_secret_value()):
             raise ValueError("Senha inválida")
         return v
@@ -148,6 +164,9 @@ class UsuarioAtualizarEmail(BaseModel):
 
     @field_validator("novoEmail")
     def novoEmail_valido(cls, v: EmailStr):
+        """
+        Valida se o novo email é válido.
+        """
         if not ValidacaoCadastro.email(v):
             raise ValueError("Email inválido")
         return v

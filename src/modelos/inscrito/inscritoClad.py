@@ -1,3 +1,7 @@
+"""
+Modelos de dados relacionados ao CRUD de inscrições em eventos.
+"""
+
 from pathlib import Path
 from typing import Literal
 
@@ -19,6 +23,9 @@ class InscritoCriar(BaseModel):
 
 
 class InscritoLer(Inscrito):
+    """
+    Informações sobre uma inscrição em um evento.
+    """
     pass
 
 

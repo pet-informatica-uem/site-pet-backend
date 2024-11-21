@@ -1,3 +1,7 @@
+"""
+Modelos de dados relacionados a usuários do sistema.
+"""
+
 from datetime import date, datetime
 from enum import Enum
 
@@ -79,6 +83,10 @@ class Usuario(BaseModel):
 
 
 class Petiano(BaseModel):
+    """
+    Subconjunto dos dados de um usuário específico para a visualização de petianos.
+    """
+
     nome: str
     "Nome completo do usuário."
 
