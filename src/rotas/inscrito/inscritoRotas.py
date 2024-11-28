@@ -84,6 +84,7 @@ def editarInscrito(
     :param idInscrito: Identificador único do inscrito a ser editado.
     :param inscrito: Dados atualizados do inscrito.
     :param usuario: Usuário autenticado que solicita a edição.
+    
     :raises NaoAutorizadoExcecao: Se o usuário não tiver permissão para editar os dados do inscrito.
     """
     # Verifica se o usuário corresponde ao inscrito ou se é um petiano autorizado.
@@ -110,6 +111,7 @@ def removerInscrito(
     :param idEvento: Identificador único do evento.
     :param idInscrito: Identificador único do inscrito a ser deletado.
     :param usuario: Usuário autenticado que solicita a exclusão.
+    
     :raises NaoAutorizadoExcecao: Se o usuário não tiver permissão para deletar o inscrito do evento.
     """
     # Verifica se o usuário corresponde ao inscrito ou se é um petiano autorizado.
