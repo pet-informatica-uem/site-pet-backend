@@ -32,6 +32,15 @@ def cadastrarInscrito(
     inscrito: InscritoCriar = Depends(),
     comprovante: UploadFile | None = None,
 ):
+    """
+    Cadastra um inscrito em um evento.
+
+    :param tasks: Gerenciador de tarefas
+    :param usuario: Usuário autenticado que está realizando a inscrição.
+    :param idEvento: Identificador único do evento.
+    :param inscrito: Dados de um inscrito.
+    :param comprovante: Arquivo de comprovante de pagamento.
+    """
     # Despacha para o controlador
     InscritosControlador.cadastrarInscrito(
         idEvento, usuario.id, inscrito, comprovante, tasks
@@ -47,6 +56,12 @@ def cadastrarInscrito(
 def getInscritos(
     idEvento: str, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]
 ):
+    """
+    Recupera todos os inscritos de um evento.
+
+    :param idEvento: Identificador único do evento.
+    :param usuario: Usuário autenticado como petiano.
+    """
     # Despacha para o controlador
     return InscritosControlador.getInscritos(idEvento)
 
@@ -62,7 +77,19 @@ def editarInscrito(
     inscrito: InscritoAtualizar,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
 ):
+    """
+    Edita os dados de um inscrito em um evento.
+
+    :param idEvento: Identificador único do evento.
+    :param idInscrito: Identificador único do inscrito a ser editado.
+    :param inscrito: Dados atualizados do inscrito.
+    :param usuario: Usuário autenticado que solicita a edição.
+    
+    :raises NaoAutorizadoExcecao: Se o usuário não tiver permissão para editar os dados do inscrito.
+    """
+    # Verifica se o usuário corresponde ao inscrito ou se é um petiano autorizado.
     if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
+        # Despacha para o controlador
         InscritosControlador.editarInscrito(idEvento, idInscrito, inscrito)
     else:
         raise NaoAutorizadoExcecao()
@@ -78,10 +105,21 @@ def removerInscrito(
     idInscrito: str,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
 ):
+    """
+    Deleta um inscrito de um evento.
+    
+    :param idEvento: Identificador único do evento.
+    :param idInscrito: Identificador único do inscrito a ser deletado.
+    :param usuario: Usuário autenticado que solicita a exclusão.
+    
+    :raises NaoAutorizadoExcecao: Se o usuário não tiver permissão para deletar o inscrito do evento.
+    """
+    # Verifica se o usuário corresponde ao inscrito ou se é um petiano autorizado.
     if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
         inscrito: InscritoDeletar = InscritoDeletar(
             idEvento=idEvento, idUsuario=idInscrito
         )
+        # Despacha para o controlador
         InscritosControlador.removerInscrito(inscrito)
     else:
         raise NaoAutorizadoExcecao()
