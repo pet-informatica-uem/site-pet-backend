@@ -137,26 +137,30 @@ class InscritosControlador:
         )
 
     @staticmethod
-    def getInscritos(idEvento: str):
+    def getInscritos(idEvento: str) -> list[Inscrito]:
         """
         Recupera os inscritos de um evento.
 
         :param idEvento: Identificador único do evento.
+
+        :return: Lista de inscritos do evento.
         """
         return InscritoBD.listarInscritosEvento(idEvento)
 
     @staticmethod
-    def getInscrito(idEvento: str, idInscrito: str):
+    def getInscrito(idEvento: str, idInscrito: str) -> Inscrito:
         """
         Recupera um inscrito em um evento.
 
         :param idEvento: Identificador único do evento.
         :param idInscrito: Identificador único do inscrito.
+
+        :return: Inscrição do inscrito no evento.
         """
         return InscritoBD.buscar(idEvento, idInscrito)
 
     @staticmethod
-    def editarInscrito(idEvento: str, idInscrito: str, inscrito: InscritoAtualizar):
+    def editarInscrito(idEvento: str, idInscrito: str, inscrito: InscritoAtualizar) -> None:
         """
         Edita o tipo de vaga de um inscrito em um evento.
         
@@ -196,7 +200,7 @@ class InscritosControlador:
         InscritoBD.atualizar(d)
 
     @staticmethod
-    def removerInscrito(inscrito: InscritoDeletar):
+    def removerInscrito(inscrito: InscritoDeletar) -> None:
         """
         Remove um inscrito de um evento.
 
