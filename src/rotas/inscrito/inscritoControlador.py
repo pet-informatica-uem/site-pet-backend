@@ -34,6 +34,20 @@ class InscritosControlador:
         comprovante: UploadFile | None,
         tasks: BackgroundTasks,
     ):
+        """
+        Cadastra um inscrito em um evento.
+
+        :param idEvento: identificador único do evento.
+        :param idUsuario: identificador único do usuário que será inscrito.
+        :param dadosInscrito: informações do inscrito a ser cadastrado.
+        :param comprovante: comprovante de pagamento, no caso do evento ser pago.
+        :param tasks: gerenciador de tarefas.
+        :raises ForaDoPeriodoDeInscricaoExcecao: Se estiver fora do período de inscrição.
+        :raises SemVagasDisponiveisExcecao: Se não houver vagas disponíveis.
+        :raises ComprovanteInvalido: Se o comprovante enviado for inválido.
+        :raises ComprovanteObrigatorioExcecao: Se o evento for pago e não for enviado comprovante.
+        :raises APIExcecaoBase: Se houver problema no BD.
+        """
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
 
@@ -52,6 +66,7 @@ class InscritosControlador:
             if evento.vagasDisponiveisSemNote == 0:
                 raise SemVagasDisponiveisExcecao()
 
+        # Verifica se o comprovante foi enviado e é valido
         if evento.valor != 0:
             if comprovante:
                 if not validaComprovante(comprovante.file):
@@ -72,10 +87,12 @@ class InscritosControlador:
             "dataInscricao": datetime.now(),
         }
 
+        # Atualiza os dados do inscrito e associa o comprovante a ele
         d.update(**dadosInscrito.model_dump())
         inscrito = Inscrito(**d)
         inscrito.comprovante = str(caminhoComprovante) if caminhoComprovante else None  # type: ignore
 
+        # Atualiza o número de vagas disponíveis de acordo com o tipo de vaga
         if inscrito.tipoVaga == TipoVaga.COM_NOTE:
             evento.vagasDisponiveisComNote -= 1
         else:
@@ -120,14 +137,33 @@ class InscritosControlador:
 
     @staticmethod
     def getInscritos(idEvento: str):
+        """
+        Recupera os inscritos de um evento.
+
+        :param idEvento: Identificador único do evento.
+        """
         return InscritoBD.listarInscritosEvento(idEvento)
 
     @staticmethod
     def getInscrito(idEvento: str, idInscrito: str):
+        """
+        Recupera um inscrito em um evento.
+
+        :param idEvento: Identificador único do evento.
+        :param idInscrito: Identificador único do inscrito.
+        """
         return InscritoBD.buscar(idEvento, idInscrito)
 
     @staticmethod
     def editarInscrito(idEvento: str, idInscrito: str, inscrito: InscritoAtualizar):
+        """
+        Edita o tipo de vaga de um inscrito em um evento.
+        
+        :param idEvento: Identificador único do evento.
+        :param idInscrito: Identificador único do inscrito a ser editado.
+        :param inscrito: Tipo de vaga atual do inscrito a ser editado.
+        :raises SemVagasDisponiveisExcecao: Se não houver vaga disponível no novo tipo.
+        """
         # Recupera o inscrito
         inscritoOld: Inscrito = InscritoBD.buscar(idEvento, idInscrito)
 
@@ -147,18 +183,25 @@ class InscritosControlador:
                 evento.vagasDisponiveisComNote += 1
                 evento.vagasDisponiveisSemNote -= 1
 
-            # Atualiza o evento no bd
+            # Atualiza o evento no BD
             EventoBD.atualizar(evento)
 
         d = inscritoOld.model_dump(by_alias=True)
         d.update(**inscrito.model_dump(exclude_none=True))
         d = Inscrito(**d)  # type: ignore
 
-        # Atualiza o inscrito no bd
+        # Atualiza o inscrito no BD
         InscritoBD.atualizar(d)
 
     @staticmethod
     def removerInscrito(inscrito: InscritoDeletar):
+        """
+        Remove um inscrito de um evento.
+
+        :param inscrito: Dados do inscrito a ser removido.
+        :raises ForaDoPeriodoDeInscricaoExcecao: Se estiver fora do período de inscrição.
+        :raises APIExcecaoBase: Se houver problema no BD.
+        """
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(inscrito.idEvento)
 
