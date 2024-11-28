@@ -42,6 +42,7 @@ class InscritosControlador:
         :param dadosInscrito: informações do inscrito a ser cadastrado.
         :param comprovante: comprovante de pagamento, no caso do evento ser pago.
         :param tasks: gerenciador de tarefas.
+        
         :raises ForaDoPeriodoDeInscricaoExcecao: Se estiver fora do período de inscrição.
         :raises SemVagasDisponiveisExcecao: Se não houver vagas disponíveis.
         :raises ComprovanteInvalido: Se o comprovante enviado for inválido.
@@ -162,6 +163,7 @@ class InscritosControlador:
         :param idEvento: Identificador único do evento.
         :param idInscrito: Identificador único do inscrito a ser editado.
         :param inscrito: Tipo de vaga atual do inscrito a ser editado.
+        
         :raises SemVagasDisponiveisExcecao: Se não houver vaga disponível no novo tipo.
         """
         # Recupera o inscrito
@@ -199,6 +201,7 @@ class InscritosControlador:
         Remove um inscrito de um evento.
 
         :param inscrito: Dados do inscrito a ser removido.
+        
         :raises ForaDoPeriodoDeInscricaoExcecao: Se estiver fora do período de inscrição.
         :raises APIExcecaoBase: Se houver problema no BD.
         """
