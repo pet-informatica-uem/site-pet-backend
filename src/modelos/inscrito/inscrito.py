@@ -1,3 +1,7 @@
+"""
+Modelos de dados relacionados a inscritos em eventos.
+"""
+
 from datetime import datetime
 from enum import Enum
 
@@ -10,7 +14,10 @@ class TipoVaga(str, Enum):
     """
 
     COM_NOTE = "comNotebook"
+    """Utilizará o próprio notebook."""
+
     SEM_NOTE = "semNotebook"
+    """Não utilizará o próprio notebook."""
 
 
 class NivelConhecimento(str, Enum):
@@ -19,10 +26,19 @@ class NivelConhecimento(str, Enum):
     """
 
     NENHUM = "1"
+    """Não possui conhecimento prévio."""
+
     BASICO = "2"
+    """Possui conhecimento básico."""
+
     INTERMEDIARIO = "3"
+    """Possui conhecimento intermediário."""
+
     AVANCADO = "4"
+    """Possui conhecimento avançado."""
+
     ESPECIALISTA = "5"
+    """Domina o assunto."""
 
 
 class Inscrito(BaseModel):

@@ -1,3 +1,7 @@
+"""
+Modelos de dados relacionados a registros de login de usuários.
+"""
+
 from datetime import datetime
 
 from pydantic import BaseModel

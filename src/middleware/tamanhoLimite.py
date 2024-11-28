@@ -1,3 +1,7 @@
+"""
+Middleware que limita o tamanho da mensagem recebida do usuário.
+"""
+
 from fastapi import HTTPException, Request
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
@@ -12,13 +16,34 @@ class TamanhoLimiteMiddleware:
     Caso o tamanho ultrapasse esse limite, o middleware gera uma HTTPException
     com o conteúdo de um TamahoLimiteExcedidoExcecao.
     """
+
     tamLimite: int | None
+    "Tamanho máximo da mensagem. Se None, o limite é desativado."
 
     def __init__(self, app: ASGIApp, *, size_limit: int | None = None) -> None:
+        """
+        Inicializa o middleware com o tamanho máximo da mensagem.
+
+        :param app: Aplicação ASGI.
+        :param size_limit: Tamanho máximo da mensagem. Se None, o limite é desativado.
+        """
         self.app = app
         self.tamLimite = size_limit
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        """
+        Processa a requisicão, limitando o tamanho da mensagem a `tamLimite` bytes.
+
+        Passa a requisição para o próximo middleware ou rota. Se o tamanho da mensagem
+        exceder o limite, gera uma HTTPException com o conteúdo de um TamanhoLimiteExcedidoExcecao.
+
+        :param scope: Escopo da requisição.
+        :param receive: Função de recebimento de mensagens.
+        :param send: Função de envio de mensagens.
+
+        :raises HTTPException: Se o tamanho da mensagem exceder o limite.
+        """
+
         if scope["type"] != "http" or self.tamLimite is None:
             await self.app(scope, receive, send)
             return
