@@ -93,6 +93,9 @@ class EventoBD:
     @staticmethod
     def atualizar(modelo: Evento):
         try:
+            print(modelo)
+            print("/n/n")
+            print(modelo.id, modelo.model_dump(by_alias=True))
             colecaoEventos.update_one(
                 {"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)}
             )
