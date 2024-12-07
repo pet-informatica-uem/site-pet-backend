@@ -16,8 +16,7 @@ class NivelConhecimento(str, Enum):
     ESPECIALISTA = "5"
 
 class Inscrito(BaseModel):
-    #idUsuario: str = Field(..., alias="_id")
-    _id: str
+    idUsuario: str
     tipoVaga: TipoVaga
     nivelConhecimento: NivelConhecimento | None = None
     comprovante: str | None = None

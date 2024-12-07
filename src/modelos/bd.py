@@ -73,7 +73,6 @@ class UsuarioBD:
 class EventoBD:
     @staticmethod
     def criar(modelo: Evento):
-        print(modelo)
         try:
             colecaoEventos.insert_one(modelo.model_dump(by_alias=True))
         except DuplicateKeyError as e:
@@ -88,14 +87,12 @@ class EventoBD:
             raise NaoEncontradoExcecao(message="O evento não foi encontrado.")
         else:
             #return Evento(**evento).model_dump(by_alias=True)  # type: ignore
+            print(evento)
             return Evento(**evento)  # type: ignore 
 
     @staticmethod
     def atualizar(modelo: Evento):
         try:
-            print(modelo)
-            print("/n/n")
-            print(modelo.id, modelo.model_dump(by_alias=True))
             colecaoEventos.update_one(
                 {"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)}
             )
@@ -113,6 +110,9 @@ class EventoBD:
     def listar(query: eventoQuery) -> list[Evento]:
         resultado: list[Evento]
 
+        print(query)
+        print("*"*50)
+
         if query == eventoQuery.PASSADO:
             dbQuery = {"fimEvento": {"$lt": datetime.now()}}
             resultadoBusca = colecaoEventos.find(dbQuery)
@@ -127,6 +127,8 @@ class EventoBD:
             resultadoBusca = colecaoEventos.find(dbQuery)
         else:
             resultadoBusca = colecaoEventos.find()
+
+        print(resultadoBusca)
 
         resultado = [Evento(**e) for e in resultadoBusca]
         return resultado
@@ -148,6 +150,7 @@ class EventoBD:
 
             # Adiciona o novo inscrito à lista de inscritos do evento
             novo_inscrito = inscrito.model_dump()
+
             # Atualiza o documento no MongoDB
             update_result = colecaoEventos.update_one(
                 {"_id": id_evento},

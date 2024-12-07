@@ -154,4 +154,4 @@ def removerInscrito(
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
 ):
         
-    return    EventoControlador.removerInscrito(idEvento, idInscrito)
+    return EventoControlador.removerInscrito(idEvento, idInscrito)

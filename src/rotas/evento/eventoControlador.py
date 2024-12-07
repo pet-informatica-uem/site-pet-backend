@@ -54,6 +54,7 @@ class EventoControlador:
 
     @staticmethod
     def getEvento(id: str) -> Evento:
+       print(id)
        return EventoBD.buscar("_id", id)
 
     @staticmethod
@@ -186,8 +187,6 @@ class EventoControlador:
 
         # cria pastas evento
         criaPastaEvento(evento.id)
-        
-        print(evento.id)
 
         return evento.id
 
@@ -234,20 +233,19 @@ class EventoControlador:
         else:
             caminhoComprovante = None
 
-##PRA BAIXO
         dictInscrito = {
-            "_id": idUsuario,
+            "idUsuario": idUsuario,
             "tipoVaga": dadosInscrito.tipoVaga,
             "nivelConhecimento": dadosInscrito.nivelConhecimento,
             "comprovante": comprovante,
             "dataHoraInscricao": datetime.now()
         }
 
-        dictInscrito.update(**dadosInscrito.model_dump())
+        # dictInscrito.update(**dadosInscrito.model_dump())
         dictInscrito["comprovante"] = (
             str(caminhoComprovante) if caminhoComprovante else None
         )
-     
+
         inscrito = Inscrito(**dictInscrito)
 
         if inscrito.tipoVaga == TipoVaga.COM_NOTE:
@@ -266,9 +264,8 @@ class EventoControlador:
         session = cliente.start_session()
         try:
             session.start_transaction()
-
+            
             EventoBD.criarInscrito(idEvento, inscrito)
-            EventoBD.atualizar(evento)
             UsuarioBD.atualizar(usuario)
 
             # Commita a transação se der tudo certo
@@ -336,7 +333,8 @@ class EventoControlador:
 
     @staticmethod
     def removerInscrito(idEvento: str, idUsuario: str):
-        evento = EventoControlador.getEvento(idEvento)
+        evento: Evento = EventoControlador.getEvento(idEvento)
+        print("PASSOU DO GEETEVENTO")
         # Remove o inscrito da lista
         inscrito_to_remove = None
         for inscrito in evento.inscritos:
@@ -345,6 +343,8 @@ class EventoControlador:
                 break
         if not inscrito_to_remove:
             raise NaoEncontradoExcecao(message="Inscrito não encontrado no evento.")
+        
+        print("PASSOU DO FOR E CONDICIONAIS")
 
         evento.inscritos.remove(inscrito_to_remove)
 
