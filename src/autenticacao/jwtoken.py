@@ -68,8 +68,7 @@ def geraLinkEsqueciSenha(email: str) -> str:
     token = jwt.encode(token_info, config.SEGREDO_JWT, algorithm="HS256")
 
     # Gera o link para a troca de senha
-    # TODO ver com o front qual vai ser o link
-    url = config.CAMINHO_BASE + "/esqueci-senha/?token=" + token
+    url = "https://petinfouem.com.br/altera-senha?token=" + token
     return url
 
 
@@ -94,7 +93,7 @@ def processaTokenTrocaSenha(token: str) -> str:
     validade = token_info["validade"]
 
     # Verifica a validade do token
-    validade: datetime = datetime.fromtimestamp(validade)  # type: ignore
+    validade: datetime = datetime.fromtimestamp(validade, UTC)  # type: ignore
     if validade < datetime.now(UTC):
         raise TokenInvalidoExcecao()
 
