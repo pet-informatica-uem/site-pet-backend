@@ -276,13 +276,19 @@ class UsuarioControlador:
         """
         petianos = []
         for petiano in UsuarioBD.listarPetianos():
+            # define a url da foto do petiano
+            urlFoto = None
+            if petiano.foto:
+                urlFoto = f"{config.CAMINHO_BASE}/img/usuarios/{petiano.id}/foto"
+            
+            # adiciona o petiano à lista
             petianos.append(
                 Petiano(
                     nome=petiano.nome,
                     github=petiano.github,
                     linkedin=petiano.linkedin,
                     instagram=petiano.instagram,
-                    foto=f"{config.CAMINHO_BASE}/img/usuarios/{petiano.id}/foto",
+                    foto=urlFoto,
                 )
             )
         return petianos
