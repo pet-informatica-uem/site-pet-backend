@@ -3,7 +3,7 @@ from typing import Self
 
 from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
 
-from src.modelos.evento.evento import Evento
+from src.modelos.evento.evento import Evento, Inscrito, TipoVaga, NivelConhecimento
 
 
 class EventoCriar(BaseModel):
@@ -147,7 +147,48 @@ class EventoAtualizar(BaseModel):
             and self.inicioInscricao > self.fimInscricao
         ):
             raise ValueError(
+
                 "A data de início das inscrições deve ser anterior à data de fim das inscrições."
             )
 
         return self
+
+
+class InscritoCriar(BaseModel):
+    """
+    Criação de um inscrito no evento.
+    """
+
+    tipoVaga: TipoVaga
+    "Tipo de vaga: True para com notebook e False para sem notebook."
+
+    nivelConhecimento: NivelConhecimento
+    "Nível de conhecimento do usuário (1 a 5)."
+
+
+class InscritoLer(Inscrito):
+    """
+    Informações sobre uma inscrição em um evento.
+    """
+    pass
+
+
+class InscritoAtualizar(BaseModel):
+    """
+    Atualiza um dado em um inscrito no evento.
+    """
+
+    tipoVaga: TipoVaga | None = None
+    "Tipo de vaga: True para com notebook e False para sem notebook."
+
+
+class InscritoDeletar(BaseModel):
+    """
+    Deleta um inscrito de um evento.
+    """
+    
+    idEvento: str
+    "Identificador único do evento."
+
+    idUsuario: str
+    "Identificador único do usuário."
