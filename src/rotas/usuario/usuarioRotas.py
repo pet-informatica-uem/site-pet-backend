@@ -1,4 +1,7 @@
-import logging
+"""
+Rotas relacionadas a gerenciamento de usuários.
+"""
+
 from datetime import UTC, datetime
 from typing import Annotated
 
@@ -28,7 +31,7 @@ from src.modelos.excecao import (
     listaRespostasExcecoes,
 )
 from src.modelos.registro.registroLogin import RegistroLogin
-from src.modelos.usuario.usuario import TipoConta, Usuario
+from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
 from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizar,
     UsuarioAtualizarEmail,
@@ -42,8 +45,15 @@ from src.rotas.usuario.usuarioControlador import UsuarioControlador
 
 
 class Token(BaseModel):
+    """
+    Um token de acesso.
+    """
+
     access_token: str
+    """O token de acesso em si."""
+
     token_type: str
+    """O tipo de token. Sempre "bearer"."""
 
 
 roteador: APIRouter = APIRouter(
@@ -51,13 +61,33 @@ roteador: APIRouter = APIRouter(
     tags=["Usuário"],
 )
 
+## Para mais detalhes sobre a autenticação, confira o documento
+## [docs/auth](docs/auth.md).
 
 tokenAcesso: OAuth2PasswordBearer = OAuth2PasswordBearer(
     tokenUrl=config.ROOT_PATH + "/usuarios/login"
 )
+"""
+Portador de token de acesso.
+
+Se especificado como dependência de uma rota, torna-a autenticada.
+"""
 
 
 def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
+    """
+    Recupera o token de acesso fornecido na solicitação e retorna um objeto usuário cujo
+    token lhe pertence.
+    
+    Caso o token seja inválido ou não exista, retorna uma resposta HTTP 401.
+
+    Pode ser especificada como dependência para obter o usuário autenticado em rotas
+    que precisam de autorização.
+
+    :param token: Token de acesso.
+    :return Usuario: Objeto contendo informações do usuário autenticado.
+    :raises NaoAutenticadoExcecao: Caso o token seja inválido ou não exista.
+    """
     try:
         return UsuarioControlador.getUsuarioAutenticado(token)
     except NaoAutenticadoExcecao:
@@ -70,6 +100,19 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
 
 
 def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
+    """
+    Verifica se o usuário autenticado é um petiano e retorna o usuário.
+
+    Caso o usuário não seja um petiano, retorna uma resposta HTTP 403.
+
+    Pode ser especificada como dependência para obter o usuário autenticado em rotas
+    que precisam de autorização de petiano.
+    
+    :param usuario: Objeto contendo informações do usuário autenticado.
+    :return Usuario: Objeto contendo informações do usuário autenticado, caso ele seja petiano.
+    :raises NaoAutorizadoExcecao: Caso o usuário não seja petiano.
+    :raises NaoAutenticadoExcecao: Caso o usuário não esteja autenticado ou não exista.
+    """
     if usuario.tipoConta == TipoConta.PETIANO:
         return usuario
     raise NaoAutorizadoExcecao()
@@ -114,10 +157,10 @@ def listarUsuarios(
     "/petiano",
     name="Recuperar petianos cadastrados",
     description="Lista todos os petianos cadastrados.",
-    response_model=list[UsuarioLer],
+    response_model=list[Petiano],
 )
 def listarPetianos():
-    return UsuarioControlador.getUsuarios(petiano=True)
+    return UsuarioControlador.getPetianos()
 
 
 @roteador.get(
@@ -258,7 +301,7 @@ def desautenticar(
 @roteador.put(
     "/{id}/email",
     name="Editar email do usuário autenticado",
-    description="""O usuário é capaz de editar seu email""",
+    description="""Realiza a troca de email do usuário autenticado.""",
 )
 def editarEmail(
     tasks: BackgroundTasks,
@@ -283,7 +326,7 @@ def editarEmail(
 @roteador.put(
     "/{id}/senha",
     name="Editar senha do usuário autenticado",
-    description="""O usuário é capaz de editar sua senha. Caso a opção deslogarAoTrocarSenha 
+    description="""Realiza a troca de senha do usuário autenticado. Caso a opção deslogarAoTrocarSenha 
     seja selecionada, todos as sessões serão deslogadas ao trocar a senha.""",
 )
 def editarSenha(
@@ -309,7 +352,7 @@ def editarSenha(
 @roteador.put(
     "/{id}/foto",
     name="Atualizar foto de perfil",
-    description="O usuário petiano é capaz de editar sua foto de perfil",
+    description="Edita a foto de perfil do usuário autenticado. O usuário deve ser um petiano, e deve ser dono da conta.",
 )
 def editarFoto(
     id: str,
@@ -326,7 +369,7 @@ def editarFoto(
     description="Promove o usuário especificado a petiano.",
 )
 def promoverPetiano(
-    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ... 
+    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...
 ):
     UsuarioControlador.promoverPetiano(id)
 
@@ -342,7 +385,7 @@ def demitirPetiano(
     egresso: bool | None = True,
     _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
 ):
-    UsuarioControlador.demitirPetiano(id, egresso if egresso is not None else True)
+    UsuarioControlador.demitirPetiano(id, UsuarioControlador.DemitirPetianoPara.ESTUDANTE if egresso is not None else UsuarioControlador.DemitirPetianoPara.EGRESSO)
 
 
 @roteador.get(

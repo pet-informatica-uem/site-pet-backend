@@ -1,3 +1,7 @@
+"""
+Classes que encapsulam operações de banco de dados.
+"""
+
 import logging
 from datetime import datetime
 
@@ -7,7 +11,7 @@ from pymongo.errors import DuplicateKeyError
 from src.config import config
 from src.modelos.autenticacao.autenticacao import TokenAutenticacao
 from src.modelos.evento.evento import Evento, Inscrito, TipoVaga
-from src.modelos.evento.eventoQuery import eventoQuery
+from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoExcecao
 from src.modelos.registro.registroLogin import RegistroLogin
 from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
@@ -31,9 +35,19 @@ colecaoRegistro = cliente[config.NOME_BD]["registros"]
 
 
 class UsuarioBD:
+    """
+    Encapsula operações do banco de dados de usuários.
+    """
+
     # operações banco de dados
     @staticmethod
     def criar(modelo: Usuario):
+        """
+        Cria um usuário no banco de dados.
+
+        :param modelo: Usuário a ser criado.
+        :raises JaExisteExcecao: Caso um usuário com o mesmo email ou CPF já exista no banco de dados.
+        """
         # cria usuario no bd
         try:
             colecaoUsuarios.insert_one(modelo.model_dump(by_alias=True))
@@ -42,32 +56,59 @@ class UsuarioBD:
             raise JaExisteExcecao(message="Usuário já existe no banco de dados")
 
     @staticmethod
-    def buscar(indice: str, chave: str) -> Usuario:
+    def buscar(campo: str, valor: str) -> Usuario:
+        """
+        Busca um usuário no banco de dados de acordo com o índice e a valor fornecidos.
+
+        :param campo: Campo de busca.
+        :param valor: Valor de busca.
+        :return: Primeiro usuário encontrado com um campo com valor igual ao fornecido.
+        """
         # Verifica se o usuário está cadastrado no bd
-        if not colecaoUsuarios.find_one({indice: chave}):
+        if not colecaoUsuarios.find_one({campo: valor}):
             raise NaoEncontradoExcecao(message="O Usuário não foi encontrado.")
         else:
-            return Usuario(**colecaoUsuarios.find_one({indice: chave}))  # type: ignore
+            return Usuario(**colecaoUsuarios.find_one({campo: valor}))  # type: ignore
 
     @staticmethod
     def atualizar(modelo: Usuario):
+        """
+        Atualiza um usuário no banco de dados.
+
+        :param modelo: Usuário a ser atualizado.
+        """
         colecaoUsuarios.update_one(
             {"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)}
         )
 
     @staticmethod
     def deletar(id: str):
+        """
+        Deleta um usuário do banco de dados.
+
+        :param id: Identificador do usuário a ser deletado.
+        """
         colecaoUsuarios.delete_one({"_id": id})
 
     @staticmethod
-    def listar(petiano: bool = False) -> list[Usuario]:
-        if not petiano:
-            return [Usuario(**u) for u in colecaoUsuarios.find()]
-        else:
-            return [
-                Usuario(**u)
-                for u in colecaoUsuarios.find({"tipoConta": TipoConta.PETIANO})
-            ]
+    def listar() -> list[Usuario]:
+        """
+        Retorna uma lista com todos os usuários cadastrados no banco de dados.
+
+        :return usuarios: Lista com todos os usuários cadastrados no banco de dados.
+        """
+        return [Usuario(**u) for u in colecaoUsuarios.find()]
+
+    @staticmethod
+    def listarPetianos() -> list[Usuario]:
+        """
+        Retorna uma lista com todos os petianos cadastrados no banco de dados.
+
+        :return petianos: Lista com todos os petianos cadastrados no banco de dados.
+        """
+        return [
+            Usuario(**u) for u in colecaoUsuarios.find({"tipoConta": TipoConta.PETIANO})
+        ]
 
 
 class EventoBD:
@@ -107,28 +148,28 @@ class EventoBD:
         colecaoEventos.delete_one({"_id": id})
 
     @staticmethod
-    def listar(query: eventoQuery) -> list[Evento]:
+    def listar(query: IntervaloBusca) -> list[Evento]:
         resultado: list[Evento]
 
-        print(query)
-        print("*"*50)
+        #print(query) 
+        #print("*"*50)
 
-        if query == eventoQuery.PASSADO:
+        if query == IntervaloBusca.PASSADO:
             dbQuery = {"fimEvento": {"$lt": datetime.now()}}
             resultadoBusca = colecaoEventos.find(dbQuery)
-        elif query == eventoQuery.PRESENTE:
+        elif query == IntervaloBusca.PRESENTE:
             dbQuery = {
                 "inicioEvento": {"$lt": datetime.now()},
                 "fimEvento": {"$gt": datetime.now()},
             }
             resultadoBusca = colecaoEventos.find(dbQuery)
-        elif query == eventoQuery.FUTURO:
+        elif query == IntervaloBusca.FUTURO:
             dbQuery = {"inicioEvento": {"$gt": datetime.now()}}
             resultadoBusca = colecaoEventos.find(dbQuery)
         else:
             resultadoBusca = colecaoEventos.find()
 
-        print(resultadoBusca)
+        #print(resultadoBusca)
 
         resultado = [Evento(**e) for e in resultadoBusca]
         return resultado
@@ -205,8 +246,18 @@ class EventoBD:
         return [Inscrito(**inscrito) for inscrito in inscritos_data]
 
 class TokenAutenticacaoBD:
+    """
+    Encapsula operações do banco de dados de tokens de autenticação.
+    """
     @staticmethod
     def buscar(id: str) -> TokenAutenticacao:
+        """
+        Busca um token de autenticação pelo id `id` no banco de dados e o retorna, caso exista.
+        
+        :param id: Identificador do token.
+        :return: Token de autenticação.
+        :raises NaoEncontradoExcecao: Caso o token não seja encontrado.
+        """
         documento = colecaoTokens.find_one({"_id": id})
         if not documento:
             raise NaoEncontradoExcecao()
@@ -215,12 +266,27 @@ class TokenAutenticacaoBD:
 
     @staticmethod
     def deletar(id: str):
+        """
+        Deleta o token de autenticação de id `id` do banco de dados.
+
+        :param id: Identificador do token.
+        :raises NaoEncontradoExcecao: Caso o token não seja encontrado.
+        """
         resultado = colecaoTokens.delete_one({"_id": id})
         if resultado.deleted_count != 1:
             raise NaoEncontradoExcecao()
 
     @staticmethod
     def criar(id: str, idUsuario: str, validade: datetime) -> TokenAutenticacao:
+        """
+        Cria um token de autenticação com id `id` no banco de dados.
+        O token é associado ao usuário de id `idUsuario` e é válido até `validade`.
+
+        :param id: Identificador do token.
+        :param idUsuario: Identificador do usuário associado ao token.
+        :param validade: Data de validade do token.
+        :return: Token de autenticação criado.
+        """
         documento = {"_id": id, "idUsuario": idUsuario, "validade": validade}
 
         resultado = colecaoTokens.insert_one(documento)
@@ -230,6 +296,11 @@ class TokenAutenticacaoBD:
 
     @staticmethod
     def deletarTokensUsuario(idUsuario: str):
+        """
+        Remove todos os tokens de autenticação do usuário com id `idUsuario`.
+
+        :param idUsuario: Identificador do usuário.
+        """
         colecaoTokens.delete_many({"idUsuario": idUsuario})
 
 

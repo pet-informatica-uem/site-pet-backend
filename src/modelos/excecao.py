@@ -111,9 +111,26 @@ class ErroNaAlteracaoExcecao(APIExcecaoBase):  # conflito
     model = AcaoNaoCompletaErro
 
 
+class ComprovanteObrigatorioExcecao(APIExcecaoBase):  # conflito
+    message = "Comprovante obrigatório para eventos pagos."
+    code = status.HTTP_400_BAD_REQUEST
+    model = AcaoNaoCompletaErro
+
+class ComprovanteInvalido(APIExcecaoBase):  # conflito
+    message = "Comprovante inválido."
+    code = status.HTTP_400_BAD_REQUEST
+    model = AcaoNaoCompletaErro
+
+
+class ForaDoPeriodoDeInscricaoExcecao(APIExcecaoBase):  # conflito
+    message = "Fora do período de inscrição."
+    code = status.HTTP_423_LOCKED
+    model = AcaoNaoCompletaErro
+
+
 class SemVagasDisponiveisExcecao(APIExcecaoBase):  # conflito
     message = "Não há vagas disponíveis."
-    code = status.HTTP_410_GONE
+    code = status.HTTP_409_CONFLICT
     model = AcaoNaoCompletaErro
 
 

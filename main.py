@@ -16,7 +16,7 @@ from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.img.imgRotas import roteador as roteadorImg
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
 
-# cria pasta logs
+## Configuração dos logs.
 criaPastas()
 
 logging.basicConfig(
@@ -31,6 +31,8 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 locale.setlocale(locale.LC_ALL, "pt_BR.UTF-8")
+
+## Domínios permitidos no CORS.
 origins = [
     "http://localhost:3000",
     "https://localhost:3000",
@@ -46,10 +48,14 @@ origins = [
 petBack = FastAPI(root_path=config.ROOT_PATH)
 petBack.state.limiter = limiter
 
+## Configura os middlewares. Para mais detalhes, confira o documento
+## [docs/middlewares.md](docs/middlewares.md).
 petBack.add_middleware(ExcecaoAPIMiddleware)
 petBack.add_middleware(LoggerMiddleware)
 petBack.add_middleware(TempoLimiteMiddleware, request_timeout=30)
 petBack.add_middleware(TamanhoLimiteMiddleware, size_limit=5 * 1024 * 1024)
+
+## Adiciona os módulos do site.
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorImg)

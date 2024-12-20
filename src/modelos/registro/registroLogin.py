@@ -1,9 +1,17 @@
+"""
+Modelos de dados relacionados a registros de login de usuários.
+"""
+
 from datetime import datetime
 
 from pydantic import BaseModel
 
 
 class RegistroLogin(BaseModel):
+    """
+    Dados do registro de login de um usuário.
+    """
+
     emailUsuario: str
     "E-mail do usuário."
 

@@ -10,7 +10,7 @@ from src.modelos.evento.eventoClad import (
     InscritoCriar,
     InscritoLer,
 )
-from src.modelos.evento.eventoQuery import eventoQuery
+from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.usuario.usuario import Usuario, TipoConta
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
@@ -23,7 +23,14 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
     name="Recuperar eventos",
     description="Retorna todos os eventos cadastrados no banco de dados filtrados pelo parâmetro 'query'.",
 )
-def getEventos(query: eventoQuery) -> list[Evento]:
+def getEventos(query: IntervaloBusca) -> list[Evento]:
+    """
+    Retorna todos os eventos cadastrados no banco de dados, aplicando filtros conforme o parâmetro 'query'.
+
+    :param query (IntervaloBusca): Parâmetro de filtro para busca dos eventos.
+
+    :return list[Evento]: Lista de objetos Evento que correspondem aos filtros especificados.
+    """
     return EventoControlador.getEventos(query)
 
 
@@ -31,12 +38,21 @@ def getEventos(query: eventoQuery) -> list[Evento]:
     "/{id}",
     name="Recuperar evento por ID",
     description="""
-        Recupera um evento cadastrado no banco de dados.
+        Recupera um evento cadastrado no banco de dados pelo seu id.
         Falha, caso o evento não exista.
     """,
     response_model=EventoLer,
 )
 def getEvento(id: str) -> Evento:
+    """
+    Recupera um evento específico pelo ID.
+
+    :param id (str): O identificador único do evento a ser recuperado.
+
+    :return Evento: Objeto do tipo Evento correspondente ao ID fornecido.
+
+    :raises HTTPException: Lançada se o evento com o ID especificado não for encontrado.
+    """
     evento: Evento = EventoControlador.getEvento(id)  
     return evento.model_dump(by_alias=True)  # type: ignore
 
@@ -49,6 +65,13 @@ def getEvento(id: str) -> Evento:
 def cadastrarEvento(
     evento: EventoCriar, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]
 ):
+    """
+    Cadastra um novo evento no sistema.
+
+    :param evento: Objeto contendo os dados do evento a ser cadastrado.
+    :param usuario: Usuário autenticado responsável pela criação do evento. 
+                    Apenas um petiano pode criar um evento.
+    """
     # Despacha para o controlador
     EventoControlador.cadastrarEvento(evento)
 
@@ -63,6 +86,14 @@ def editarEvento(
     evento: EventoAtualizar,
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
 ):
+    """
+    Edita um evento existente.
+
+    :param id: Identificador único do evento a ser editado.
+    :param evento: Dados atualizados do evento.
+    :param usuario: Usuário autenticado responsável pela edição.
+                    Apenas um petiano pode editar um evento.
+    """
     # Despacha para o controlador
     EventoControlador.editarEvento(id, evento)
 
@@ -79,6 +110,15 @@ def atualizarImagensEvento(
     arte: UploadFile | None = None,
     cracha: UploadFile | None = None,
 ):
+    """
+    Atualiza as imagens de arte e crachá associadas a um evento.
+
+    :param id: Identificador do evento.
+    :param usuario: Usuário autenticado responsável pela atualização.
+                    Apenas um petiano pode atualizar as imagens de um evento.
+    :param arte: Arquivo opcional de imagem para arte.
+    :param cracha: Arquivo opcional de imagem para crachá.
+    """
     # Despacha para o controlador
     EventoControlador.atualizarImagensEvento(id, arte, cracha)
 
@@ -92,6 +132,13 @@ def deletarEvento(
     id: str,
     usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
 ):
+    """
+    Exclui um evento específico do banco de dados.
+
+    :param id: Identificador do evento a ser deletado.
+    :param usuario: Usuário autenticado que solicita a exclusão.
+                    Apenas um petiano pode deletar um evento.
+    """
     # Despacha para o controlador
     EventoControlador.deletarEvento(id)
 
@@ -113,6 +160,15 @@ def cadastrarInscrito(
     inscrito: InscritoCriar = Depends(),
     comprovante: UploadFile | None = None,
 ):
+    """
+    Cadastra um inscrito em um evento.
+
+    :param tasks: Gerenciador de tarefas
+    :param usuario: Usuário autenticado que está realizando a inscrição.
+    :param idEvento: Identificador único do evento.
+    :param inscrito: Dados de um inscrito.
+    :param comprovante: Arquivo de comprovante de pagamento.
+    """
     # Despacha para o controlador
     EventoControlador.cadastrarInscrito(    
         idEvento, usuario.id, inscrito, comprovante, tasks
@@ -127,6 +183,12 @@ def cadastrarInscrito(
 def getInscritos(
     idEvento: str, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]
 ):
+    """
+    Recupera todos os inscritos de um evento.
+
+    :param idEvento: Identificador único do evento.
+    :param usuario: Usuário autenticado como petiano.
+    """
     # Despacha para o controlador
     return EventoControlador.getInscritos(idEvento)
 
@@ -141,6 +203,14 @@ def editarInscrito(
     inscrito: InscritoAtualizar,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
 ):
+    """
+    Edita os dados de um inscrito em um evento.
+
+    :param idEvento: Identificador único do evento.
+    :param idInscrito: Identificador único do inscrito a ser editado.
+    :param inscrito: Dados atualizados do inscrito.
+    :param usuario: Usuário autenticado que solicita a edição.
+    """
     return EventoControlador.editarInscrito(idEvento, idInscrito, inscrito)
 
 @roteador.delete(
@@ -153,5 +223,13 @@ def removerInscrito(
     idInscrito: str,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
 ):
-        
+    """
+    Deleta um inscrito de um evento.
+    
+    :param idEvento: Identificador único do evento.
+    :param idInscrito: Identificador único do inscrito a ser deletado.
+    :param usuario: Usuário autenticado que solicita a exclusão.
+    
+    :raises NaoAutorizadoExcecao: Se o usuário não tiver permissão para deletar o inscrito do evento.
+    """
     return EventoControlador.removerInscrito(idEvento, idInscrito)

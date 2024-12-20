@@ -1,27 +1,30 @@
+"""
+Funções relacioandas a validação de cadastro de usuários.
+"""
+
 import re
 
 
 class ValidacaoCadastro:
+    """
+    Contém métodos para validação de cadastro de usuários.
+    """
+
     # https://pt.stackoverflow.com/questions/64608/como-validar-e-calcular-o-d%C3%ADgito-de-controle-de-um-cpf
     @staticmethod
     def cpf(cpf: str) -> bool:
         """
-        Efetua a validacao do CPF, nao valida a formatacao!!!!!!.
+        Efetua a validação do CPF. A validação é executada apenas sobre os dígitos numéricos do CPF, ignorando-se
+        os demais caracteres.
 
-        Parametros:
-            cpf (str): CPF a ser validado
-
-        Retorno:
-            bool:
-                - Falso, quando o CPF nao possuir 11 caracteres numericos;
-                - Falso, quando os digitos verificadores forem invalidos;
-                - Verdadeiro, caso contrario.
+        :param cpf: CPF a ser validado
+        :return valido: Falso, quando o CPF não possuir 11 caracteres numéricos; Falso, quando os dígitos verificadores forem inválidos; Verdadeiro, caso contrário.
 
         Exemplos:
 
-        validate('529.982.247-25')
+        >>> ValidacaoCadastro.cpf('529.982.247-25')
         True
-        validate('52998224725')
+        >>> ValidacaoCadastro.cpf('52998224725')
         True
         """
 
@@ -50,7 +53,10 @@ class ValidacaoCadastro:
     @staticmethod
     def email(email: str) -> bool:
         """
-        Valida se um email estah na expressao regular correta.
+        Valida se um email está na expressao regular correta.
+
+        :param email: email a ser validado
+        :return valido: Falso, quando o email não possuir o formato correto; Verdadeiro, caso contrário.
         """
 
         # expressao regular do gmail:
@@ -63,12 +69,17 @@ class ValidacaoCadastro:
     @staticmethod
     def senha(senha: str) -> bool:
         """
+        Verifica se a senha é válida.
+
         Para a senha ser aceita ela deve ter:
-        -Ao menos 8 caracteres e ao máximo 64
-        -Ao menos uma letra MAIUSCULA
-        -Ao menos um numero
-        -Ao menos um caractere especial(!@#$%¨&*)
-        -confirmacao de senha identica a senha
+        - Ao menos 8 caracteres e ao máximo 64
+        - Ao menos uma letra MAIUSCULA
+        - Ao menos um numero
+        - Ao menos um caractere especial(!@#$%¨&*)
+        - confirmacao de senha identica a senha
+
+        :param senha: senha a ser validada
+        :return valido: Verdadeiro apenas se todos os critérios forem atendidos; Falso, caso contrário.
         """
 
         if senha.islower():  # nao tem nenhum maiusculo:
