@@ -1,16 +1,19 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, UploadFile, status
-
+from fastapi import APIRouter, Depends, File, UploadFile, status, BackgroundTasks
 from src.modelos.evento.evento import Evento
-from src.modelos.evento.eventoClad import EventoAtualizar, EventoCriar, EventoLer
+from src.modelos.evento.eventoClad import (
+    EventoAtualizar,
+    EventoCriar,
+    EventoLer,
+    InscritoAtualizar,
+    InscritoCriar,
+    InscritoLer,
+)
 from src.modelos.evento.intervaloBusca import IntervaloBusca
-from src.modelos.usuario.usuario import Usuario
+from src.modelos.usuario.usuario import Usuario, TipoConta
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
-
-# Especifica o formato das datas para serem convertidos
-formatoString = "%d/%m/%Y %H:%M"
 
 roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
@@ -38,6 +41,7 @@ def getEventos(query: IntervaloBusca) -> list[Evento]:
         Recupera um evento cadastrado no banco de dados pelo seu id.
         Falha, caso o evento não exista.
     """,
+    response_model=EventoLer,
 )
 def getEvento(id: str) -> Evento:
     """
@@ -49,10 +53,8 @@ def getEvento(id: str) -> Evento:
 
     :raises HTTPException: Lançada se o evento com o ID especificado não for encontrado.
     """
-    evento: Evento = EventoControlador.getEvento(id)
-
-    return evento
-
+    evento: Evento = EventoControlador.getEvento(id)  
+    return evento.model_dump(by_alias=True)  # type: ignore
 
 @roteador.post(
     "/",
@@ -139,3 +141,95 @@ def deletarEvento(
     """
     # Despacha para o controlador
     EventoControlador.deletarEvento(id)
+
+
+##########################################################INSCRITOS
+@roteador.post(
+    "/{idEvento}/inscritos",
+    name="Cadastrar inscrito",
+    description="Cadastra um novo inscrito.\n\n "
+    "- tipoVaga = comNotebook para vaga com note.\n\n"
+    "- tipoVaga = semNotebook para vaga sem note.\n\n"
+    "- nivelConhecimento 1-5",
+    status_code=status.HTTP_201_CREATED,
+)
+def cadastrarInscrito(
+    tasks: BackgroundTasks,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+    idEvento: str,
+    inscrito: InscritoCriar = Depends(),
+    comprovante: UploadFile | None = None,
+):
+    """
+    Cadastra um inscrito em um evento.
+
+    :param tasks: Gerenciador de tarefas
+    :param usuario: Usuário autenticado que está realizando a inscrição.
+    :param idEvento: Identificador único do evento.
+    :param inscrito: Dados de um inscrito.
+    :param comprovante: Arquivo de comprovante de pagamento.
+    """
+    # Despacha para o controlador
+    EventoControlador.cadastrarInscrito(    
+        idEvento, usuario.id, inscrito, comprovante, tasks
+    )
+
+@roteador.get(
+    "/{idEvento}/inscritos",
+    name="Recuperar inscritos",
+    description="Recupera os inscritos de um evento.",
+    response_model=list[InscritoLer],
+)
+def getInscritos(
+    idEvento: str, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]
+):
+    """
+    Recupera todos os inscritos de um evento.
+
+    :param idEvento: Identificador único do evento.
+    :param usuario: Usuário autenticado como petiano.
+    """
+    # Despacha para o controlador
+    return EventoControlador.getInscritos(idEvento)
+
+@roteador.patch(
+    "/{idEvento}/inscritos/{idInscrito}",
+    name="Editar inscrito",
+    description="Edita um inscrito.",
+)
+def editarInscrito(
+    idEvento: str,
+    idInscrito: str,
+    inscrito: InscritoAtualizar,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+):
+    """
+    Edita os dados de um inscrito em um evento.
+
+    :param idEvento: Identificador único do evento.
+    :param idInscrito: Identificador único do inscrito a ser editado.
+    :param inscrito: Dados atualizados do inscrito.
+    :param usuario: Usuário autenticado que solicita a edição.
+    """
+    return EventoControlador.editarInscrito(idEvento, idInscrito, inscrito)
+
+@roteador.delete(
+    "/{idEvento}/inscritos/{idInscrito}",
+    name="Remover inscrito",
+    description="Remove um inscrito.",
+)
+def removerInscrito(
+    idEvento: str,
+    idInscrito: str,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+):
+    """
+    Deleta um inscrito de um evento.
+    
+    :param idEvento: Identificador único do evento.
+    :param idInscrito: Identificador único do inscrito a ser deletado.
+    :param usuario: Usuário autenticado que solicita a exclusão.
+    
+    :raises NaoAutorizadoExcecao: Se o usuário não tiver permissão para deletar o inscrito do evento.
+    """
+    return EventoControlador.removerInscrito(idEvento, idInscrito)

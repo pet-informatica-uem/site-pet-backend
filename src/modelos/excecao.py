@@ -60,6 +60,11 @@ class EmailNaoConfirmadoExcecao(APIExcecaoBase):
     code = status.HTTP_401_UNAUTHORIZED
 
 
+class ForaDoPeriodoDeInscricaoExcecao(APIExcecaoBase):
+    message = "Fora do período de inscrição."
+    code = status.HTTP_400_BAD_REQUEST
+
+
 class NaoAutorizadoExcecao(APIExcecaoBase):
     message = "Acesso negado."
     code = status.HTTP_403_FORBIDDEN
