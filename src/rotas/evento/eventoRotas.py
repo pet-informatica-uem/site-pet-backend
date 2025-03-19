@@ -158,7 +158,7 @@ def cadastrarInscrito(
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
     idEvento: str,
     inscrito: InscritoCriar = Depends(),
-    comprovante: UploadFile | None = None,
+    comprovante: UploadFile | str | None = None,
 ):
     """
     Cadastra um inscrito em um evento.
@@ -169,6 +169,13 @@ def cadastrarInscrito(
     :param inscrito: Dados de um inscrito.
     :param comprovante: Arquivo de comprovante de pagamento.
     """
+    print("entra na rota cadastrarInscrito")
+    print(f"Tipo do comprovante: {type(comprovante)}")
+    print(f"Valor do comprovante: {comprovante}")
+    
+    if comprovante == "":
+        comprovante = None
+        
     # Despacha para o controlador
     EventoControlador.cadastrarInscrito(    
         idEvento, usuario.id, inscrito, comprovante, tasks
