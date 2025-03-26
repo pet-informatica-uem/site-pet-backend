@@ -45,6 +45,7 @@ origins = [
     "http://www.din.uem.br",
     "https://www.din.uem.br",
     "https://www.petinfouem.com.br",
+    "https://recepcao-calouros-2025.vercel.app",
 ]
 
 petBack = FastAPI(root_path=config.ROOT_PATH)
