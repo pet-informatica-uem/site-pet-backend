@@ -2,6 +2,7 @@ import os
 import csv
 from datetime import datetime
 
+
 class RecepcaoControlador:
     @staticmethod
     def registrar_presenca(codigo):
@@ -20,11 +21,11 @@ class RecepcaoControlador:
         # Escrever no arquivo CSV
         with open(caminho_arquivo, mode="a", newline="") as arquivo:
             escritor = csv.writer(arquivo)
-            
+
             # Se o arquivo não existia, escrever o cabeçalho
             if not arquivo_existe:
                 escritor.writerow(["Codigo", "Timestamp"])
-            
+
             # Adicionar linha com código e timestamp atual
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             escritor.writerow([codigo, timestamp])

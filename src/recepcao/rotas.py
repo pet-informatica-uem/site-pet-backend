@@ -1,3 +1,4 @@
+from pydantic import BaseModel
 from src.recepcao.controlador import RecepcaoControlador
 
 from fastapi import (
@@ -16,6 +17,12 @@ roteador: APIRouter = APIRouter(
     tags=["Recepção"],
 )
 
+
+class PresencaProps(BaseModel):
+    codigoPresenca: str
+    senha: str
+
+
 @roteador.post(
     "/registra-presenca",
     name="Registra presença",
@@ -23,17 +30,17 @@ roteador: APIRouter = APIRouter(
     status_code=status.HTTP_201_CREATED,
 )
 def cadastrarUsuario(
-    tasks: BackgroundTasks, request: Request, codigoPresenca: str, senha: str
+    tasks: BackgroundTasks, request: Request, props: PresencaProps
 ) -> str:
 
-    if senha != "pet1235":
+    if props.senha != "pet1235":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Senha inválida.",
         )
 
     # despacha para controlador
-    presenca = RecepcaoControlador.registrar_presenca(codigoPresenca)
+    presenca = RecepcaoControlador.registrar_presenca(props.codigoPresenca)
 
     # retorna os dados do usuario cadastrado
     return presenca
