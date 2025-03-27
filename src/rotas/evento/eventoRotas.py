@@ -169,10 +169,6 @@ def cadastrarInscrito(
     :param inscrito: Dados de um inscrito.
     :param comprovante: Arquivo de comprovante de pagamento.
     """
-    print("entra na rota cadastrarInscrito")
-    print(f"Tipo do comprovante: {type(comprovante)}")
-    print(f"Valor do comprovante: {comprovante}")
-    
     if comprovante == "":
         comprovante = None
         

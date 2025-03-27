@@ -248,7 +248,6 @@ class EventoControlador:
         comprovante: UploadFile | None,
         tasks: BackgroundTasks,  
     ):
-        print("Função cadastrarInscrito foi chamada!")  # <- Print inicial para verificar
         """
         Cadastra um inscrito em um evento.
 
@@ -282,9 +281,7 @@ class EventoControlador:
             if evento.vagasDisponiveisSemNote == 0:
                 raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
         
-        print(f"Valor do evento: {evento.valor} (Tipo: {type(evento.valor)})")
         if evento.valor != 0:
-            print("Evento pago")
             if comprovante:
                 if not validaComprovante(comprovante.file):
                     raise APIExcecaoBase(message="Comprovante inválido.")
@@ -298,9 +295,6 @@ class EventoControlador:
                     message="Comprovante obrigatório para eventos pagos."
                 )
         else:
-            print("Evento gratuito")
-            print("Comprovante recebido:", comprovante)
-            print("Tipo do comprovante:", type(comprovante))
             caminhoComprovante = None
 
         dictInscrito = {
