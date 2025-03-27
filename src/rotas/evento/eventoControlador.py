@@ -2,7 +2,7 @@ import logging
 import secrets
 from typing import BinaryIO
 from bson.objectid import ObjectId
-from fastapi import UploadFile
+from fastapi import File, UploadFile
 
 # Importações dos módulos internos
 from src.config import config
@@ -246,7 +246,7 @@ class EventoControlador:
         idUsuario: str,
         dadosInscrito: InscritoCriar,
         comprovante: UploadFile | None,
-        tasks: BackgroundTasks,
+        tasks: BackgroundTasks,  
     ):
         """
         Cadastra um inscrito em um evento.
@@ -280,7 +280,7 @@ class EventoControlador:
         else:
             if evento.vagasDisponiveisSemNote == 0:
                 raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
-
+        
         if evento.valor != 0:
             if comprovante:
                 if not validaComprovante(comprovante.file):
