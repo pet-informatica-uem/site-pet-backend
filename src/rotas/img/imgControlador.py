@@ -35,7 +35,7 @@ class ImagemControlador:
         return getFileResponse(evento.cracha)
 
     @staticmethod
-    def getComprovanteInscrito(idEvento: str, idInscrito: str):
-        inscrito = InscritosControlador.getInscrito(idEvento, idInscrito)
+    def getComprovanteInscrito(idEvento: str, idUsuario: str):
+        inscrito = EventoControlador.getInscrito(idEvento, idUsuario)
 
         return getFileResponse(inscrito.comprovante)
