@@ -508,3 +508,6 @@ class UsuarioControlador:
         :return historico: Lista de registros de login.
         """
         return RegistroLoginBD.listarRegistrosUsuario(email)
+    
+
+
