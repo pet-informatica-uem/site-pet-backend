@@ -180,15 +180,3 @@ class InscritoAtualizar(BaseModel):
 
     tipoVaga: TipoVaga | None = None
     "Tipo de vaga: True para com notebook e False para sem notebook."
-
-
-class InscritoDeletar(BaseModel):
-    """
-    Deleta um inscrito de um evento.
-    """
-    
-    idEvento: str
-    "Identificador único do evento."
-
-    idUsuario: str
-    "Identificador único do usuário."

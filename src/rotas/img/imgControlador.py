@@ -4,7 +4,6 @@ from fastapi.responses import FileResponse
 
 from src.modelos.excecao import NaoEncontradoExcecao
 from src.rotas.evento.eventoControlador import EventoControlador
-#from src.rotas.inscrito.inscritoControlador import InscritosControlador
 from src.rotas.usuario.usuarioControlador import UsuarioControlador
 
 

@@ -1,6 +1,6 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, UploadFile, status, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, status, BackgroundTasks
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import (
     EventoAtualizar,
@@ -11,7 +11,7 @@ from src.modelos.evento.eventoClad import (
     InscritoLer,
 )
 from src.modelos.evento.intervaloBusca import IntervaloBusca
-from src.modelos.usuario.usuario import Usuario, TipoConta
+from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
 from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
 

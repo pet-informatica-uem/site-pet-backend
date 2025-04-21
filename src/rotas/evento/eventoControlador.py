@@ -20,12 +20,10 @@ from src.modelos.evento.eventoClad import (
     EventoCriar,
     InscritoAtualizar,
     InscritoCriar,
-    InscritoDeletar,
 )
 from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import (
     APIExcecaoBase,
-    ForaDoPeriodoDeInscricaoExcecao,
     ImagemInvalidaExcecao,
     ImagemNaoSalvaExcecao,
     SemVagasDisponiveisExcecao,
@@ -257,7 +255,6 @@ class EventoControlador:
         :param comprovante: comprovante de pagamento, no caso do evento ser pago.
         :param tasks: gerenciador de tarefas.
         
-        :raises ForaDoPeriodoDeInscricaoExcecao: Se estiver fora do período de inscrição.
         :raises SemVagasDisponiveisExcecao: Se não houver vagas disponíveis.
         :raises ComprovanteInvalido: Se o comprovante enviado for inválido.
         :raises ComprovanteObrigatorioExcecao: Se o evento for pago e não for enviado comprovante.

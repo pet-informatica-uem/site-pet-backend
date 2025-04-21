@@ -14,7 +14,7 @@ from src.modelos.evento.evento import Evento, Inscrito, TipoVaga
 from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoExcecao
 from src.modelos.registro.registroLogin import RegistroLogin
-from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
+from src.modelos.usuario.usuario import TipoConta, Usuario
 
 cliente: MongoClient = MongoClient(str(config.URI_BD))
 
@@ -128,7 +128,6 @@ class EventoBD:
             raise NaoEncontradoExcecao(message="O evento não foi encontrado.")
         else:
             #return Evento(**evento).model_dump(by_alias=True)  # type: ignore
-            print(evento)
             return Evento(**evento)  # type: ignore 
 
     @staticmethod
@@ -151,9 +150,6 @@ class EventoBD:
     def listar(query: IntervaloBusca) -> list[Evento]:
         resultado: list[Evento]
 
-        #print(query) 
-        #print("*"*50)
-
         if query == IntervaloBusca.PASSADO:
             dbQuery = {"fimEvento": {"$lt": datetime.now()}}
             resultadoBusca = colecaoEventos.find(dbQuery)
@@ -169,7 +165,6 @@ class EventoBD:
         else:
             resultadoBusca = colecaoEventos.find()
 
-        #print(resultadoBusca)
 
         resultado = [Evento(**e) for e in resultadoBusca]
         return resultado
