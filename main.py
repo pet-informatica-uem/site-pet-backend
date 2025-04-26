@@ -16,7 +16,6 @@ from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.img.imgRotas import roteador as roteadorImg
 from src.rotas.inscrito.inscritoRotas import roteador as roteadorInscrito
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
-from src.recepcao.rotas import roteador as roteadorRecepcao
 from src.capacitacao.rotas import roteador as roteadorCapacitacao
 
 ## Configuração dos logs.
@@ -64,7 +63,6 @@ petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
 petBack.include_router(roteadorInscrito)
 petBack.include_router(roteadorImg)
-petBack.include_router(roteadorRecepcao)
 petBack.include_router(roteadorCapacitacao)
 
 petBack.add_middleware(
