@@ -2,7 +2,7 @@ import logging
 import secrets
 from typing import BinaryIO
 from bson.objectid import ObjectId
-from fastapi import UploadFile
+from fastapi import File, UploadFile
 
 # Importações dos módulos internos
 from src.config import config
@@ -20,12 +20,10 @@ from src.modelos.evento.eventoClad import (
     EventoCriar,
     InscritoAtualizar,
     InscritoCriar,
-    InscritoDeletar,
 )
 from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import (
     APIExcecaoBase,
-    ForaDoPeriodoDeInscricaoExcecao,
     ImagemInvalidaExcecao,
     ImagemNaoSalvaExcecao,
     SemVagasDisponiveisExcecao,
@@ -246,7 +244,7 @@ class EventoControlador:
         idUsuario: str,
         dadosInscrito: InscritoCriar,
         comprovante: UploadFile | None,
-        tasks: BackgroundTasks,
+        tasks: BackgroundTasks,  
     ):
         """
         Cadastra um inscrito em um evento.
@@ -257,7 +255,6 @@ class EventoControlador:
         :param comprovante: comprovante de pagamento, no caso do evento ser pago.
         :param tasks: gerenciador de tarefas.
         
-        :raises ForaDoPeriodoDeInscricaoExcecao: Se estiver fora do período de inscrição.
         :raises SemVagasDisponiveisExcecao: Se não houver vagas disponíveis.
         :raises ComprovanteInvalido: Se o comprovante enviado for inválido.
         :raises ComprovanteObrigatorioExcecao: Se o evento for pago e não for enviado comprovante.
@@ -280,7 +277,7 @@ class EventoControlador:
         else:
             if evento.vagasDisponiveisSemNote == 0:
                 raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
-
+        
         if evento.valor != 0:
             if comprovante:
                 if not validaComprovante(comprovante.file):
