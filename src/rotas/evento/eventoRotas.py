@@ -1,4 +1,5 @@
 from typing import Annotated
+from typing import Optional
 
 from fastapi import APIRouter, Depends, UploadFile, status, BackgroundTasks
 from src.modelos.evento.evento import Evento
@@ -23,7 +24,7 @@ roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
     name="Recuperar eventos",
     description="Retorna todos os eventos cadastrados no banco de dados filtrados pelo parâmetro 'query'.",
 )
-def getEventos(query: IntervaloBusca) -> list[Evento]:
+def getEventos(query: Optional[IntervaloBusca] = None) -> list[Evento]:
     """
     Retorna todos os eventos cadastrados no banco de dados, aplicando filtros conforme o parâmetro 'query'.
 
@@ -53,8 +54,9 @@ def getEvento(id: str) -> Evento:
 
     :raises HTTPException: Lançada se o evento com o ID especificado não for encontrado.
     """
-    evento: Evento = EventoControlador.getEvento(id)  
+    evento: Evento = EventoControlador.getEvento(id)
     return evento.model_dump(by_alias=True)  # type: ignore
+
 
 @roteador.post(
     "/",
@@ -69,7 +71,7 @@ def cadastrarEvento(
     Cadastra um novo evento no sistema.
 
     :param evento: Objeto contendo os dados do evento a ser cadastrado.
-    :param usuario: Usuário autenticado responsável pela criação do evento. 
+    :param usuario: Usuário autenticado responsável pela criação do evento.
                     Apenas um petiano pode criar um evento.
     """
     # Despacha para o controlador
@@ -171,11 +173,12 @@ def cadastrarInscrito(
     """
     if comprovante == "":
         comprovante = None
-        
+
     # Despacha para o controlador
-    EventoControlador.cadastrarInscrito(    
+    EventoControlador.cadastrarInscrito(
         idEvento, usuario.id, inscrito, comprovante, tasks
     )
+
 
 @roteador.get(
     "/{idEvento}/inscritos",
@@ -194,6 +197,7 @@ def getInscritos(
     """
     # Despacha para o controlador
     return EventoControlador.getInscritos(idEvento)
+
 
 @roteador.patch(
     "/{idEvento}/inscritos/{idInscrito}",
@@ -216,6 +220,7 @@ def editarInscrito(
     """
     return EventoControlador.editarInscrito(idEvento, idInscrito, inscrito)
 
+
 @roteador.delete(
     "/{idEvento}/inscritos/{idInscrito}",
     name="Remover inscrito",
@@ -228,11 +233,11 @@ def removerInscrito(
 ):
     """
     Deleta um inscrito de um evento.
-    
+
     :param idEvento: Identificador único do evento.
     :param idInscrito: Identificador único do inscrito a ser deletado.
     :param usuario: Usuário autenticado que solicita a exclusão.
-    
+
     :raises NaoAutorizadoExcecao: Se o usuário não tiver permissão para deletar o inscrito do evento.
     """
     return EventoControlador.removerInscrito(idEvento, idInscrito)
