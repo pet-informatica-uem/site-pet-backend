@@ -155,12 +155,12 @@ def listarUsuarios(
 
 @roteador.get(
     "/petiano",
-    name="Recuperar petianos cadastrados",
-    description="Lista todos os petianos cadastrados.",
+    name="Recuperar petianos e egressos cadastrados",
+    description="Lista todos os petianos e egressos cadastrados.",
     response_model=list[Petiano],
 )
 def listarPetianos():
-    return UsuarioControlador.getPetianos()
+    return UsuarioControlador.getPetianosAndEgressos()
 
 
 @roteador.get(

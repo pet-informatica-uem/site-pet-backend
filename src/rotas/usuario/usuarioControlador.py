@@ -284,11 +284,51 @@ class UsuarioControlador:
             # adiciona o petiano à lista
             petianos.append(
                 Petiano(
+                    id=petiano.id,
                     nome=petiano.nome,
                     github=petiano.github,
                     linkedin=petiano.linkedin,
                     instagram=petiano.instagram,
                     foto=urlFoto,
+                    inicioPet=petiano.inicioPet,
+                    fimPet=petiano.fimPet,
+                    sobre=petiano.sobre,
+                    eventosInscrito=petiano.eventosInscrito,
+                    tipoConta=petiano.tipoConta,
+                    apadrinhadoPor=petiano.apadrinhadoPor,
+                )
+            )
+        return petianos
+
+    @staticmethod
+    def getPetianosAndEgressos() -> list[Petiano]:
+        """
+        Retorna uma lista de todos os petianos e egressos cadastrados.
+
+        :return petianos: Lista de petianos e egressos.
+        """
+        petianos = []
+        for petiano in UsuarioBD.listarPetianosAndEgressos():
+            # define a url da foto do petiano ou egresso
+            urlFoto = None
+            if petiano.foto:
+                urlFoto = f"{config.CAMINHO_BASE}/img/usuarios/{petiano.id}/foto"
+            
+            # adiciona o petiano ou egresso à lista
+            petianos.append(
+                Petiano(
+                    id=petiano.id,
+                    nome=petiano.nome,
+                    github=petiano.github,
+                    linkedin=petiano.linkedin,
+                    instagram=petiano.instagram,
+                    foto=urlFoto,
+                    inicioPet=petiano.inicioPet,
+                    fimPet=petiano.fimPet,
+                    sobre=petiano.sobre,
+                    eventosInscrito=petiano.eventosInscrito,
+                    tipoConta=petiano.tipoConta,
+                    apadrinhadoPor=petiano.apadrinhadoPor,
                 )
             )
         return petianos

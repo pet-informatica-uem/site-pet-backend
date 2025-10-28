@@ -81,11 +81,18 @@ class Usuario(BaseModel):
     foto: str | None = None
     "Caminho para foto de perfil do petiano."
 
+    sobre: str | None = None
+    "Descrição pessoal do petiano."
+
+    apadrinhadoPor: str | None = None
+    "Id do petiano que apadrinhou este petiano."
 
 class Petiano(BaseModel):
     """
     Subconjunto dos dados de um usuário específico para a visualização de petianos.
     """
+    id: str
+    "Identificador único."
 
     nome: str
     "Nome completo do usuário."
@@ -101,3 +108,21 @@ class Petiano(BaseModel):
 
     foto: str | None = None
     "Caminho para foto de perfil do petiano."
+
+    sobre: str | None = None
+    "Descrição pessoal do petiano."
+
+    inicioPet: date | None = None
+    "Data de ingresso no PET-Informática."
+
+    fimPet: date | None = None
+    "Data de desligamento do PET-Informática."
+
+    tipoConta: TipoConta | None = None
+    "Tipo de conta. Representa petianos ou egressos"
+
+    eventosInscrito: list[str] = []
+    "Lista de tuplas de id de evento."
+
+    apadrinhadoPor: str | None = None
+    "Id do petiano que apadrinhou este petiano."

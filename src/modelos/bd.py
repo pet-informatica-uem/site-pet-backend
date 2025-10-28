@@ -110,6 +110,21 @@ class UsuarioBD:
             Usuario(**u) for u in colecaoUsuarios.find({"tipoConta": TipoConta.PETIANO})
         ]
 
+    @staticmethod
+    def listarPetianosAndEgressos() -> list[Usuario]:
+        """
+        Retorna uma lista com todos os petianos e egressos cadastrados no banco de dados.
+
+        :return petianos: Lista com todos os petianos e egressos cadastrados no banco de dados.
+        """
+        query = {
+            "tipoConta": {"$in": [TipoConta.PETIANO, TipoConta.EGRESSO]}
+        }
+        
+        return [
+            Usuario(**u) for u in colecaoUsuarios.find(query)
+        ]
+
 
 class EventoBD:
     @staticmethod
