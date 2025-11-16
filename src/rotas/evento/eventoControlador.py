@@ -50,7 +50,7 @@ class EventoControlador:
     Classe controladora para gerenciar operações sobre eventos, incluindo
     criação, atualização, remoção e manipulação de dados e imagens.
     """
-     
+
     @staticmethod
     def getEventos(query: IntervaloBusca) -> list[Evento]:
         """
@@ -102,7 +102,6 @@ class EventoControlador:
         """
         # Obtém evento
         eventoOld: Evento = EventoControlador.getEvento(id)
-
 
         qtdInscritosNote: int = (
             eventoOld.vagasComNote - eventoOld.vagasDisponiveisComNote
@@ -220,7 +219,7 @@ class EventoControlador:
         dadosEvento.titulo = dadosEvento.titulo.strip()
         dadosEvento.descricao = dadosEvento.descricao.strip()
         dadosEvento.local = dadosEvento.local.strip()
- 
+
         # cria evento
         evento: Evento = Evento(
             **dadosEvento.model_dump(),
@@ -244,7 +243,7 @@ class EventoControlador:
         idUsuario: str,
         dadosInscrito: InscritoCriar,
         comprovante: UploadFile | None,
-        tasks: BackgroundTasks,  
+        tasks: BackgroundTasks,
     ):
         """
         Cadastra um inscrito em um evento.
@@ -254,7 +253,7 @@ class EventoControlador:
         :param dadosInscrito: informações do inscrito a ser cadastrado.
         :param comprovante: comprovante de pagamento, no caso do evento ser pago.
         :param tasks: gerenciador de tarefas.
-        
+
         :raises SemVagasDisponiveisExcecao: Se não houver vagas disponíveis.
         :raises ComprovanteInvalido: Se o comprovante enviado for inválido.
         :raises ComprovanteObrigatorioExcecao: Se o evento for pago e não for enviado comprovante.
@@ -277,7 +276,7 @@ class EventoControlador:
         else:
             if evento.vagasDisponiveisSemNote == 0:
                 raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
-        
+
         if evento.valor != 0:
             if comprovante:
                 if not validaComprovante(comprovante.file):
@@ -299,7 +298,7 @@ class EventoControlador:
             "tipoVaga": dadosInscrito.tipoVaga,
             "nivelConhecimento": dadosInscrito.nivelConhecimento,
             "comprovante": comprovante,
-            "dataInscricao": datetime.now()
+            "dataInscricao": datetime.now(),
         }
 
         # dictInscrito.update(**dadosInscrito.model_dump())
@@ -314,7 +313,6 @@ class EventoControlador:
         else:
             evento.vagasDisponiveisSemNote -= 1
 
-
         # Recupera o usuário
         usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
 
@@ -325,7 +323,7 @@ class EventoControlador:
         session = cliente.start_session()
         try:
             session.start_transaction()
-            
+
             EventoBD.criarInscrito(idEvento, inscrito)
             UsuarioBD.atualizar(usuario)
 
@@ -344,14 +342,14 @@ class EventoControlador:
             raise APIExcecaoBase(message="Erro ao criar inscrito")
 
         # Envia email de confirmação de inscrição
-        '''
+        """
         tasks.add_task(
             enviarEmailConfirmacaoEvento,
             usuario.email,
             evento.id,
             dadosInscrito.tipoVaga,
         )
-        '''
+        """
 
     # Métodos adicionados do InscritosControlador
     @staticmethod
@@ -378,14 +376,16 @@ class EventoControlador:
         return EventoBD.buscarInscrito(idEvento, idUsuario)
 
     @staticmethod
-    def editarInscrito(idEvento: str, idUsuario: str, inscritoAtualizar: InscritoAtualizar):
+    def editarInscrito(
+        idEvento: str, idUsuario: str, inscritoAtualizar: InscritoAtualizar
+    ):
         """
         Edita o tipo de vaga de um inscrito em um evento.
-        
+
         :param idEvento: Identificador único do evento.
         :param idUsuário: Identificador único do usuário a ser editado.
         :param inscritoAtualizar: Tipo de vaga atual do inscrito a ser editado.
-        
+
         :raises SemVagasDisponiveisExcecao: Se não houver vaga disponível no novo tipo.
         """
         # Recupera o evento e o inscrito
@@ -393,7 +393,10 @@ class EventoControlador:
         inscrito = EventoBD.buscarInscrito(idEvento, idUsuario)
 
         # Atualiza o tipo de vaga se necessário
-        if inscritoAtualizar.tipoVaga and inscritoAtualizar.tipoVaga != inscrito.tipoVaga:
+        if (
+            inscritoAtualizar.tipoVaga
+            and inscritoAtualizar.tipoVaga != inscrito.tipoVaga
+        ):
             # Verifica disponibilidade e atualiza vagas
             if inscritoAtualizar.tipoVaga == TipoVaga.COM_NOTE:
                 if evento.vagasDisponiveisComNote <= 0:
@@ -423,7 +426,7 @@ class EventoControlador:
 
         :param idEvento: Identificador único do evento.
         :param idUsuario: Dados do usuário a ser removido.
-        
+
         :raises NaoEncontradoExcecao: Se o inscrito não for encontrado no evento.
         """
         # Recupera o evento
@@ -437,7 +440,7 @@ class EventoControlador:
                 break
         if not inscrito_to_remove:
             raise NaoEncontradoExcecao(message="Inscrito não encontrado no evento.")
-        
+
         evento.inscritos.remove(inscrito_to_remove)
 
         # Ajusta vagas disponíveis

@@ -1,7 +1,8 @@
 from typing import Annotated
 from typing import Optional
 
-from fastapi import APIRouter, Depends, UploadFile, status, BackgroundTasks
+from fastapi import APIRouter, Depends, UploadFile, status, BackgroundTasks, Form, File
+from src.modelos.evento.evento import NivelConhecimento, TipoVaga
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import (
     EventoAtualizar,
@@ -159,22 +160,15 @@ def cadastrarInscrito(
     tasks: BackgroundTasks,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
     idEvento: str,
-    inscrito: InscritoCriar = Depends(),
-    comprovante: UploadFile | str | None = None,
+    tipoVaga: TipoVaga = Form(...),
+    nivelConhecimento: NivelConhecimento = Form(...),
+    comprovante: UploadFile | None = File(None),
 ):
-    """
-    Cadastra um inscrito em um evento.
+    inscrito = InscritoCriar(
+        tipoVaga=tipoVaga,
+        nivelConhecimento=nivelConhecimento,
+    )
 
-    :param tasks: Gerenciador de tarefas
-    :param usuario: Usuário autenticado que está realizando a inscrição.
-    :param idEvento: Identificador único do evento.
-    :param inscrito: Dados de um inscrito.
-    :param comprovante: Arquivo de comprovante de pagamento.
-    """
-    if comprovante == "":
-        comprovante = None
-
-    # Despacha para o controlador
     EventoControlador.cadastrarInscrito(
         idEvento, usuario.id, inscrito, comprovante, tasks
     )
