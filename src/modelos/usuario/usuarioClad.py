@@ -30,6 +30,10 @@ class UsuarioCriar(BaseModel):
     curso: Annotated[str, StringConstraints(max_length=240)]
     """Curso do usuário."""
 
+    sobre: Annotated[str | None, StringConstraints(max_length=256)]
+    """A bio o usuário. A bio possui limite de 256 caracteres"""
+
+
     @field_validator("cpf")
     def cpf_valido(cls, v: str):
         """
@@ -79,6 +83,9 @@ class UsuarioLer(BaseModel):
 
     instagram: str | None = None
     """URL do perfil do Instagram do usuário, caso seja petiano."""
+
+    sobre: str | None = None
+    """Bio do usuário"""
 
 
 class UsuarioLerAdmin(UsuarioLer):
@@ -130,6 +137,9 @@ class UsuarioAtualizar(BaseModel):
 
     instagram: str | None = None
     """URL do perfil do Instagram do usuário, caso seja petiano."""
+
+    sobre: str | None = None
+    """Bio do usuário"""
 
 
 class UsuarioAtualizarSenha(BaseModel):
