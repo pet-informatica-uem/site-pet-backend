@@ -31,7 +31,7 @@ class UsuarioCriar(BaseModel):
     """Curso do usuário."""
 
     sobre: Annotated[str | None, StringConstraints(max_length=256)]
-    """A bio o usuário. A bio possui limite de 256 caracteres"""
+    """Bio do usuário. A bio possui limite de 256 caracteres."""
 
 
     @field_validator("cpf")
@@ -102,7 +102,7 @@ class UsuarioLerAdmin(UsuarioLer):
     """Indica se o e-mail do usuário foi confirmado."""
 
     tipoConta: TipoConta
-    """Tipo de conta do usuário. """
+    """Tipo de conta do usuário."""
 
     eventosInscrito: list[str]
     """Lista de identificadores dos eventos nos quais o usuário está inscrito."""
@@ -138,8 +138,8 @@ class UsuarioAtualizar(BaseModel):
     instagram: str | None = None
     """URL do perfil do Instagram do usuário, caso seja petiano."""
 
-    sobre: str | None = None
-    """Bio do usuário"""
+    sobre: Annotated[str | None, StringConstraints(max_length=256)] = None
+    """Bio do usuário. A bio possui limite de 256 caracteres."""
 
 
 class UsuarioAtualizarSenha(BaseModel):
