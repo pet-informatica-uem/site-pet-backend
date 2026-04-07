@@ -12,8 +12,8 @@ class TipoConta(str, Enum):
     """
     Tipo de conta de usuário. Tipos diferentes possuem permissões diferentes.
     """
-
-    ESTUDANTE = "estudante"
+    
+    EXTERNO = "externo"
     "Conta base. Pode visualizar dados e se inscrever em eventos e atividades."
 
     EGRESSO = "petiano egresso"
@@ -21,7 +21,9 @@ class TipoConta(str, Enum):
 
     PETIANO = "petiano"
     "Conta pertencente a um petiano ativo. Possui permissões totais."
-
+    
+    ADMIN = "admin"
+    "Conta pertencente ao grupo PET-Informática. Possui permissões totais."
 
 class Usuario(BaseModel):
     """
@@ -52,6 +54,14 @@ class Usuario(BaseModel):
     tipoConta: TipoConta
     "Tipo de conta. Representa permissões."
 
+    genero: str | None = None
+    "Gênero do usuário"
+
+    dataNascimento: date | None = None
+    "Data de nascimento do usuário"
+
+    ra: str | None = None
+    "Registro acadêmico do usuário. 'None' caso ele não possua"
     eventosInscrito: list[str] = []
     "Lista de tuplas de id de evento."
 
