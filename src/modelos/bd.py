@@ -15,6 +15,7 @@ from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoExcecao
 from src.modelos.registro.registroLogin import RegistroLogin
 from src.modelos.usuario.usuario import TipoConta, Usuario
+from src.modelos.avaliacao.avaliacao import FormularioAvaliacaoEvento, SubmissaoAvaliacaoAnonima, ControleSubmissaoAvaliacao
 
 cliente: MongoClient = MongoClient(str(config.URI_BD))
 
@@ -32,6 +33,14 @@ colecaoEventos = cliente[config.NOME_BD]["eventos"]
 colecaoEventos.create_index("titulo", unique=True)
 
 colecaoRegistro = cliente[config.NOME_BD]["registros"]
+
+colecaoFormulariosAvaliacao = cliente[config.NOME_BD]["formulariosAvaliacao"]
+colecaoFormulariosAvaliacao.create_index("idEvento", unique=True)
+
+colecaoSubmissoesAvaliacao = cliente[config.NOME_BD]["submissoesAvaliacao"]
+
+colecaoControleSubmissao = cliente[config.NOME_BD]["controleSubmissaoAvaliacao"]
+colecaoControleSubmissao.create_index([("idEvento", 1), ("idUsuario", 1)], unique=True)
 
 
 class UsuarioBD:
@@ -342,3 +351,107 @@ class RegistroLoginBD:
         Lista todos os registros de login.
         """
         return [RegistroLogin(**r) for r in colecaoRegistro.find()]
+
+
+class AvaliacaoBD:
+    """
+    Encapsula operacoes do banco de dados relacionadas a avaliacoes de eventos.
+    """
+
+    @staticmethod
+    def criarFormulario(modelo: FormularioAvaliacaoEvento):
+        """
+        Cria um formulario de avaliacao no banco de dados.
+
+        :param modelo: Formulario a ser criado.
+        :raises JaExisteExcecao: Caso um formulario para o evento ja exista.
+        """
+        try:
+            colecaoFormulariosAvaliacao.insert_one(modelo.model_dump(by_alias=True))
+        except DuplicateKeyError:
+            logging.error("Formulario de avaliacao ja existe para este evento")
+            raise JaExisteExcecao(message="Formulario de avaliacao ja existe para este evento")
+
+    @staticmethod
+    def buscarFormularioPorEvento(idEvento: str) -> FormularioAvaliacaoEvento:
+        """
+        Busca o formulario de avaliacao de um evento.
+
+        :param idEvento: Identificador do evento.
+        :return: Formulario de avaliacao do evento.
+        :raises NaoEncontradoExcecao: Caso o formulario nao seja encontrado.
+        """
+        documento = colecaoFormulariosAvaliacao.find_one({"idEvento": idEvento})
+        if not documento:
+            raise NaoEncontradoExcecao(message="Formulario de avaliacao nao encontrado.")
+        return FormularioAvaliacaoEvento(**documento)
+
+    @staticmethod
+    def atualizarFormulario(modelo: FormularioAvaliacaoEvento):
+        """
+        Atualiza um formulario de avaliacao no banco de dados.
+
+        :param modelo: Formulario com dados atualizados.
+        """
+        colecaoFormulariosAvaliacao.update_one(
+            {"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)}
+        )
+
+    @staticmethod
+    def criarSubmissaoAnonima(modelo: SubmissaoAvaliacaoAnonima):
+        """
+        Cria uma submissao anonima de avaliacao.
+
+        :param modelo: Submissao a ser criada.
+        """
+        colecaoSubmissoesAvaliacao.insert_one(modelo.model_dump(by_alias=True))
+
+    @staticmethod
+    def criarControleSubmissao(modelo: ControleSubmissaoAvaliacao):
+        """
+        Registra que um usuario completou a avaliacao de um evento.
+
+        :param modelo: Registro de controle de submissao.
+        :raises JaExisteExcecao: Caso o usuario ja tenha submetido avaliacao.
+        """
+        try:
+            colecaoControleSubmissao.insert_one(modelo.model_dump(by_alias=True))
+        except DuplicateKeyError:
+            logging.error("Usuario ja submeteu avaliacao para este evento")
+            raise JaExisteExcecao(message="Avaliacao ja realizada para este evento")
+
+    @staticmethod
+    def verificarSubmissaoExistente(idEvento: str, idUsuario: str) -> bool:
+        """
+        Verifica se o usuario ja submeteu avaliacao para o evento.
+
+        :param idEvento: Identificador do evento.
+        :param idUsuario: Identificador do usuario.
+        :return: True se ja submeteu, False caso contrario.
+        """
+        documento = colecaoControleSubmissao.find_one({
+            "idEvento": idEvento,
+            "idUsuario": idUsuario,
+        })
+        return documento is not None
+
+    @staticmethod
+    def listarSubmissoesPorEvento(idEvento: str) -> list[SubmissaoAvaliacaoAnonima]:
+        """
+        Lista todas as submissoes anonimas de um evento.
+
+        :param idEvento: Identificador do evento.
+        :return: Lista de submissoes anonimas.
+        """
+        documentos = colecaoSubmissoesAvaliacao.find({"idEvento": idEvento})
+        return [SubmissaoAvaliacaoAnonima(**doc) for doc in documentos]
+
+    @staticmethod
+    def contarSubmissoesPorEvento(idEvento: str) -> int:
+        """
+        Conta o numero de avaliacoes submetidas para um evento.
+
+        :param idEvento: Identificador do evento.
+        :return: Numero de avaliacoes.
+        """
+        return colecaoSubmissoesAvaliacao.count_documents({"idEvento": idEvento})

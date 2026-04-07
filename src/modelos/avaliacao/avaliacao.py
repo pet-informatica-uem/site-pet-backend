@@ -183,7 +183,7 @@ class RespostaPerguntaAvaliacao(BaseModel):
             if not self.respostaTexto or not self.respostaTexto.strip():
                 raise ValueError("Perguntas abertas exigem resposta.")
 
-            if (self.respostaOpcao is not None or self.respostasOpcoes is not Noneor self.nota is not None):
+            if (self.respostaOpcao is not None or self.respostasOpcoes is not None or self.nota is not None):
                 raise ValueError("Perguntas abertas aceitam apenas o campo respostaTexto.")
 
         if self.tipoPergunta == TipoPerguntaAvaliacao.MULTIPLA_ESCOLHA:
