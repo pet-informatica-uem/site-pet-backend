@@ -57,7 +57,7 @@ class Usuario(BaseModel):
     genero: str | None = None
     "Gênero do usuário"
 
-    dataNascimento: date | None = None
+    dataNascimento: datetime | None = None
     "Data de nascimento do usuário"
 
     ra: str | None = None
