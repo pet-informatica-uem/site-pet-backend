@@ -378,14 +378,14 @@ def promoverPetiano(
     "/{id}/petiano",
     name="Rebaixar usuário a não petiano",
     description="""Remove o status de petiano do usuário especificado.
-        Por padrão, a conta passa a ser do tipo egresso, mas caso o parâmetro egresso seja falso, o usuário é rebaixado a estudante.""",
+        Por padrão, a conta passa a ser do tipo egresso, mas caso o parâmetro egresso seja falso, o usuário é rebaixado a externo.""",
 )
 def demitirPetiano(
     id: str,
     egresso: bool | None = True,
     _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
 ):
-    UsuarioControlador.demitirPetiano(id, UsuarioControlador.DemitirPetianoPara.ESTUDANTE if egresso is not None else UsuarioControlador.DemitirPetianoPara.EGRESSO)
+    UsuarioControlador.demitirPetiano(id, UsuarioControlador.DemitirPetianoPara.EXTERNO if egresso is not None else UsuarioControlador.DemitirPetianoPara.EGRESSO)
 
 
 @roteador.get(

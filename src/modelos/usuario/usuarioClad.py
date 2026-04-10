@@ -2,7 +2,7 @@
 Modelos de dados relacionados a operações de CRUD de usuários.
 """
 
-from datetime import datetime
+from datetime import  date, datetime
 from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, SecretStr, StringConstraints, field_validator
@@ -23,6 +23,15 @@ class UsuarioCriar(BaseModel):
 
     cpf: str
     """CPF do usuário. O CPF deve ser válido."""
+
+    genero: str
+    """Gênero do usuário."""
+
+    dataNascimento: datetime
+    """Data de nascimento"""
+
+    ra: str | None = None
+    """Registro acadêmico do usuário"""
 
     senha: SecretStr
     """Senha do usuário. A senha deve obedecer às regras de complexidade."""
@@ -75,6 +84,15 @@ class UsuarioLer(BaseModel):
     curso: str
     """Curso do usuário."""
 
+    genero: str
+    """Gênero do usuário"""
+
+    dataNascimento: datetime
+    """Data de nascimento do usuário"""
+
+    ra: str | None = None
+    """Registro acadêmico do usuário"""
+
     github: str | None = None
     """URL do perfil do GitHub do usuário, caso seja petiano."""
 
@@ -101,6 +119,15 @@ class UsuarioLerAdmin(UsuarioLer):
     emailConfirmado: bool
     """Indica se o e-mail do usuário foi confirmado."""
 
+    genero: str
+    """Gênero do usuário"""
+
+    dataNascimento: datetime
+    """Data de nascimento do usuário"""
+
+    ra: str | None = None
+    """Registro acadêmico do usuário"""
+
     tipoConta: TipoConta
     """Tipo de conta do usuário."""
 
@@ -110,11 +137,13 @@ class UsuarioLerAdmin(UsuarioLer):
     dataCriacao: datetime
     """Timestamp de criação do usuário."""
 
-    inicioPet: datetime | None = None
+    inicioPet: date | None = None
     """Timestamp de ingresso no PET, caso seja petiano ou egresso."""
 
-    fimPet: datetime | None = None
+    fimPet: date | None = None
     """Timestamp de saída do PET, caso seja petiano ou egresso."""
+
+
 
 
 class UsuarioAtualizar(BaseModel):
@@ -128,6 +157,12 @@ class UsuarioAtualizar(BaseModel):
 
     curso: str | None = None
     """Curso do usuário."""
+
+    genero: str | None = None
+    """Gênero do usuário"""
+
+    dataNascimento: datetime | None = None
+    """Data de nascimento do usuário"""
 
     github: str | None = None
     """URL do perfil do GitHub do usuário, caso seja petiano."""

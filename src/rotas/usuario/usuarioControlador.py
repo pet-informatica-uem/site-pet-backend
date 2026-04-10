@@ -103,7 +103,7 @@ class UsuarioControlador:
         d = {
             "_id": secrets.token_hex(16),
             "emailConfirmado": False,
-            "tipoConta": TipoConta.ESTUDANTE,
+            "tipoConta": TipoConta.EXTERNO,
             "dataCriacao": datetime.now(),
         }
 
@@ -498,9 +498,9 @@ class UsuarioControlador:
         Tipo de demissão de petiano.
         """
 
-        ESTUDANTE = "estudante"
+        EXTERNO = "externo"
         """
-        Demite um petiano a estudante.
+        Demite um petiano a externo.
         """
 
         EGRESSO = "egresso"
@@ -511,10 +511,10 @@ class UsuarioControlador:
     @staticmethod
     def demitirPetiano(id: str, egresso: DemitirPetianoPara) -> None:
         """
-        Demite um usuário petiano ou egresso a egresso, caso `egresso` seja verdadeiro, ou a estudante caso contrário.
+        Demite um usuário petiano ou egresso a egresso, caso `egresso` seja verdadeiro, ou a externo caso contrário.
 
         :param id: Id do usuário a ser demitido.
-        :param egresso: Se verdadeiro, demite o usuário a egresso; caso contrário, demite a estudante.
+        :param egresso: Se verdadeiro, demite o usuário a egresso; caso contrário, demite a externo.
         :raises UsuarioNaoEncontradoExcecao: Se o usuário com o id fornecido não existir.
         :raises NaoAtualizadaExcecao: Se o usuário não for petiano nem egresso.
         """
@@ -530,9 +530,9 @@ class UsuarioControlador:
         if egresso == UsuarioControlador.DemitirPetianoPara.EGRESSO:
             logging.info(f"Demitindo usuário {usuario.id} a egresso")
             usuario.tipoConta = TipoConta.EGRESSO
-        elif egresso == UsuarioControlador.DemitirPetianoPara.ESTUDANTE:
-            logging.info(f"Demitindo usuário {usuario.id} a estudante")
-            usuario.tipoConta = TipoConta.ESTUDANTE
+        elif egresso == UsuarioControlador.DemitirPetianoPara.EXTERNO:
+            logging.info(f"Demitindo usuário {usuario.id} a externo")
+            usuario.tipoConta = TipoConta.EXTERNO
 
         UsuarioBD.atualizar(usuario)
 
