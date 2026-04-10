@@ -17,7 +17,7 @@ class TipoConta(str, Enum):
     "Conta base. Pode visualizar dados e se inscrever em eventos e atividades."
 
     EGRESSO = "petiano egresso"
-    "Conta pertencente a um ex-petiano. Possui as mesmas permissões de um estudante."
+    "Conta pertencente a um ex-petiano. Possui as mesmas permissões de um externo."
 
     PETIANO = "petiano"
     "Conta pertencente a um petiano ativo. Possui permissões totais."
