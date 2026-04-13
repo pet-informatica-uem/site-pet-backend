@@ -248,6 +248,21 @@ class EventoBD:
         raise NaoEncontradoExcecao(message="O inscrito não foi encontrado.")
 
     @staticmethod
+    def verificarInscricaoExistente(idEvento: str, idUsuario: str) -> bool:
+        """
+        Verifica se um usuario esta inscrito em um evento.
+
+        :param idEvento: Identificador do evento.
+        :param idUsuario: Identificador do usuario.
+        :return: True se estiver inscrito, False caso contrario.
+        """
+        documento = colecaoEventos.find_one(
+            {"_id": idEvento, "inscritos.idUsuario": idUsuario},
+            {"_id": 1},
+        )
+        return documento is not None
+
+    @staticmethod
     def deletarInscrito(idEvento: str, idUsuario: str):
         resultado = colecaoEventos.update_one(
             {"_id": idEvento},
@@ -445,6 +460,28 @@ class AvaliacaoBD:
         """
         documentos = colecaoSubmissoesAvaliacao.find({"idEvento": idEvento})
         return [SubmissaoAvaliacaoAnonima(**doc) for doc in documentos]
+
+    @staticmethod
+    def buscarSubmissaoAnonima(
+        idEvento: str, idSubmissao: str
+    ) -> SubmissaoAvaliacaoAnonima:
+        """
+        Busca uma submissao anonima de avaliacao por evento e identificador.
+
+        :param idEvento: Identificador do evento.
+        :param idSubmissao: Identificador da submissao anonima.
+        :return: Submissao anonima encontrada.
+        :raises NaoEncontradoExcecao: Caso a submissao nao seja encontrada.
+        """
+        documento = colecaoSubmissoesAvaliacao.find_one(
+            {"_id": idSubmissao, "idEvento": idEvento}
+        )
+        if not documento:
+            raise NaoEncontradoExcecao(
+                message="Submissao de avaliacao nao encontrada."
+            )
+
+        return SubmissaoAvaliacaoAnonima(**documento)
 
     @staticmethod
     def contarSubmissoesPorEvento(idEvento: str) -> int:

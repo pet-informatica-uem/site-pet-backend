@@ -127,7 +127,7 @@ class FormularioAvaliacaoEvento(BaseModel):
     @model_validator(mode="after")
     def validar_secoes_obrigatorias(self):
         """
-        Garante a existencia das tres secoes principais com perguntas obrigatorias.
+        Garante a existencia das três seções principais com perguntas obrigatorias.
         """
         secoes_principais = {
             SecaoAvaliacao.MINISTRANTES,
@@ -153,7 +153,7 @@ class FormularioAvaliacaoEvento(BaseModel):
 
 class RespostaPerguntaAvaliacao(BaseModel):
     """
-    Representa uma resposta individual para uma pergunta da avaliacao.
+    Representa uma resposta individual para uma pergunta da avaliação.
     """
 
     idPergunta: str
