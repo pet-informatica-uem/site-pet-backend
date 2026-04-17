@@ -99,23 +99,33 @@ def getUsuarioAutenticado(token: Annotated[str, Depends(tokenAcesso)]):
         )
 
 
-def getPetianoAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
+def getPetianoAdminAutenticado(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
     """
-    Verifica se o usuário autenticado é um petiano e retorna o usuário.
+    Verifica se o usuário autenticado é um petiano ou o administrador e retorna o usuário.
 
-    Caso o usuário não seja um petiano, retorna uma resposta HTTP 403.
+    Caso o usuário não seja um petiano ou o administrador, retorna uma resposta HTTP 403.
 
     Pode ser especificada como dependência para obter o usuário autenticado em rotas
-    que precisam de autorização de petiano.
+    que precisam de autorização de petiano ou do administração.
     
     :param usuario: Objeto contendo informações do usuário autenticado.
-    :return Usuario: Objeto contendo informações do usuário autenticado, caso ele seja petiano.
-    :raises NaoAutorizadoExcecao: Caso o usuário não seja petiano.
+    :return Usuario: Objeto contendo informações do usuário autenticado, caso ele seja um petiano ou o administrador.
+    :raises NaoAutorizadoExcecao: Caso o usuário não seja um petiano ou o administrador.
     :raises NaoAutenticadoExcecao: Caso o usuário não esteja autenticado ou não exista.
     """
-    if usuario.tipoConta == TipoConta.PETIANO:
+    if temPermissaoPetianoAdmin(usuario):
         return usuario
     raise NaoAutorizadoExcecao()
+
+
+def temPermissaoPetianoAdmin(usuario: Usuario):
+    """
+    Verifica se o usuário tem permissões elevadas, ou seja, se é um petiano ou o administrador.
+
+    :param usuario: Objeto contendo informações do usuário.
+    :return bool: True caso o usuário tenha permissões elevadas, False caso contrário.
+    """
+    return usuario.tipoConta in [TipoConta.PETIANO, TipoConta.ADMIN]
 
 
 @roteador.post(
@@ -144,11 +154,11 @@ def cadastrarUsuario(
 @roteador.get(
     "/",
     name="Recuperar usuários cadastrados",
-    description="Rota apenas para petianos.\n\n" "Lista todos os usuários cadastrados.",
+    description="Rota apenas para petianos e administrador.\n\n" "Lista todos os usuários cadastrados.",
     response_model=list[UsuarioLerAdmin],
 )
 def listarUsuarios(
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
 ):
     return UsuarioControlador.getUsuarios()
 
@@ -309,7 +319,7 @@ def editarEmail(
     dadosEmail: UsuarioAtualizarEmail,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,  # type: ignore
 ):
-    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
+    if usuario.id == id or temPermissaoPetianoAdmin(usuario):
         if not ValidacaoCadastro.email(dadosEmail.novoEmail):
             raise ErroValidacaoExcecao(message="Email inválido.")
         # normaliza dados
@@ -352,12 +362,12 @@ def editarSenha(
 @roteador.put(
     "/{id}/foto",
     name="Atualizar foto de perfil",
-    description="Edita a foto de perfil do usuário autenticado. O usuário deve ser um petiano, e deve ser dono da conta.",
+    description="Edita a foto de perfil do usuário autenticado. O usuário deve ser um petiano e deve ser dono da conta, ou ser o administrador.",
 )
 def editarFoto(
     id: str,
     foto: UploadFile,
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,  # type: ignore
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)] = ...,  # type: ignore
 ) -> None:
     if usuario.id == id:
         UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
@@ -366,10 +376,10 @@ def editarFoto(
 @roteador.post(
     "/{id}/petiano",
     name="Promover usuário a petiano",
-    description="Promove o usuário especificado a petiano.",
+    description="Promove o usuário especificado a petiano. O usuário deve ser um petiano ou o administrador.",
 )
 def promoverPetiano(
-    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...
+    id: str, _usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)] = ...
 ):
     UsuarioControlador.promoverPetiano(id)
 
@@ -383,7 +393,7 @@ def promoverPetiano(
 def demitirPetiano(
     id: str,
     egresso: bool | None = True,
-    _usuario: Annotated[Usuario, Depends(getPetianoAutenticado)] = ...,
+    _usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)] = ...,
 ):
     UsuarioControlador.demitirPetiano(id, UsuarioControlador.DemitirPetianoPara.EXTERNO if egresso is not None else UsuarioControlador.DemitirPetianoPara.EGRESSO)
 
@@ -421,7 +431,7 @@ def patchUsuario(
     dados: UsuarioAtualizar,
     id: str,
 ):
-    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
+    if usuario.id == id or temPermissaoPetianoAdmin(usuario):
         return UsuarioControlador.editarUsuario(id, dados)
     else:
         raise NaoAutorizadoExcecao()
@@ -440,7 +450,7 @@ def deletaUsuario(
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
     id: str,
 ):
-    if usuario.id == id or usuario.tipoConta == TipoConta.PETIANO:
+    if usuario.id == id or temPermissaoPetianoAdmin(usuario):
         UsuarioControlador.deletarUsuario(id)
     else:
         raise NaoAutorizadoExcecao()

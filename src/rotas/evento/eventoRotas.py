@@ -14,7 +14,7 @@ from src.modelos.evento.eventoClad import (
 from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
-from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
+from src.rotas.usuario.usuarioRotas import getPetianoAdminAutenticado, getUsuarioAutenticado
 
 roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
@@ -65,14 +65,14 @@ def getEvento(id: str) -> Evento:
     status_code=status.HTTP_201_CREATED,
 )
 def cadastrarEvento(
-    evento: EventoCriar, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]
+    evento: EventoCriar, usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)]
 ):
     """
     Cadastra um novo evento no sistema.
 
     :param evento: Objeto contendo os dados do evento a ser cadastrado.
     :param usuario: Usuário autenticado responsável pela criação do evento.
-                    Apenas um petiano pode criar um evento.
+                    Apenas um petiano ou o administrador podem criar um evento.
     """
     # Despacha para o controlador
     EventoControlador.cadastrarEvento(evento)
@@ -86,7 +86,7 @@ def cadastrarEvento(
 def editarEvento(
     id: str,
     evento: EventoAtualizar,
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
 ):
     """
     Edita um evento existente.
@@ -94,7 +94,7 @@ def editarEvento(
     :param id: Identificador único do evento a ser editado.
     :param evento: Dados atualizados do evento.
     :param usuario: Usuário autenticado responsável pela edição.
-                    Apenas um petiano pode editar um evento.
+                    Apenas um petiano ou o administrador podem editar um evento.
     """
     # Despacha para o controlador
     EventoControlador.editarEvento(id, evento)
@@ -108,7 +108,7 @@ def editarEvento(
 )
 def atualizarImagensEvento(
     id: str,
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
     arte: UploadFile | None = None,
     cracha: UploadFile | None = None,
 ):
@@ -117,7 +117,7 @@ def atualizarImagensEvento(
 
     :param id: Identificador do evento.
     :param usuario: Usuário autenticado responsável pela atualização.
-                    Apenas um petiano pode atualizar as imagens de um evento.
+                    Apenas um petiano ou o administrador podem atualizar as imagens de um evento.
     :param arte: Arquivo opcional de imagem para arte.
     :param cracha: Arquivo opcional de imagem para crachá.
     """
@@ -132,14 +132,14 @@ def atualizarImagensEvento(
 )
 def deletarEvento(
     id: str,
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
 ):
     """
     Exclui um evento específico do banco de dados.
 
     :param id: Identificador do evento a ser deletado.
     :param usuario: Usuário autenticado que solicita a exclusão.
-                    Apenas um petiano pode deletar um evento.
+                    Apenas um petiano ou o administrador podem deletar um evento.
     """
     # Despacha para o controlador
     EventoControlador.deletarEvento(id)
@@ -187,13 +187,13 @@ def cadastrarInscrito(
     response_model=list[InscritoLer],
 )
 def getInscritos(
-    idEvento: str, usuario: Annotated[Usuario, Depends(getPetianoAutenticado)]
+    idEvento: str, usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)]
 ):
     """
     Recupera todos os inscritos de um evento.
 
     :param idEvento: Identificador único do evento.
-    :param usuario: Usuário autenticado como petiano.
+    :param usuario: Usuário autenticado como petiano ou administrador.
     """
     # Despacha para o controlador
     return EventoControlador.getInscritos(idEvento)
