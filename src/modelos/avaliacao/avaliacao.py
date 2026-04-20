@@ -6,6 +6,12 @@ from datetime import datetime
 from enum import Enum
 from pydantic import BaseModel, Field, model_validator
 
+LIMITE_RESPOSTA_LONGA = 1500
+"Quantidade maxima de caracteres para respostas longas."
+
+LIMITE_RESPOSTA_CURTA = 300
+"Quantidade maxima de caracteres para respostas curtas."
+
 
 class TipoPerguntaAvaliacao(str, Enum):
     """
@@ -182,6 +188,16 @@ class RespostaPerguntaAvaliacao(BaseModel):
         if self.tipoPergunta is TipoPerguntaAvaliacao.RESPOSTA_CURTA or self.tipoPergunta is TipoPerguntaAvaliacao.RESPOSTA_LONGA:
             if not self.respostaTexto or not self.respostaTexto.strip():
                 raise ValueError("Perguntas abertas exigem resposta.")
+
+            self.respostaTexto = self.respostaTexto.strip()
+
+            if (self.tipoPergunta is TipoPerguntaAvaliacao.RESPOSTA_CURTA
+                and len(self.respostaTexto) > LIMITE_RESPOSTA_CURTA):
+                raise ValueError(f"Perguntas de resposta curta aceitam no máximo {LIMITE_RESPOSTA_CURTA} caracteres.")
+
+            if (self.tipoPergunta is TipoPerguntaAvaliacao.RESPOSTA_LONGA
+                and len(self.respostaTexto) > LIMITE_RESPOSTA_LONGA):
+                raise ValueError(f"Perguntas de resposta longa aceitam no máximo {LIMITE_RESPOSTA_LONGA} caracteres.")
 
             if (self.respostaOpcao is not None or self.respostasOpcoes is not None or self.nota is not None):
                 raise ValueError("Perguntas abertas aceitam apenas o campo respostaTexto.")

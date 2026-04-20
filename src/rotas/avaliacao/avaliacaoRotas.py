@@ -79,7 +79,7 @@ def enviarFormulario(
 )
 def obterFormulario(
     idEvento: str,
-    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
 ):
     """
     Recupera o formulario de avaliacao de um evento.

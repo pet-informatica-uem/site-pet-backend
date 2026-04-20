@@ -51,8 +51,8 @@ class ConfiguracaoFormularioCriar(BaseModel):
     Dados para configuracao ou atualizacao do formulario de avaliacao de um evento.
     """
 
-    liberarApos: datetime
-    "Data/hora a partir da qual o formulario pode ser respondido."
+    liberarApos: datetime | None = None
+    "Data/hora, por padrão, usa o fim do evento."
 
     habilitado: bool = True
     "Indica se o formulario esta habilitado para uso."
