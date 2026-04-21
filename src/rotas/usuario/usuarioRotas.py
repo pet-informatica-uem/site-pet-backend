@@ -346,7 +346,7 @@ def editarSenha(
     deslogarAoTrocarSenha: bool,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,  # type: ignore
 ):
-    if usuario.id == id:
+    if usuario.id == id or usuario.tipoConta == TipoConta.ADMIN:
         # efetua troca de senha
         UsuarioControlador.editaSenha(
             dadosSenha,
@@ -357,6 +357,8 @@ def editarSenha(
         # efetua logout de todas as sessões, caso o usuário desejar
         if deslogarAoTrocarSenha:
             TokenAutenticacaoBD.deletarTokensUsuario(usuario.id)
+    else:
+        raise NaoAutorizadoExcecao()
 
 
 @roteador.put(
@@ -369,8 +371,10 @@ def editarFoto(
     foto: UploadFile,
     usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)] = ...,  # type: ignore
 ) -> None:
-    if usuario.id == id:
+    if usuario.id == id or usuario.tipoConta == TipoConta.ADMIN:
         UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
+    else:
+        raise NaoAutorizadoExcecao()
 
 
 @roteador.post(
@@ -410,7 +414,7 @@ def demitirPetiano(
 def getUsuario(usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str):
     if usuario.id == id:
         return usuario
-    elif usuario.tipoConta == TipoConta.PETIANO:
+    elif temPermissaoPetianoAdmin(usuario):
         vitima: Usuario = UsuarioControlador.getUsuario(id)
         return vitima
     else:
@@ -470,7 +474,7 @@ def deletaUsuario(
 def getHistoricoLogin(
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)], id: str
 ):
-    if usuario.id != id and usuario.tipoConta != TipoConta.PETIANO:
+    if usuario.id != id and not temPermissaoPetianoAdmin(usuario):
         raise NaoAutorizadoExcecao()
 
     return UsuarioControlador.getHistoricoLogin(usuario.email)
