@@ -25,6 +25,28 @@ class TipoConta(str, Enum):
     ADMIN = "admin"
     "Conta pertencente ao grupo PET-Informática. Possui permissões totais."
 
+
+class Genero(str, Enum):
+    """
+    Gênero do usuário.
+    """
+
+    MASCULINO = "masculino"
+    "Masculino."
+
+    FEMININO = "feminino"
+    "Feminino."
+
+    NAO_BINARIO = "não-binário"
+    "Não-binário."
+
+    OUTRO = "outro"
+    "Outro."
+
+    PREFIRO_NAO_DIZER = "prefiro não dizer"
+    "Prefiro não dizer."
+
+
 class Usuario(BaseModel):
     """
     Classe que representa um usuário do sistema.
@@ -54,7 +76,7 @@ class Usuario(BaseModel):
     tipoConta: TipoConta
     "Tipo de conta. Representa permissões."
 
-    genero: str | None = None
+    genero: Genero | None = None
     "Gênero do usuário"
 
     dataNascimento: datetime | None = None

@@ -7,7 +7,7 @@ from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, SecretStr, StringConstraints, field_validator
 
-from src.modelos.usuario.usuario import TipoConta
+from src.modelos.usuario.usuario import Genero, TipoConta
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 
 
@@ -24,7 +24,7 @@ class UsuarioCriar(BaseModel):
     cpf: str
     """CPF do usuário. O CPF deve ser válido."""
 
-    genero: str
+    genero: Genero
     """Gênero do usuário."""
 
     dataNascimento: datetime
@@ -84,7 +84,7 @@ class UsuarioLer(BaseModel):
     curso: str
     """Curso do usuário."""
 
-    genero: str
+    genero: Genero
     """Gênero do usuário"""
 
     dataNascimento: datetime
@@ -119,7 +119,7 @@ class UsuarioLerAdmin(UsuarioLer):
     emailConfirmado: bool
     """Indica se o e-mail do usuário foi confirmado."""
 
-    genero: str
+    genero: Genero
     """Gênero do usuário"""
 
     dataNascimento: datetime
@@ -158,7 +158,7 @@ class UsuarioAtualizar(BaseModel):
     curso: str | None = None
     """Curso do usuário."""
 
-    genero: str | None = None
+    genero: Genero | None = None
     """Gênero do usuário"""
 
     dataNascimento: datetime | None = None
