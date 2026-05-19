@@ -46,6 +46,17 @@ class Genero(str, Enum):
     PREFIRO_NAO_DIZER = "prefiro não dizer"
     "Prefiro não dizer."
 
+class EventosInscrito(BaseModel):
+    """
+    Classe que representa um evento no qual o petiano está inscrito.
+    """
+    
+    titulo: str
+    "Título do evento."
+
+    arte: str | None = None
+    "Caminho para a arte do evento."
+
 
 class Usuario(BaseModel):
     """
@@ -153,8 +164,8 @@ class Petiano(BaseModel):
     tipoConta: TipoConta | None = None
     "Tipo de conta. Representa petianos ou egressos"
 
-    eventosInscrito: list[str] = []
-    "Lista de tuplas de id de evento."
+    eventosInscrito: list[EventosInscrito] = []
+    "Lista de objetos que representam os eventos que o petiano participou."
 
     apadrinhadoPor: str | None = None
     "Id do petiano que apadrinhou este petiano."
