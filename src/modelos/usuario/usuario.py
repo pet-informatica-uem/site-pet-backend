@@ -2,7 +2,7 @@
 Modelos de dados relacionados a usuários do sistema.
 """
 
-from datetime import date, datetime
+from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel, EmailStr, Field
@@ -92,10 +92,10 @@ class Usuario(BaseModel):
 
     # campos exclusivos para petianos
 
-    inicioPet: date | None = None
+    inicioPet: datetime | None = None
     "Data de ingresso no PET-Informática."
 
-    fimPet: date | None = None
+    fimPet: datetime | None = None
     "Data de desligamento do PET-Informática."
 
     github: str | None = None
@@ -144,10 +144,10 @@ class Petiano(BaseModel):
     sobre: str | None = None
     "Descrição pessoal do petiano."
 
-    inicioPet: date | None = None
+    inicioPet: datetime | None = None
     "Data de ingresso no PET-Informática."
 
-    fimPet: date | None = None
+    fimPet: datetime | None = None
     "Data de desligamento do PET-Informática."
 
     tipoConta: TipoConta | None = None
