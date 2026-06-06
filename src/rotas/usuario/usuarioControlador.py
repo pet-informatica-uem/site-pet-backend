@@ -24,7 +24,7 @@ from src.email.operacoesEmail import (
     enviarEmailVerificacao,
 )
 from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
-from src.modelos.bd import RegistroLoginBD, TokenAutenticacaoBD, UsuarioBD, cliente
+from src.modelos.bd import EventoBD, RegistroLoginBD, TokenAutenticacaoBD, UsuarioBD, cliente
 from src.modelos.excecao import (
     APIExcecaoBase,
     EmailNaoConfirmadoExcecao,
@@ -280,6 +280,23 @@ class UsuarioControlador:
             urlFoto = None
             if petiano.foto:
                 urlFoto = f"{config.CAMINHO_BASE}/img/usuarios/{petiano.id}/foto"
+
+            eventos = []
+            for evento_id in petiano.eventosInscrito:
+                try:
+                    evento = EventoBD.buscar("_id", evento_id)
+                    url_arte = (
+                        f"{config.CAMINHO_BASE}/img/eventos/{evento.id}/arte"
+                        if evento.arte
+                        else None
+                    )
+                    eventos.append({
+                        "id": evento.id,
+                        "titulo": evento.titulo,
+                        "arte": url_arte,
+                    })
+                except Exception:
+                    pass  
             
             # adiciona o petiano à lista
             petianos.append(
@@ -293,7 +310,7 @@ class UsuarioControlador:
                     inicioPet=petiano.inicioPet,
                     fimPet=petiano.fimPet,
                     sobre=petiano.sobre,
-                    eventosInscrito=petiano.eventosInscrito,
+                    eventosInscrito=eventos,
                     tipoConta=petiano.tipoConta,
                     apadrinhadoPor=petiano.apadrinhadoPor,
                 )
@@ -314,6 +331,23 @@ class UsuarioControlador:
             if petiano.foto:
                 urlFoto = f"{config.CAMINHO_BASE}/img/usuarios/{petiano.id}/foto"
             
+            eventos = []
+            for evento_id in petiano.eventosInscrito:
+                try:
+                    evento = EventoBD.buscar("_id", evento_id)
+                    url_arte = (
+                        f"{config.CAMINHO_BASE}/img/eventos/{evento.id}/arte"
+                        if evento.arte
+                        else None
+                    )
+                    eventos.append({
+                        "id": evento.id,
+                        "titulo": evento.titulo,
+                        "arte": url_arte,
+                    })
+                except Exception:
+                    pass  
+
             # adiciona o petiano ou egresso à lista
             petianos.append(
                 Petiano(
@@ -326,7 +360,7 @@ class UsuarioControlador:
                     inicioPet=petiano.inicioPet,
                     fimPet=petiano.fimPet,
                     sobre=petiano.sobre,
-                    eventosInscrito=petiano.eventosInscrito,
+                    eventosInscrito=eventos,
                     tipoConta=petiano.tipoConta,
                     apadrinhadoPor=petiano.apadrinhadoPor,
                 )

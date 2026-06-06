@@ -47,6 +47,21 @@ class Genero(str, Enum):
     "Prefiro não dizer."
 
 
+class EventoResumido(BaseModel):
+    """
+    Resumo de um Evento para consultas dos Petianos.
+    """
+
+    id: str
+    "Identificador único."
+
+    titulo: str
+    "Título do evento."
+
+    arte: str | None
+    "Caminho para a imagem de capa do evento."
+
+
 class Usuario(BaseModel):
     """
     Classe que representa um usuário do sistema.
@@ -153,8 +168,8 @@ class Petiano(BaseModel):
     tipoConta: TipoConta | None = None
     "Tipo de conta. Representa petianos ou egressos"
 
-    eventosInscrito: list[str] = []
-    "Lista de tuplas de id de evento."
+    eventosInscrito: list[EventoResumido] = []
+    "Lista com informações resumidas de um Evento."
 
     apadrinhadoPor: str | None = None
     "Id do petiano que apadrinhou este petiano."
