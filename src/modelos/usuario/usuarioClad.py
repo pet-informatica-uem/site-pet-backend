@@ -2,7 +2,7 @@
 Modelos de dados relacionados a operações de CRUD de usuários.
 """
 
-from datetime import  date, datetime
+from datetime import  datetime
 from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, SecretStr, StringConstraints, field_validator
@@ -41,6 +41,15 @@ class UsuarioCriar(BaseModel):
 
     sobre: Annotated[str | None, StringConstraints(max_length=256)]
     """Bio do usuário. A bio possui limite de 256 caracteres."""
+
+    tipoConta: TipoConta = TipoConta.EXTERNO
+    """Tipo de conta do usuário."""
+
+    inicioPet: datetime | None = None
+    """Data de ingresso no PET-Informática."""
+
+    telefone: str | None = None
+    """Telefone do usuário."""
 
 
     @field_validator("cpf")
@@ -105,6 +114,11 @@ class UsuarioLer(BaseModel):
     sobre: str | None = None
     """Bio do usuário"""
 
+    tipoConta: TipoConta
+    """Tipo de conta do usuário."""
+
+
+
 
 class UsuarioLerAdmin(UsuarioLer):
     """
@@ -124,6 +138,9 @@ class UsuarioLerAdmin(UsuarioLer):
 
     dataNascimento: datetime
     """Data de nascimento do usuário"""
+    
+    telefone: str | None = None
+    """Telefone do usuário."""
 
     ra: str | None = None
     """Registro acadêmico do usuário"""
@@ -137,10 +154,10 @@ class UsuarioLerAdmin(UsuarioLer):
     dataCriacao: datetime
     """Timestamp de criação do usuário."""
 
-    inicioPet: date | None = None
+    inicioPet: datetime | None = None
     """Timestamp de ingresso no PET, caso seja petiano ou egresso."""
 
-    fimPet: date | None = None
+    fimPet: datetime | None = None
     """Timestamp de saída do PET, caso seja petiano ou egresso."""
 
 
@@ -175,6 +192,12 @@ class UsuarioAtualizar(BaseModel):
 
     sobre: Annotated[str | None, StringConstraints(max_length=256)] = None
     """Bio do usuário. A bio possui limite de 256 caracteres."""
+
+    inicioPet: datetime | None = None
+    """Data de ingresso no PET-Informática."""
+
+    telefone: str | None = None
+    """Telefone do usuário."""
 
 
 class UsuarioAtualizarSenha(BaseModel):
