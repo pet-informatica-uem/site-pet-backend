@@ -25,6 +25,7 @@ class Inscrito(BaseModel):
     dataInscricao: datetime
     "Data e hora da inscrição."
 
+
 class Evento(BaseModel):
     """
     Classe que representa um evento do sistema.
@@ -42,7 +43,7 @@ class Evento(BaseModel):
     descricao: str
     "Descrição do evento."
 
-    preRequisitos: list[str] = []
+    preRequisitos: str
     "Pré-requisitos para participar do evento."
 
     inicioInscricao: datetime
@@ -81,15 +82,19 @@ class Evento(BaseModel):
     cargaHoraria: int
     "Carga horária do evento."
 
+    chavePIX: str | None = None
+    "Chave PIX para pagamento"
+
     valor: float
     "Valor da inscrição."
 
-    arte: str | None = None
+    capa: str | None = None
     "Caminho para a imagem de capa do evento."
 
     cracha: str | None = None
     "Caminho para a imagem do crachá do evento."
 
+
     class Config:
-        populate_by_name = True  # Permite usar alias ao popular campos
+        popula_por_nome = True  # Permite usar alias ao popular campos
         json_encoders = {datetime: lambda v: v.isoformat()}  # Serializa datetimes corretamente
