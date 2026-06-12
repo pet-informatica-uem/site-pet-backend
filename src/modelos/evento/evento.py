@@ -1,39 +1,9 @@
 from datetime import datetime
-from enum import Enum
+from src.modelos.evento.enums import TipoVaga, TipoEvento, NivelConhecimento
 from pydantic import BaseModel, Field
 from bson.objectid import ObjectId
 from uuid import uuid4
 
-class TipoVaga(str, Enum):
-    """
-    Determina se o inscrito utilizará ou não o próprio notebook durante o evento.
-    """
-
-    COM_NOTE = "comNotebook"
-    """Utilizará o próprio notebook."""
-
-    SEM_NOTE = "semNotebook"
-    """Não utilizará o próprio notebook."""
-
-class NivelConhecimento(str, Enum):
-    """
-    Determina o nível de conhecimento de um inscrito a respeito do tema do evento, em uma escala de 1 a 5.
-    """
-
-    NENHUM = "1"
-    """Não possui conhecimento prévio."""
-
-    BASICO = "2"
-    """Possui conhecimento básico."""
-
-    INTERMEDIARIO = "3"
-    """Possui conhecimento intermediário."""
-
-    AVANCADO = "4"
-    """Possui conhecimento avançado."""
-
-    ESPECIALISTA = "5"
-    """Domina o assunto."""
 
 class Inscrito(BaseModel):
     """
@@ -65,6 +35,9 @@ class Evento(BaseModel):
 
     titulo: str
     "Título do evento."
+
+    tipoEvento: TipoEvento
+    "Categoria do evento."
 
     descricao: str
     "Descrição do evento."
