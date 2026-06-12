@@ -12,6 +12,7 @@ from src.middleware.excecoes import ExcecaoAPIMiddleware
 from src.middleware.logger import LoggerMiddleware
 from src.middleware.tamanhoLimite import TamanhoLimiteMiddleware
 from src.middleware.tempoLimite import TempoLimiteMiddleware
+from src.rotas.avaliacao.avaliacaoRotas import roteador as roteadorAvaliacao
 from src.rotas.evento.eventoRotas import roteador as roteadorEvento
 from src.rotas.img.imgRotas import roteador as roteadorImg
 from src.rotas.usuario.usuarioRotas import roteador as roteadorUsuario
@@ -58,6 +59,7 @@ petBack.add_middleware(TamanhoLimiteMiddleware, size_limit=5 * 1024 * 1024)
 ## Adiciona os módulos do site.
 petBack.include_router(roteadorUsuario)
 petBack.include_router(roteadorEvento)
+petBack.include_router(roteadorAvaliacao)
 petBack.include_router(roteadorImg)
 
 petBack.add_middleware(
