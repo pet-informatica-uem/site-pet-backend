@@ -17,8 +17,7 @@ from src.modelos.avaliacao.avaliacaoClad import (
 )
 from src.modelos.usuario.usuario import Usuario
 from src.rotas.avaliacao.avaliacaoControlador import AvaliacaoControlador
-from src.rotas.usuario.usuarioRotas import getPetianoAutenticado, getUsuarioAutenticado
-
+from src.rotas.usuario.usuarioRotas import getPetianoAdminAutenticado, getUsuarioAutenticado
 roteador: APIRouter = APIRouter(
     prefix="/eventos/{idEvento}/avaliacao",
     tags=["Avaliacao"],
@@ -34,7 +33,7 @@ roteador: APIRouter = APIRouter(
 def configurarFormulario(
     idEvento: str,
     dadosFormulario: ConfiguracaoFormularioCriar,
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
 ):
     """
     Cria ou atualiza o formulario de avaliacao de um evento.
@@ -79,7 +78,7 @@ def enviarFormulario(
 )
 def obterFormulario(
     idEvento: str,
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
 ):
     """
     Recupera o formulario de avaliacao de um evento.
@@ -101,7 +100,7 @@ def obterFormulario(
 def obterRespostaFormulario(
     idEvento: str,
     idSubmissao: str,
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
 ):
     """
     Recupera uma submissao anonima especifica de um evento.
@@ -123,7 +122,7 @@ def obterRespostaFormulario(
 )
 def obterResultados(
     idEvento: str,
-    usuario: Annotated[Usuario, Depends(getPetianoAutenticado)],
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
 ):
     """
     Recupera os resultados consolidados da avaliacao de um evento.
