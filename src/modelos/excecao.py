@@ -95,37 +95,37 @@ class ErroValidacaoExcecao(APIExcecaoBase):
     model = ErroBase
 
 
-class NaoAtualizadaExcecao(APIExcecaoBase):  # conflito
+class NaoAtualizadaExcecao(APIExcecaoBase):  
     message = "Não foi possível atualizar."
-    code = status.HTTP_404_NOT_FOUND
+    code = status.HTTP_409_NOT_FOUND
     model = AcaoNaoCompletaErro
 
 
-class ErroNaAlteracaoExcecao(APIExcecaoBase):  # conflito
+class ErroNaAlteracaoExcecao(APIExcecaoBase): 
     message = "Não foi possível fazer a alteração."
-    code = status.HTTP_404_NOT_FOUND
+    code = status.HTTP_409_NOT_FOUND
     model = AcaoNaoCompletaErro
 
 
-class ComprovanteObrigatorioExcecao(APIExcecaoBase):  # conflito
+class ComprovanteObrigatorioExcecao(APIExcecaoBase):  
     message = "Comprovante obrigatório para eventos pagos."
     code = status.HTTP_400_BAD_REQUEST
     model = AcaoNaoCompletaErro
 
 
-class ComprovanteInvalido(APIExcecaoBase):  # conflito
+class ComprovanteInvalido(APIExcecaoBase):  
     message = "Comprovante inválido."
     code = status.HTTP_400_BAD_REQUEST
     model = AcaoNaoCompletaErro
 
 
-class SemVagasDisponiveisExcecao(APIExcecaoBase):  # conflito
+class SemVagasDisponiveisExcecao(APIExcecaoBase): 
     message = "Não há vagas disponíveis."
     code = status.HTTP_409_CONFLICT
     model = AcaoNaoCompletaErro
 
 
-class TipoVagaInvalidoExcecao(APIExcecaoBase):  # conflito
+class TipoVagaInvalidoExcecao(APIExcecaoBase): 
     message = "Tipo de vaga inválido."
     code = status.HTTP_404_NOT_FOUND
     model = NaoEncontradoErro
