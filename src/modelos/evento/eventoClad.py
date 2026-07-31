@@ -58,17 +58,26 @@ class EventoCriar(BaseModel):
         """
         Valida o campo de dias
         """
-        if not ValidacaoEvento.dias(v):
-            raise ValueError("Datas inválidas")
+        # Para essa validação, as exceções das verificações são tratadas internamente.
+        ValidacaoEvento.diasValidos(v)
         return v
     
+    @field_validator("valor")
+    def valor_valido(cls, v: float):
+        """
+        Valida o campo de valor
+        """
+        if not ValidacaoEvento.valorValido(v):
+            raise ValueError("Valor de custo de inscrição inválido.")
+        return v
+
     @model_validator(mode='after')
     def data_inscricao_valida(self) -> Self:
         """
         Valida os campos de início de inscrição e fim de inscrição
         """
-        if self.inicioInscricao >= self.fimInscricao:
-            raise ValueError("Datas de prazo de inscrição inválidas")
+        if not ValidacaoEvento.inscricoesValidas(self.inicioInscricao, self.fimInscricao):
+            raise ValueError("Datas de prazo de inscrição inválidas.")
         return self
 
 

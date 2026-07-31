@@ -11,36 +11,58 @@ class ValidacaoEvento:
     """
 
     @staticmethod
-    def diasValidos(
-        cls, dias: list[tuple[datetime, datetime]] | None
-    ) -> list[tuple[datetime, datetime]] | None:
+    def diasValidos(dias: list[tuple[datetime, datetime]] | None) -> bool:
         """
-        Verifica se as datas a serem atualizar de início e fim de cada dia do evento são válidas.
-            :cls: EventoCriar -> referência à classe EventoCriar, na qual o método está sendo definido.
+        Verifica se as datas de início e fim de cada dia do evento são válidas.
+        Para que os dias sejam validados, é necessário que:
+        - Em cada tupla, ambas as datas possuam o mesmo dia.
+        - O horário de término da tupla seja posterior ao horário de início.
+        - A lista de dias é ordenada de acordo com os dias e horários.
+
             :dias: list[tuple[datetime, datetime]] -> a data e a hora de início e fim de cada dia do evento.
         """
-        if dias:
-            for i, dia in enumerate(dias):
-                if dia[0] > dia[1]:
-                    raise ValueError(
-                        f"A data de início do dia {i} deve ser anterior à data de fim do dia {i}."
-                    )
+        if not dias:
+            raise ValueError("Datas ausentes.")
 
-        return dias
-    
-    def inscricoesValidas(self) -> Self:
+        for i in range(len(dias)):
+            inicio, fim = dias[i]
+            
+            # Tupla deve ter itens que correspondem ao mesmo dia
+            if inicio.date() != fim.date():
+                raise ValueError(f"O início e o fim do dia {i + 1} devem ocorrer na mesma data.")
+            
+            # O horário de término deve ser posterior ao de início
+            if inicio >= fim:
+                raise ValueError(f"No dia {i + 1}, o horário de término deve ser posterior ao horário de início.")
+            
+            # Ordem cronológica entre dias do evento
+            if i > 0:
+                fim_dia_anterior = dias[i - 1][1]
+                if inicio <= fim_dia_anterior:
+                    raise ValueError(f"O dia {i + 1} deve começar após o término do dia {i}.")
+
+        return True
+
+    @staticmethod
+    def valorValido(valor: float) -> bool:
+        """
+        Verifica se um evento possui um valor de preço válido.
+        Para o valor ser validado, é necessário que:
+        - Seja não-negativo.
+        - Seja menor que 1000.
+
+            :valor: float -> o preço de inscrição para um evento.
+        """
+        return valor >= 0 and valor < 1000
+
+    @staticmethod
+    def inscricoesValidas(inicioInscricao: datetime | None, fimInscricao: datetime | None) -> bool:
         """
         Verifica se as datas a serem atualizadas das inscrições do evento são válidas.
-            :self: EventoCriar -> referência à classe EventoCriar, na qual o método está sendo definido.
+            :inicioInscricao: datetime -> a data e a hora de início do período de inscrições de um evento.
+            :fimInscricao: datetime -> a data e a hora de fim do período de inscrições de um evento.
         """
-        if (
-            self.inicioInscricao
-            and self.fimInscricao
-            and self.inicioInscricao > self.fimInscricao
-        ):
-            raise ValueError(
+        if inicioInscricao and fimInscricao and inicioInscricao > fimInscricao:
+            return False
 
-                "A data de início das inscrições deve ser anterior à data de fim das inscrições."
-            )
-
-        return self
+        return True
