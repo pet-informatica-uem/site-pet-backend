@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, UploadFile, status, BackgroundTasks, For
 from src.modelos.evento.evento import NivelConhecimento, TipoVaga
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import (
-    EventoAtualizar,
+    EventoAtualizarAdmin,
     EventoCriar,
     EventoLer,
     InscritoAtualizar,
     InscritoCriar,
     InscritoLer,
+    VerificacaoInscricao,
 )
 from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.usuario.usuario import Usuario
@@ -86,7 +87,7 @@ def cadastrarEvento(
 )
 def editarEvento(
     id: str,
-    evento: EventoAtualizar,
+    evento: EventoAtualizarAdmin,
     usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
 ):
     """
@@ -191,6 +192,22 @@ def getInscritos(
     """
     # Despacha para o controlador
     return EventoControlador.getInscritos(idEvento)
+
+
+@roteador.patch(
+    "/{idEvento}/inscritos/{idInscrito}/verificacao",
+    name="Verificar comprovante de inscrição",
+    description="Aceita ou rejeita o comprovante enviado por um inscrito.",
+)
+def verificarInscricao(
+    idEvento: str,
+    idInscrito: str,
+    verificacao: VerificacaoInscricao,
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
+):
+    EventoControlador.verificarInscricao(
+        idEvento, idInscrito, verificacao.estadoDeVerificacao
+    )
 
 
 @roteador.patch(

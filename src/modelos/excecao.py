@@ -97,13 +97,13 @@ class ErroValidacaoExcecao(APIExcecaoBase):
 
 class NaoAtualizadaExcecao(APIExcecaoBase):  
     message = "Não foi possível atualizar."
-    code = status.HTTP_409_NOT_FOUND
+    code = status.HTTP_409_CONFLICT
     model = AcaoNaoCompletaErro
 
 
 class ErroNaAlteracaoExcecao(APIExcecaoBase): 
     message = "Não foi possível fazer a alteração."
-    code = status.HTTP_409_NOT_FOUND
+    code = status.HTTP_409_CONFLICT
     model = AcaoNaoCompletaErro
 
 

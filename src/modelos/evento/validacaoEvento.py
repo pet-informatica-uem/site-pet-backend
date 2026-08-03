@@ -2,7 +2,7 @@
     Funções relacionadas a validação de campos de evento
 """
 
-import datetime
+from datetime import datetime
 
 
 class ValidacaoEvento:

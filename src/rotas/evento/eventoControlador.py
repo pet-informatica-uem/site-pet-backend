@@ -16,16 +16,18 @@ from src.img.operacoesImagem import (
 from src.modelos.bd import EventoBD, UsuarioBD, cliente
 from src.modelos.evento.evento import Evento, Inscrito, TipoVaga
 from src.modelos.evento.eventoClad import (
-    EventoAtualizar,
+    EventoAtualizarAdmin,
     EventoCriar,
     InscritoAtualizar,
     InscritoCriar,
+    InscritoLer,
 )
 from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import (
     APIExcecaoBase,
     ImagemInvalidaExcecao,
     ImagemNaoSalvaExcecao,
+    JaExisteExcecao,
     SemVagasDisponiveisExcecao,
     NaoEncontradoExcecao,
 )
@@ -88,7 +90,7 @@ class EventoControlador:
         EventoBD.deletar(id)
 
     @staticmethod
-    def editarEvento(id: str, dadosEvento: EventoAtualizar) -> Evento:
+    def editarEvento(id: str, dadosEvento: EventoAtualizarAdmin) -> Evento:
         """
         Edita um evento existente com base nos novos dados fornecidos.
 
@@ -262,6 +264,10 @@ class EventoControlador:
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
 
+        # Valida a duplicidade antes de substituir ou armazenar o comprovante.
+        if EventoBD.verificarInscricaoExistente(idEvento, idUsuario):
+            raise JaExisteExcecao(message="Usuário já está inscrito neste evento.")
+
         # Verifica se está no período de inscrição
         if (
             evento.inicioInscricao > datetime.now()
@@ -353,7 +359,7 @@ class EventoControlador:
 
     # Métodos adicionados do InscritosControlador
     @staticmethod
-    def getInscritos(idEvento: str) -> list[Inscrito]:
+    def getInscritos(idEvento: str) -> list[InscritoLer]:
         """
         Recupera os inscritos de um evento.
 
@@ -361,7 +367,30 @@ class EventoControlador:
 
         :return: Lista de inscritos do evento.
         """
-        return EventoBD.listarInscritosEvento(idEvento)
+        inscritos = EventoBD.listarInscritosEvento(idEvento)
+        resultado = []
+
+        for inscrito in inscritos:
+            usuario = UsuarioBD.buscar("_id", inscrito.idUsuario)
+            comprovante = (
+                f"{config.CAMINHO_BASE}/img/eventos/{idEvento}/inscritos/"
+                f"{inscrito.idUsuario}/comprovante"
+                if inscrito.comprovante
+                else None
+            )
+
+            resultado.append(
+                InscritoLer(
+                    **inscrito.model_dump(exclude={"comprovante"}),
+                    comprovante=comprovante,
+                    nome=usuario.nome,
+                    cpf=usuario.cpf,
+                    email=str(usuario.email),
+                    curso=usuario.curso,
+                )
+            )
+
+        return resultado
 
     @staticmethod
     def getInscrito(idEvento: str, idUsuario: str) -> Inscrito:
@@ -374,6 +403,21 @@ class EventoControlador:
         :return: Inscrição do inscrito no evento.
         """
         return EventoBD.buscarInscrito(idEvento, idUsuario)
+
+    @staticmethod
+    def verificarInscricao(
+        idEvento: str, idUsuario: str, estadoDeVerificacao: bool
+    ) -> None:
+        """Registra a aceitação ou rejeição do comprovante de uma inscrição."""
+        evento = EventoControlador.getEvento(idEvento)
+
+        for inscrito in evento.inscritos:
+            if inscrito.idUsuario == idUsuario:
+                inscrito.estadoDeVerificacao = estadoDeVerificacao
+                EventoBD.atualizar(evento)
+                return
+
+        raise NaoEncontradoExcecao(message="O inscrito não foi encontrado.")
 
     @staticmethod
     def editarInscrito(

@@ -6,7 +6,6 @@ from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
 from src.modelos.evento.enums import TipoVaga, TipoEvento, NivelConhecimento
 from src.modelos.evento.evento import Evento, Inscrito
 from src.modelos.evento.validacaoEvento import ValidacaoEvento
-from src.modelos.usuario.usuario import Usuario
 
 
 class EventoCriar(BaseModel):
@@ -52,6 +51,9 @@ class EventoCriar(BaseModel):
 
     valor: float
     """Valor da inscrição."""
+
+    organizadores: list[str] = []
+    """Identificadores dos petianos responsáveis pela organização do evento."""
 
     @field_validator("dias")
     def dias_valido(cls, v: list[tuple[datetime, datetime]]):
@@ -199,14 +201,14 @@ class EventoAtualizarAdmin(BaseModel):
     valor: float | None = None
     """Valor da inscrição."""
 
+    organizadores: list[str] | None = None
+    """Identificadores dos petianos responsáveis pela organização do evento."""
+
 
 class InscritoCriar(BaseModel):
     """
     Criação de um inscrito no evento.
     """
-
-    usuarioInscrito: Usuario
-    """Usuário do inscrito."""
 
     comprovante: str | None = None
     """Comprovante de pagamento anexado pelo inscrito."""
@@ -226,8 +228,17 @@ class InscritoLer(Inscrito):
     Informações sobre uma inscrição em um evento.
     """
 
-    usuarioInscrito: Usuario
-    """Usuário do inscrito."""
+    nome: str
+    """Nome do usuário inscrito."""
+
+    cpf: str
+    """CPF do usuário inscrito."""
+
+    email: str
+    """E-mail do usuário inscrito."""
+
+    curso: str | None = None
+    """Curso do usuário inscrito."""
 
     comprovante: str | None = None
     """Comprovante de pagamento anexado pelo inscrito."""
@@ -258,3 +269,10 @@ class InscritoAtualizar(BaseModel):
 
     nivelConhecimento: NivelConhecimento
     """Nível de conhecimento do usuário (1 a 5)."""
+
+
+class VerificacaoInscricao(BaseModel):
+    """Decisão de um petiano sobre o comprovante de uma inscrição."""
+
+    estadoDeVerificacao: bool
+    """Verdadeiro para aceitar e falso para rejeitar o comprovante."""
