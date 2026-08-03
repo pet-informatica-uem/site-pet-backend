@@ -24,7 +24,7 @@ from src.email.operacoesEmail import (
     enviarEmailVerificacao,
 )
 from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
-from src.modelos.bd import RegistroLoginBD, TokenAutenticacaoBD, UsuarioBD, cliente
+from src.modelos.bd import EventoBD, RegistroLoginBD, TokenAutenticacaoBD, UsuarioBD, cliente
 from src.modelos.excecao import (
     APIExcecaoBase,
     EmailNaoConfirmadoExcecao,
@@ -103,7 +103,7 @@ class UsuarioControlador:
         d = {
             "_id": secrets.token_hex(16),
             "emailConfirmado": False,
-            "tipoConta": TipoConta.ESTUDANTE,
+            "tipoConta": TipoConta.EXTERNO,
             "dataCriacao": datetime.now(),
         }
 
@@ -280,6 +280,23 @@ class UsuarioControlador:
             urlFoto = None
             if petiano.foto:
                 urlFoto = f"{config.CAMINHO_BASE}/img/usuarios/{petiano.id}/foto"
+
+            eventos = []
+            for evento_id in petiano.eventosInscrito:
+                try:
+                    evento = EventoBD.buscar("_id", evento_id)
+                    url_arte = (
+                        f"{config.CAMINHO_BASE}/img/eventos/{evento.id}/arte"
+                        if evento.arte
+                        else None
+                    )
+                    eventos.append({
+                        "id": evento.id,
+                        "titulo": evento.titulo,
+                        "arte": url_arte,
+                    })
+                except Exception:
+                    pass  
             
             # adiciona o petiano à lista
             petianos.append(
@@ -293,7 +310,7 @@ class UsuarioControlador:
                     inicioPet=petiano.inicioPet,
                     fimPet=petiano.fimPet,
                     sobre=petiano.sobre,
-                    eventosInscrito=petiano.eventosInscrito,
+                    eventosInscrito=eventos,
                     tipoConta=petiano.tipoConta,
                     apadrinhadoPor=petiano.apadrinhadoPor,
                 )
@@ -314,6 +331,23 @@ class UsuarioControlador:
             if petiano.foto:
                 urlFoto = f"{config.CAMINHO_BASE}/img/usuarios/{petiano.id}/foto"
             
+            eventos = []
+            for evento_id in petiano.eventosInscrito:
+                try:
+                    evento = EventoBD.buscar("_id", evento_id)
+                    url_arte = (
+                        f"{config.CAMINHO_BASE}/img/eventos/{evento.id}/arte"
+                        if evento.arte
+                        else None
+                    )
+                    eventos.append({
+                        "id": evento.id,
+                        "titulo": evento.titulo,
+                        "arte": url_arte,
+                    })
+                except Exception:
+                    pass  
+
             # adiciona o petiano ou egresso à lista
             petianos.append(
                 Petiano(
@@ -326,7 +360,7 @@ class UsuarioControlador:
                     inicioPet=petiano.inicioPet,
                     fimPet=petiano.fimPet,
                     sobre=petiano.sobre,
-                    eventosInscrito=petiano.eventosInscrito,
+                    eventosInscrito=eventos,
                     tipoConta=petiano.tipoConta,
                     apadrinhadoPor=petiano.apadrinhadoPor,
                 )
@@ -498,9 +532,9 @@ class UsuarioControlador:
         Tipo de demissão de petiano.
         """
 
-        ESTUDANTE = "estudante"
+        EXTERNO = "externo"
         """
-        Demite um petiano a estudante.
+        Demite um petiano a externo.
         """
 
         EGRESSO = "egresso"
@@ -511,10 +545,10 @@ class UsuarioControlador:
     @staticmethod
     def demitirPetiano(id: str, egresso: DemitirPetianoPara) -> None:
         """
-        Demite um usuário petiano ou egresso a egresso, caso `egresso` seja verdadeiro, ou a estudante caso contrário.
+        Demite um usuário petiano ou egresso a egresso, caso `egresso` seja verdadeiro, ou a externo caso contrário.
 
         :param id: Id do usuário a ser demitido.
-        :param egresso: Se verdadeiro, demite o usuário a egresso; caso contrário, demite a estudante.
+        :param egresso: Se verdadeiro, demite o usuário a egresso; caso contrário, demite a externo.
         :raises UsuarioNaoEncontradoExcecao: Se o usuário com o id fornecido não existir.
         :raises NaoAtualizadaExcecao: Se o usuário não for petiano nem egresso.
         """
@@ -530,9 +564,9 @@ class UsuarioControlador:
         if egresso == UsuarioControlador.DemitirPetianoPara.EGRESSO:
             logging.info(f"Demitindo usuário {usuario.id} a egresso")
             usuario.tipoConta = TipoConta.EGRESSO
-        elif egresso == UsuarioControlador.DemitirPetianoPara.ESTUDANTE:
-            logging.info(f"Demitindo usuário {usuario.id} a estudante")
-            usuario.tipoConta = TipoConta.ESTUDANTE
+        elif egresso == UsuarioControlador.DemitirPetianoPara.EXTERNO:
+            logging.info(f"Demitindo usuário {usuario.id} a externo")
+            usuario.tipoConta = TipoConta.EXTERNO
 
         UsuarioBD.atualizar(usuario)
 
