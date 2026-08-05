@@ -97,13 +97,13 @@ class ErroValidacaoExcecao(APIExcecaoBase):
 
 class NaoAtualizadaExcecao(APIExcecaoBase):  
     message = "Não foi possível atualizar."
-    code = status.HTTP_409_NOT_FOUND
+    code = status.HTTP_409_CONFLICT
     model = AcaoNaoCompletaErro
 
 
 class ErroNaAlteracaoExcecao(APIExcecaoBase): 
     message = "Não foi possível fazer a alteração."
-    code = status.HTTP_409_NOT_FOUND
+    code = status.HTTP_409_CONFLICT
     model = AcaoNaoCompletaErro
 
 
@@ -140,6 +140,12 @@ class EmailNaoFoiEnviadoExcecao(APIExcecaoBase):
 class TipoDeInscricaoErradoExcecao(APIExcecaoBase):
     message = "Tipo de inscrição errada, deveria ser <com notebook> ou <sem notebook>"
     code = status.HTTP_400_BAD_REQUEST
+    model = AcaoNaoCompletaErro
+
+
+class ForaDoPeriodoDeInscricaoExcecao(APIExcecaoBase):
+    message = "Fora do período de inscrição da atividade."
+    code = status.HTTP_409_CONFLICT
     model = AcaoNaoCompletaErro
 
 
