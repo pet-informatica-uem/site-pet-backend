@@ -4,7 +4,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, UploadFile, status, BackgroundTasks
 from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import (
-    EventoAtualizar,
+    EventoAtualizarAdmin,
     EventoCriar,
     EventoLer,
     InscritoAtualizar,
@@ -85,7 +85,7 @@ def cadastrarEvento(
 )
 def editarEvento(
     id: str,
-    evento: EventoAtualizar,
+    evento: EventoAtualizarAdmin,
     usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
 ):
     """

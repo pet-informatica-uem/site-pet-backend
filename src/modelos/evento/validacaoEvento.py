@@ -56,7 +56,7 @@ class ValidacaoEvento:
         return valor >= 0 and valor < 1000
 
     @staticmethod
-    def inscricoesValidas(inicioInscricao: datetime | None, fimInscricao: datetime | None) -> bool:
+    def inscricoesValidas(inicioInscricao: datetime, fimInscricao: datetime) -> bool:
         """
         Verifica se as datas a serem atualizadas das inscrições do evento são válidas.
             :inicioInscricao: datetime -> a data e a hora de início do período de inscrições de um evento.
