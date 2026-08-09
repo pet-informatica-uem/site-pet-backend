@@ -136,6 +136,27 @@ def obterSituacaoUsuario(
 
 
 @roteador.get(
+    "/submissoes",
+    name="Listar submissoes de avaliacao",
+    description="Lista todas as submissoes anonimas de avaliacao enviadas para o evento.",
+    status_code=status.HTTP_200_OK,
+    response_model=list[SubmissaoAvaliacaoAnonima],
+)
+def listarRespostasFormulario(
+    idEvento: str,
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
+):
+    """
+    Lista todas as submissoes anonimas de avaliacao enviadas para o evento.
+
+    :param idEvento: Identificador unico do evento.
+    :param usuario: Usuario autenticado (petiano).
+    :return submissoes: Lista de submissoes anonimas do evento.
+    """
+    return AvaliacaoControlador.listarSubmissoes(idEvento)
+
+
+@roteador.get(
     "/submissoes/{idSubmissao}",
     name="Obter submissao de avaliacao",
     description="Recupera uma submissao anonima de avaliacao enviada para o evento.",

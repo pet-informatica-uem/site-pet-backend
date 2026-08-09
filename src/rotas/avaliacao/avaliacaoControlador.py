@@ -397,6 +397,17 @@ class AvaliacaoControlador:
         return AvaliacaoBD.buscarSubmissaoAnonima(idEvento, idSubmissao)
 
     @staticmethod
+    def listarSubmissoes(idEvento: str) -> list[SubmissaoAvaliacaoAnonima]:
+        """
+        Lista todas as submissoes anonimas de avaliacao enviadas para um evento.
+
+        :param idEvento: Identificador unico do evento.
+
+        :return submissoes: Lista de submissoes anonimas do evento.
+        """
+        return AvaliacaoBD.listarSubmissoesPorEvento(idEvento)
+
+    @staticmethod
     def obterResultados(idEvento: str) -> ResultadoAvaliacaoEvento:
         """ 
         Obtem os resultados consolidados de avaliacao de um evento.
