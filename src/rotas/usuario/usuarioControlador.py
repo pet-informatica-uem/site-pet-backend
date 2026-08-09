@@ -389,7 +389,7 @@ class UsuarioControlador:
         usuario: Usuario = UsuarioControlador.getUsuario(id)
 
         # verifica se o usuário é petiano
-        if usuario.tipoConta != TipoConta.PETIANO:
+        if usuario.tipoConta not in [TipoConta.PETIANO, TipoConta.EGRESSO]:
             dadosUsuario.github = None
             dadosUsuario.linkedin = None
             dadosUsuario.instagram = None

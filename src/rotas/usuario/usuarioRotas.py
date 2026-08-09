@@ -364,13 +364,16 @@ def editarSenha(
 @roteador.put(
     "/{id}/foto",
     name="Atualizar foto de perfil",
-    description="Edita a foto de perfil do usuário autenticado. O usuário deve ser um petiano e deve ser dono da conta, ou ser o administrador.",
+    description="Edita a foto de perfil do usuário autenticado. O usuário deve ser um petiano, petiano egresso ou administrador.",
 )
 def editarFoto(
     id: str,
     foto: UploadFile,
-    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)] = ...,  # type: ignore
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)] = ...,  # type: ignore
 ) -> None:
+    podeEditarFoto = usuario.tipoConta in [TipoConta.PETIANO, TipoConta.ADMIN, TipoConta.EGRESSO]
+    if not podeEditarFoto:
+        raise NaoAutorizadoExcecao()
     if usuario.id == id or usuario.tipoConta == TipoConta.ADMIN:
         UsuarioControlador.editarFoto(usuario=usuario, foto=foto)
     else:
