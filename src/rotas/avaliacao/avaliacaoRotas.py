@@ -13,6 +13,7 @@ from src.modelos.avaliacao.avaliacao import (
 )
 from src.modelos.avaliacao.avaliacaoClad import (
     ConfiguracaoFormularioCriar,
+    SituacaoAvaliacaoUsuario,
     SubmissaoAvaliacaoCriar,
 )
 from src.modelos.usuario.usuario import Usuario
@@ -89,6 +90,50 @@ def obterFormulario(
     :return formulario: Formulario de avaliacao do evento.
     """
     return AvaliacaoControlador.obterFormulario(idEvento)
+
+
+@roteador.get(
+    "/formulario/responder",
+    name="Obter formulario de avaliacao para preenchimento",
+    description="Recupera o formulario de avaliacao de um evento para o usuario responder.",
+    status_code=status.HTTP_200_OK,
+    response_model=FormularioAvaliacaoEvento,
+)
+def obterFormularioParaPreenchimento(
+    idEvento: str,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+):
+    """
+    Recupera o formulario de avaliacao de um evento para o usuario responder.
+
+    :param idEvento: Identificador unico do evento.
+    :param usuario: Usuario autenticado.
+    :return formulario: Formulario de avaliacao do evento.
+    """
+    return AvaliacaoControlador.obterFormularioParaPreenchimento(idEvento, usuario)
+
+
+@roteador.get(
+    "/situacao",
+    name="Obter situacao do usuario na avaliacao",
+    description="Verifica se o usuario autenticado ja enviou uma avaliacao para o evento.",
+    status_code=status.HTTP_200_OK,
+    response_model=SituacaoAvaliacaoUsuario,
+)
+def obterSituacaoUsuario(
+    idEvento: str,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+):
+    """
+    Verifica se o usuario autenticado ja enviou uma avaliacao para o evento.
+
+    :param idEvento: Identificador unico do evento.
+    :param usuario: Usuario autenticado.
+    :return situacao: Situacao do usuario em relacao a avaliacao do evento.
+    """
+    return SituacaoAvaliacaoUsuario(
+        jaRespondeu=AvaliacaoControlador.obterSituacaoUsuario(idEvento, usuario.id)
+    )
 
 
 @roteador.get(
