@@ -1,39 +1,9 @@
 from datetime import datetime
-from enum import Enum
+from src.modelos.evento.enums import TipoVaga, TipoEvento, NivelConhecimento
 from pydantic import BaseModel, Field
 from bson.objectid import ObjectId
 from uuid import uuid4
 
-class TipoVaga(str, Enum):
-    """
-    Determina se o inscrito utilizará ou não o próprio notebook durante o evento.
-    """
-
-    COM_NOTE = "comNotebook"
-    """Utilizará o próprio notebook."""
-
-    SEM_NOTE = "semNotebook"
-    """Não utilizará o próprio notebook."""
-
-class NivelConhecimento(str, Enum):
-    """
-    Determina o nível de conhecimento de um inscrito a respeito do tema do evento, em uma escala de 1 a 5.
-    """
-
-    NENHUM = "1"
-    """Não possui conhecimento prévio."""
-
-    BASICO = "2"
-    """Possui conhecimento básico."""
-
-    INTERMEDIARIO = "3"
-    """Possui conhecimento intermediário."""
-
-    AVANCADO = "4"
-    """Possui conhecimento avançado."""
-
-    ESPECIALISTA = "5"
-    """Domina o assunto."""
 
 class Inscrito(BaseModel):
     """
@@ -52,8 +22,12 @@ class Inscrito(BaseModel):
     comprovante: str | None = None
     "Comprovante de pagamento da inscrição."
 
+    estadoDeVerificacao: bool | None = None
+    "Resultado da verificação do comprovante: pendente, aceito ou rejeitado."
+
     dataInscricao: datetime
     "Data e hora da inscrição."
+
 
 class Evento(BaseModel):
     """
@@ -66,10 +40,13 @@ class Evento(BaseModel):
     titulo: str
     "Título do evento."
 
+    tipoEvento: TipoEvento
+    "Categoria do evento."
+
     descricao: str
     "Descrição do evento."
 
-    preRequisitos: list[str] = []
+    preRequisitos: str
     "Pré-requisitos para participar do evento."
 
     inicioInscricao: datetime
@@ -105,18 +82,25 @@ class Evento(BaseModel):
     inscritos: list[Inscrito] = []
     "Pessoas inscritas no evento."
 
+    organizadores: list[str] = []
+    "Identificadores dos petianos responsáveis pela organização do evento."
+
     cargaHoraria: int
     "Carga horária do evento."
+
+    chavePIX: str | None = None
+    "Chave PIX para pagamento"
 
     valor: float
     "Valor da inscrição."
 
     arte: str | None = None
-    "Caminho para a imagem de capa do evento."
+    "Caminho para a imagem de arte do evento."
 
     cracha: str | None = None
     "Caminho para a imagem do crachá do evento."
 
+
     class Config:
-        populate_by_name = True  # Permite usar alias ao popular campos
+        popula_por_nome = True  # Permite usar alias ao popular campos
         json_encoders = {datetime: lambda v: v.isoformat()}  # Serializa datetimes corretamente

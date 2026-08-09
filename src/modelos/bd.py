@@ -12,7 +12,7 @@ from src.config import config
 from src.modelos.autenticacao.autenticacao import TokenAutenticacao
 from src.modelos.evento.evento import Evento, Inscrito, TipoVaga
 from src.modelos.evento.intervaloBusca import IntervaloBusca
-from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoExcecao
+from src.modelos.excecao import JaExisteExcecao, NaoEncontradoExcecao
 from src.modelos.registro.registroLogin import RegistroLogin
 from src.modelos.usuario.usuario import TipoConta, Usuario
 from src.modelos.avaliacao.avaliacao import FormularioAvaliacaoEvento, SubmissaoAvaliacaoAnonima, ControleSubmissaoAvaliacao
@@ -176,18 +176,18 @@ class EventoBD:
 
         if query == IntervaloBusca.PASSADO:
             dbQuery = {"fimEvento": {"$lt": datetime.now()}}
-            resultadoBusca = colecaoEventos.find(dbQuery)
+            resultadoBusca = colecaoEventos.find(dbQuery).sort("inicioEvento", -1)
         elif query == IntervaloBusca.PRESENTE:
             dbQuery = {
                 "inicioEvento": {"$lt": datetime.now()},
                 "fimEvento": {"$gt": datetime.now()},
             }
-            resultadoBusca = colecaoEventos.find(dbQuery)
+            resultadoBusca = colecaoEventos.find(dbQuery).sort("inicioEvento", -1)
         elif query == IntervaloBusca.FUTURO:
             dbQuery = {"inicioEvento": {"$gt": datetime.now()}}
-            resultadoBusca = colecaoEventos.find(dbQuery)
+            resultadoBusca = colecaoEventos.find(dbQuery).sort("inicioEvento", 1)
         else:
-            resultadoBusca = colecaoEventos.find()
+            resultadoBusca = colecaoEventos.find().sort("inicioEvento", 1)
 
 
         resultado = [Evento(**e) for e in resultadoBusca]
@@ -264,9 +264,29 @@ class EventoBD:
 
     @staticmethod
     def deletarInscrito(idEvento: str, idUsuario: str):
+        evento = colecaoEventos.find_one(
+            {"_id": idEvento, "inscritos.idUsuario": idUsuario},
+            {"inscritos": {"$elemMatch": {"idUsuario": idUsuario}}},
+        )
+        if not evento or not evento.get("inscritos"):
+            raise NaoEncontradoExcecao(message="O inscrito não foi encontrado para remoção.")
+
+        inscrito = evento["inscritos"][0]
+
+        if inscrito["tipoVaga"] == TipoVaga.COM_NOTE:
+            incComNote, incSemNote = 1, 0
+        else:
+            incComNote, incSemNote = 0, 1
+
         resultado = colecaoEventos.update_one(
             {"_id": idEvento},
-            {"$pull": {"inscritos": {"idUsuario": idUsuario}}}
+            {
+                "$pull": {"inscritos": {"idUsuario": idUsuario}},
+                "$inc": {
+                    "vagasDisponiveisComNote": incComNote,
+                    "vagasDisponiveisSemNote": incSemNote,
+                },
+            },
         )
         if resultado.modified_count == 0:
             raise NaoEncontradoExcecao(message="O inscrito não foi encontrado para remoção.")
