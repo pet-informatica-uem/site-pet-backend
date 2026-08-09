@@ -12,7 +12,7 @@ from src.config import config
 from src.modelos.autenticacao.autenticacao import TokenAutenticacao
 from src.modelos.evento.evento import Evento, Inscrito, TipoVaga
 from src.modelos.evento.intervaloBusca import IntervaloBusca
-from src.modelos.excecao import APIExcecaoBase, JaExisteExcecao, NaoEncontradoExcecao
+from src.modelos.excecao import JaExisteExcecao, NaoEncontradoExcecao
 from src.modelos.registro.registroLogin import RegistroLogin
 from src.modelos.usuario.usuario import TipoConta, Usuario
 from src.modelos.avaliacao.avaliacao import FormularioAvaliacaoEvento, SubmissaoAvaliacaoAnonima, ControleSubmissaoAvaliacao

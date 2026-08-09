@@ -24,7 +24,11 @@ from src.modelos.evento.eventoClad import (
 )
 from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import (
-    APIExcecaoBase,
+    ComprovanteInvalido,
+    ComprovanteObrigatorioExcecao,
+    ErroInternoExcecao,
+    ErroNaAlteracaoExcecao,
+    ForaDoPeriodoDeInscricaoExcecao,
     ImagemInvalidaExcecao,
     ImagemNaoSalvaExcecao,
     JaExisteExcecao,
@@ -43,7 +47,6 @@ from PIL import Image
 from src.config import config
 from src.email.operacoesEmail import enviarEmailConfirmacaoEvento
 from src.img.operacoesImagem import armazenaComprovante, deletaImagem, validaComprovante
-from src.modelos.excecao import APIExcecaoBase
 from src.modelos.usuario.usuario import Usuario
 
 
@@ -100,7 +103,7 @@ class EventoControlador:
         :return Evento: Evento atualizado.
 
         :raises NaoEncontradoExcecao: Lançada se o evento com o ID especificado não for encontrado.
-        :raises SemVagasDisponiveisExcecao: Lançada se o número de vagas especificado é inferior ao número de inscritos existentes.
+        :raises ErroNaAlteracaoExcecao: Lançada se o número de vagas especificado é inferior ao número de inscritos existentes.
         """
         # Obtém evento
         eventoOld: Evento = EventoControlador.getEvento(id)
@@ -117,7 +120,7 @@ class EventoControlador:
             dadosEvento.vagasComNote is not None
             and dadosEvento.vagasComNote < qtdInscritosNote
         ):
-            raise APIExcecaoBase(
+            raise ErroNaAlteracaoExcecao(
                 message="Erro ao alterar vagas com note: numero de inscritos superior ao total de vagas com note."
             )
 
@@ -125,7 +128,7 @@ class EventoControlador:
             dadosEvento.vagasSemNote is not None
             and dadosEvento.vagasSemNote < qtdInscritosSemNote
         ):
-            raise APIExcecaoBase(
+            raise ErroNaAlteracaoExcecao(
                 message="Erro ao alterar vagas sem note: numero de inscritos superior ao total de vagas sem note."
             )
 
@@ -263,11 +266,12 @@ class EventoControlador:
         :param dadosInscrito: informações do inscrito a ser cadastrado.
         :param comprovante: comprovante de pagamento, no caso do evento ser pago.
         :param tasks: gerenciador de tarefas.
-
+        
+        :raises ForaDoPeriodoDeInscricaoExcecao: Caso não esteja no período de inscrição.
         :raises SemVagasDisponiveisExcecao: Se não houver vagas disponíveis.
         :raises ComprovanteInvalido: Se o comprovante enviado for inválido.
         :raises ComprovanteObrigatorioExcecao: Se o evento for pago e não for enviado comprovante.
-        :raises APIExcecaoBase: Se houver problema no BD.
+        :raises ErroInternoExcecao: Se houver problema no Banco de Dados.
         """
         # Recupera o evento
         evento: Evento = EventoControlador.getEvento(idEvento)
@@ -281,27 +285,27 @@ class EventoControlador:
             evento.inicioInscricao > datetime.now()
             or evento.fimInscricao < datetime.now()
         ):
-            raise APIExcecaoBase(message="Fora do período de inscrição")
+            raise ForaDoPeriodoDeInscricaoExcecao(message="Fora do período de inscrição")
 
         # Verifica se há vagas disponíveis
         if dadosInscrito.tipoVaga == TipoVaga.COM_NOTE:
             if evento.vagasDisponiveisComNote == 0:
-                raise APIExcecaoBase(message="Não há vagas disponíveis com note")
+                raise SemVagasDisponiveisExcecao(message="Não há vagas disponíveis com note")
         else:
             if evento.vagasDisponiveisSemNote == 0:
-                raise APIExcecaoBase(message="Não há vagas disponíveis sem note")
-
+                raise SemVagasDisponiveisExcecao(message="Não há vagas disponíveis sem note")
+        
         if evento.valor != 0:
             if comprovante:
                 if not validaComprovante(comprovante.file):
-                    raise APIExcecaoBase(message="Comprovante inválido.")
+                    raise ComprovanteInvalido(message="Comprovante inválido.")
 
                 deletaImagem(idUsuario, ["eventos", evento.id, "comprovantes"])
                 caminhoComprovante = armazenaComprovante(
                     evento.id, idUsuario, comprovante.file
                 )
             else:
-                raise APIExcecaoBase(
+                raise ComprovanteObrigatorioExcecao(
                     message="Comprovante obrigatório para eventos pagos."
                 )
         else:
@@ -353,7 +357,7 @@ class EventoControlador:
 
             session.abort_transaction()
             session.end_session()
-            raise APIExcecaoBase(message="Erro ao criar inscrito")
+            raise ErroInternoExcecao(message="Erro ao criar inscrito (Banco de Dados).")
 
         # Envia email de confirmação de inscrição
         """

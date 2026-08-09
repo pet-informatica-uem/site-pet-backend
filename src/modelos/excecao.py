@@ -143,6 +143,12 @@ class TipoDeInscricaoErradoExcecao(APIExcecaoBase):
     model = AcaoNaoCompletaErro
 
 
+class ForaDoPeriodoDeInscricaoExcecao(APIExcecaoBase):
+    message = "Fora do período de inscrição da atividade."
+    code = status.HTTP_409_CONFLICT
+    model = AcaoNaoCompletaErro
+
+
 class NivelDeConhecimentoErradoExcecao(APIExcecaoBase):
     message = "Nivel de conhecimento inválido. Valores válidos são 1, 2, 3, 4 ou 5"
     code = status.HTTP_400_BAD_REQUEST
