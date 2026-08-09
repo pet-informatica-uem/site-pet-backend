@@ -150,6 +150,14 @@ class EventoControlador:
             )
 
         d.update(dadosEvento.model_dump(exclude_none=True))
+
+        # Recalcula as datas caso os dias do evento tenham sido alterados
+        if dadosEvento.dias is not None:
+            d.update(
+                inicioEvento=dadosEvento.dias[0][0],
+                fimEvento=dadosEvento.dias[-1][1],
+            )
+
         evento = Evento(**d)
 
         EventoBD.atualizar(evento)
@@ -237,7 +245,7 @@ class EventoControlador:
         # cria pastas evento
         criaPastaEvento(evento.id)
 
-        return evento.id
+        return evento
 
     @staticmethod
     def cadastrarInscrito(
@@ -463,6 +471,8 @@ class EventoControlador:
         # Atualiza o evento no banco de dados
         EventoBD.atualizar(evento)
 
+        return inscrito
+
     @staticmethod
     def removerInscrito(idEvento: str, idUsuario: str):
         """
@@ -473,28 +483,11 @@ class EventoControlador:
 
         :raises NaoEncontradoExcecao: Se o inscrito não for encontrado no evento.
         """
-        # Recupera o evento
-        evento: Evento = EventoControlador.getEvento(idEvento)
+        # Recupera o evento (valida a existência)
+        EventoControlador.getEvento(idEvento)
 
-        # Remove o inscrito da lista
-        inscrito_to_remove = None
-        for inscrito in evento.inscritos:
-            if inscrito.idUsuario == idUsuario:
-                inscrito_to_remove = inscrito
-                break
-        if not inscrito_to_remove:
-            raise NaoEncontradoExcecao(message="Inscrito não encontrado no evento.")
-
-        evento.inscritos.remove(inscrito_to_remove)
-
-        # Ajusta vagas disponíveis
-        if inscrito_to_remove.tipoVaga == TipoVaga.COM_NOTE:
-            evento.vagasDisponiveisComNote += 1
-        else:
-            evento.vagasDisponiveisSemNote += 1
-
-        # Atualiza o evento no banco de dados
-        EventoBD.atualizar(evento)
+        # Remove o inscrito de forma atômica (ajusta também as vagas disponíveis)
+        EventoBD.deletarInscrito(idEvento, idUsuario)
 
         # Atualiza a lista de eventos inscritos do usuário
         usuario = UsuarioBD.buscar("_id", idUsuario)

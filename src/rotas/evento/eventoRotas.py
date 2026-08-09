@@ -7,16 +7,20 @@ from src.modelos.evento.evento import Evento
 from src.modelos.evento.eventoClad import (
     EventoAtualizarAdmin,
     EventoCriar,
-    EventoLer,
     InscritoAtualizar,
     InscritoCriar,
     InscritoLer,
     VerificacaoInscricao,
 )
 from src.modelos.evento.intervaloBusca import IntervaloBusca
+from src.modelos.excecao import NaoAutorizadoExcecao
 from src.modelos.usuario.usuario import Usuario
 from src.rotas.evento.eventoControlador import EventoControlador
-from src.rotas.usuario.usuarioRotas import getPetianoAdminAutenticado, getUsuarioAutenticado
+from src.rotas.usuario.usuarioRotas import (
+    getPetianoAdminAutenticado,
+    getUsuarioAutenticado,
+    temPermissaoPetianoAdmin,
+)
 
 roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
 
@@ -44,7 +48,6 @@ def getEventos(query: Optional[IntervaloBusca] = None) -> list[Evento]:
         Recupera um evento cadastrado no banco de dados pelo seu id.
         Falha, caso o evento não exista.
     """,
-    response_model=EventoLer,
 )
 def getEvento(id: str) -> Evento:
     """
@@ -68,7 +71,7 @@ def getEvento(id: str) -> Evento:
 )
 def cadastrarEvento(
     evento: EventoCriar, usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)]
-):
+) -> Evento:
     """
     Cadastra um novo evento no sistema.
 
@@ -77,7 +80,7 @@ def cadastrarEvento(
                     Apenas um petiano ou o administrador podem criar um evento.
     """
     # Despacha para o controlador
-    EventoControlador.cadastrarEvento(evento)
+    return EventoControlador.cadastrarEvento(evento)
 
 
 @roteador.patch(
@@ -99,7 +102,7 @@ def editarEvento(
                     Apenas um petiano ou o administrador podem editar um evento.
     """
     # Despacha para o controlador
-    EventoControlador.editarEvento(id, evento)
+    return EventoControlador.editarEvento(id, evento)
 
 
 # TODO tem que ser opcional
@@ -229,6 +232,8 @@ def editarInscrito(
     :param inscrito: Dados atualizados do inscrito.
     :param usuario: Usuário autenticado que solicita a edição.
     """
+    if usuario.id != idInscrito and not temPermissaoPetianoAdmin(usuario):
+        raise NaoAutorizadoExcecao()
     return EventoControlador.editarInscrito(idEvento, idInscrito, inscrito)
 
 
@@ -251,4 +256,6 @@ def removerInscrito(
 
     :raises NaoAutorizadoExcecao: Se o usuário não tiver permissão para deletar o inscrito do evento.
     """
+    if usuario.id != idInscrito and not temPermissaoPetianoAdmin(usuario):
+        raise NaoAutorizadoExcecao()
     return EventoControlador.removerInscrito(idEvento, idInscrito)

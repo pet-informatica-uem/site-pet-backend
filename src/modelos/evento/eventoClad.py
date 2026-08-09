@@ -80,6 +80,13 @@ class EventoCriar(BaseModel):
         """
         if not ValidacaoEvento.inscricoesValidas(self.inicioInscricao, self.fimInscricao):
             raise ValueError("Datas de prazo de inscrição inválidas.")
+
+        if not ValidacaoEvento.inscricaoAntesDoEvento(
+            self.fimInscricao, self.dias[0][0]
+        ):
+            raise ValueError(
+                "O período de inscrição deve encerrar antes do início do evento."
+            )
         return self
 
 
@@ -124,36 +131,70 @@ class EventoLerAdmin(Evento):
     """Valor da inscrição."""
 
 
-class EventoLer(Evento):
-    titulo: str | None = None
+class EventoLer(BaseModel):
+    """
+    Dados de um evento expostos publicamente (sem dados internos como inscritos e crachá).
+    """
+
+    id: str
+    """Identificador único do evento."""
+
+    titulo: str
     """Título do evento."""
 
-    descricao: str | None = None
+    tipoEvento: TipoEvento
+    """Categoria do evento."""
+
+    descricao: str
     """Descrição do evento."""
 
-    preRequisitos: str | None = None
+    preRequisitos: str
     """Pré-requisitos para participar do evento."""
 
-    inicioInscricao: datetime | None = None
+    inicioInscricao: datetime
     """Data e hora de início das inscrições."""
 
-    fimInscricao: datetime | None = None
+    fimInscricao: datetime
     """Data e hora de fim das inscrições."""
 
-    dias: list[tuple[datetime, datetime]] | None = None
+    dias: list[tuple[datetime, datetime]]
     """Lista de tuplas de data e hora de início e fim de cada dia do evento."""
 
-    local: str | None = None
+    inicioEvento: datetime
+    """Primeiro dia e hora do evento."""
+
+    fimEvento: datetime
+    """Último dia e hora do evento."""
+
+    local: str
     """Local do evento."""
 
-    cargaHoraria: int | None = None
+    vagasComNote: int
+    """Quantidade de vagas com notebook."""
+
+    vagasSemNote: int
+    """Quantidade de vagas sem notebook."""
+
+    vagasDisponiveisComNote: int
+    """Quantidade de vagas com notebook disponíveis."""
+
+    vagasDisponiveisSemNote: int
+    """Quantidade de vagas sem notebook disponíveis."""
+
+    organizadores: list[str] = []
+    """Identificadores dos petianos responsáveis pela organização do evento."""
+
+    cargaHoraria: int
     """Carga horária do evento."""
 
     chavePIX: str | None = None
     """Chave PIX para pagamento."""
 
-    valor: float | None = None
+    valor: float
     """Valor da inscrição."""
+
+    arte: str | None = None
+    """Indicador de existência de imagem de arte do evento."""
 
 
 
@@ -203,6 +244,62 @@ class EventoAtualizarAdmin(BaseModel):
 
     organizadores: list[str] | None = None
     """Identificadores dos petianos responsáveis pela organização do evento."""
+
+    @field_validator("dias")
+    def dias_valido(cls, v: list[tuple[datetime, datetime]] | None):
+        """
+        Valida o campo de dias
+        """
+        if v is None:
+            return v
+
+        ValidacaoEvento.diasValidos(v)
+        return v
+
+    @field_validator("valor")
+    def valor_valido(cls, v: float | None):
+        """
+        Valida o campo de valor
+        """
+        if v is not None and not ValidacaoEvento.valorValido(v):
+            raise ValueError("Valor de custo de inscrição inválido.")
+        return v
+
+    @field_validator("vagasComNote", "vagasSemNote")
+    def vagas_validas(cls, v: int | None):
+        """
+        Valida o campo de vagas
+        """
+        if v is not None and v < 0:
+            raise ValueError("Quantidade de vagas inválida.")
+        return v
+
+    @field_validator("cargaHoraria")
+    def cargaHoraria_valida(cls, v: int | None):
+        """
+        Valida o campo de carga horária
+        """
+        if v is not None and v <= 0:
+            raise ValueError("Carga horária inválida.")
+        return v
+
+    @model_validator(mode='after')
+    def data_inscricao_valida(self) -> Self:
+        """
+        Valida os campos de início de inscrição e fim de inscrição
+        """
+        if not ValidacaoEvento.inscricoesValidas(
+            self.inicioInscricao, self.fimInscricao
+        ):
+            raise ValueError("Datas de prazo de inscrição inválidas.")
+
+        if self.dias and not ValidacaoEvento.inscricaoAntesDoEvento(
+            self.fimInscricao, self.dias[0][0]
+        ):
+            raise ValueError(
+                "O período de inscrição deve encerrar antes do início do evento."
+            )
+        return self
 
 
 class InscritoCriar(BaseModel):
