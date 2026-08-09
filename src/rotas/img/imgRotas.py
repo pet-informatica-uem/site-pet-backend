@@ -47,7 +47,7 @@ def getComprovanteInscrito(
     idEvento: str,
     idInscrito: str,
 ):
-    if usuario.tipoConta == TipoConta.PETIANO or usuario.id == idInscrito:
+    if usuario.tipoConta in [TipoConta.PETIANO, TipoConta.ADMIN] or usuario.id == idInscrito:
         return ImagemControlador.getComprovanteInscrito(idEvento, idInscrito)
     else:
         raise NaoAutorizadoExcecao()

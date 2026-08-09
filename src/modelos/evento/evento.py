@@ -22,6 +22,9 @@ class Inscrito(BaseModel):
     comprovante: str | None = None
     "Comprovante de pagamento da inscrição."
 
+    estadoDeVerificacao: bool | None = None
+    "Resultado da verificação do comprovante: pendente, aceito ou rejeitado."
+
     dataInscricao: datetime
     "Data e hora da inscrição."
 
@@ -79,6 +82,9 @@ class Evento(BaseModel):
     inscritos: list[Inscrito] = []
     "Pessoas inscritas no evento."
 
+    organizadores: list[str] = []
+    "Identificadores dos petianos responsáveis pela organização do evento."
+
     cargaHoraria: int
     "Carga horária do evento."
 
@@ -88,8 +94,8 @@ class Evento(BaseModel):
     valor: float
     "Valor da inscrição."
 
-    capa: str | None = None
-    "Caminho para a imagem de capa do evento."
+    arte: str | None = None
+    "Caminho para a imagem de arte do evento."
 
     cracha: str | None = None
     "Caminho para a imagem do crachá do evento."

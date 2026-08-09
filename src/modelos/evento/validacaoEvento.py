@@ -2,7 +2,7 @@
     Funções relacionadas a validação de campos de evento
 """
 
-import datetime
+from datetime import datetime
 
 
 class ValidacaoEvento:
@@ -63,6 +63,19 @@ class ValidacaoEvento:
             :fimInscricao: datetime -> a data e a hora de fim do período de inscrições de um evento.
         """
         if inicioInscricao and fimInscricao and inicioInscricao > fimInscricao:
+            return False
+
+        return True
+
+    @staticmethod
+    def inscricaoAntesDoEvento(
+        fimInscricao: datetime | None, inicioEvento: datetime | None) -> bool:
+        """
+        Verifica se o período de inscrições encerra antes do início do evento.
+            :fimInscricao: datetime -> a data e a hora de fim do período de inscrições de um evento.
+            :inicioEvento: datetime -> a data e a hora de início do evento.
+        """
+        if fimInscricao and inicioEvento and fimInscricao >= inicioEvento:
             return False
 
         return True
