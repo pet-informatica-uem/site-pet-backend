@@ -2,7 +2,7 @@
 Modelos de dados relacionados a usuários do sistema.
 """
 
-from datetime import date, datetime
+from datetime import datetime
 from enum import Enum
 
 from pydantic import BaseModel, EmailStr, Field
@@ -12,15 +12,54 @@ class TipoConta(str, Enum):
     """
     Tipo de conta de usuário. Tipos diferentes possuem permissões diferentes.
     """
-
-    ESTUDANTE = "estudante"
+    
+    EXTERNO = "externo"
     "Conta base. Pode visualizar dados e se inscrever em eventos e atividades."
 
     EGRESSO = "petiano egresso"
-    "Conta pertencente a um ex-petiano. Possui as mesmas permissões de um estudante."
+    "Conta pertencente a um ex-petiano. Possui as mesmas permissões de um externo."
 
     PETIANO = "petiano"
     "Conta pertencente a um petiano ativo. Possui permissões totais."
+    
+    ADMIN = "admin"
+    "Conta pertencente ao grupo PET-Informática. Possui permissões totais."
+
+
+class Genero(str, Enum):
+    """
+    Gênero do usuário.
+    """
+
+    MASCULINO = "masculino"
+    "Masculino."
+
+    FEMININO = "feminino"
+    "Feminino."
+
+    NAO_BINARIO = "não-binário"
+    "Não-binário."
+
+    OUTRO = "outro"
+    "Outro."
+
+    PREFIRO_NAO_DIZER = "prefiro não dizer"
+    "Prefiro não dizer."
+
+
+class EventoResumido(BaseModel):
+    """
+    Resumo de um Evento para consultas dos Petianos.
+    """
+
+    id: str
+    "Identificador único."
+
+    titulo: str
+    "Título do evento."
+
+    arte: str | None
+    "Caminho para a imagem de capa do evento."
 
 class EventosInscrito(BaseModel):
     """
@@ -63,6 +102,14 @@ class Usuario(BaseModel):
     tipoConta: TipoConta
     "Tipo de conta. Representa permissões."
 
+    genero: Genero | None = None
+    "Gênero do usuário"
+
+    dataNascimento: datetime | None = None
+    "Data de nascimento do usuário"
+
+    ra: str | None = None
+    "Registro acadêmico do usuário. 'None' caso ele não possua"
     eventosInscrito: list[str] = []
     "Lista de tuplas de id de evento."
 
@@ -71,10 +118,10 @@ class Usuario(BaseModel):
 
     # campos exclusivos para petianos
 
-    inicioPet: date | None = None
+    inicioPet: datetime | None = None
     "Data de ingresso no PET-Informática."
 
-    fimPet: date | None = None
+    fimPet: datetime | None = None
     "Data de desligamento do PET-Informática."
 
     github: str | None = None
@@ -123,17 +170,17 @@ class Petiano(BaseModel):
     sobre: str | None = None
     "Descrição pessoal do petiano."
 
-    inicioPet: date | None = None
+    inicioPet: datetime | None = None
     "Data de ingresso no PET-Informática."
 
-    fimPet: date | None = None
+    fimPet: datetime | None = None
     "Data de desligamento do PET-Informática."
 
     tipoConta: TipoConta | None = None
     "Tipo de conta. Representa petianos ou egressos"
 
-    eventosInscrito: list[EventosInscrito] = []
-    "Lista de objetos que representam os eventos que o petiano participou."
+    eventosInscrito: list[EventoResumido] = []
+    "Lista com informações resumidas de um Evento."
 
     apadrinhadoPor: str | None = None
     "Id do petiano que apadrinhou este petiano."

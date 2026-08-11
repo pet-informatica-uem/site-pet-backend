@@ -2,12 +2,12 @@
 Modelos de dados relacionados a operações de CRUD de usuários.
 """
 
-from datetime import datetime
+from datetime import  datetime
 from typing import Annotated
 
 from pydantic import BaseModel, EmailStr, SecretStr, StringConstraints, field_validator
 
-from src.modelos.usuario.usuario import TipoConta
+from src.modelos.usuario.usuario import Genero, TipoConta
 from src.modelos.usuario.validacaoCadastro import ValidacaoCadastro
 
 
@@ -24,11 +24,33 @@ class UsuarioCriar(BaseModel):
     cpf: str
     """CPF do usuário. O CPF deve ser válido."""
 
+    genero: Genero
+    """Gênero do usuário."""
+
+    dataNascimento: datetime
+    """Data de nascimento"""
+
+    ra: str | None = None
+    """Registro acadêmico do usuário"""
+
     senha: SecretStr
     """Senha do usuário. A senha deve obedecer às regras de complexidade."""
 
     curso: Annotated[str, StringConstraints(max_length=240)]
     """Curso do usuário."""
+
+    sobre: Annotated[str | None, StringConstraints(max_length=256)]
+    """Bio do usuário. A bio possui limite de 256 caracteres."""
+
+    tipoConta: TipoConta = TipoConta.EXTERNO
+    """Tipo de conta do usuário."""
+
+    inicioPet: datetime | None = None
+    """Data de ingresso no PET-Informática."""
+
+    telefone: str | None = None
+    """Telefone do usuário."""
+
 
     @field_validator("cpf")
     def cpf_valido(cls, v: str):
@@ -71,6 +93,15 @@ class UsuarioLer(BaseModel):
     curso: str
     """Curso do usuário."""
 
+    genero: Genero
+    """Gênero do usuário"""
+
+    dataNascimento: datetime
+    """Data de nascimento do usuário"""
+
+    ra: str | None = None
+    """Registro acadêmico do usuário"""
+
     github: str | None = None
     """URL do perfil do GitHub do usuário, caso seja petiano."""
 
@@ -79,6 +110,14 @@ class UsuarioLer(BaseModel):
 
     instagram: str | None = None
     """URL do perfil do Instagram do usuário, caso seja petiano."""
+
+    sobre: str | None = None
+    """Bio do usuário"""
+
+    tipoConta: TipoConta
+    """Tipo de conta do usuário."""
+
+
 
 
 class UsuarioLerAdmin(UsuarioLer):
@@ -94,8 +133,20 @@ class UsuarioLerAdmin(UsuarioLer):
     emailConfirmado: bool
     """Indica se o e-mail do usuário foi confirmado."""
 
+    genero: Genero
+    """Gênero do usuário"""
+
+    dataNascimento: datetime
+    """Data de nascimento do usuário"""
+    
+    telefone: str | None = None
+    """Telefone do usuário."""
+
+    ra: str | None = None
+    """Registro acadêmico do usuário"""
+
     tipoConta: TipoConta
-    """Tipo de conta do usuário. """
+    """Tipo de conta do usuário."""
 
     eventosInscrito: list[str]
     """Lista de identificadores dos eventos nos quais o usuário está inscrito."""
@@ -110,6 +161,8 @@ class UsuarioLerAdmin(UsuarioLer):
     """Timestamp de saída do PET, caso seja petiano ou egresso."""
 
 
+
+
 class UsuarioAtualizar(BaseModel):
     """
     Dados de um pedido de atualização de um usuário no sistema.
@@ -122,6 +175,12 @@ class UsuarioAtualizar(BaseModel):
     curso: str | None = None
     """Curso do usuário."""
 
+    genero: Genero | None = None
+    """Gênero do usuário"""
+
+    dataNascimento: datetime | None = None
+    """Data de nascimento do usuário"""
+
     github: str | None = None
     """URL do perfil do GitHub do usuário, caso seja petiano."""
 
@@ -130,6 +189,15 @@ class UsuarioAtualizar(BaseModel):
 
     instagram: str | None = None
     """URL do perfil do Instagram do usuário, caso seja petiano."""
+
+    sobre: Annotated[str | None, StringConstraints(max_length=256)] = None
+    """Bio do usuário. A bio possui limite de 256 caracteres."""
+
+    inicioPet: datetime | None = None
+    """Data de ingresso no PET-Informática."""
+
+    telefone: str | None = None
+    """Telefone do usuário."""
 
 
 class UsuarioAtualizarSenha(BaseModel):
