@@ -61,6 +61,17 @@ class EventoResumido(BaseModel):
     arte: str | None
     "Caminho para a imagem de capa do evento."
 
+class EventosInscrito(BaseModel):
+    """
+    Classe que representa um evento no qual o petiano está inscrito.
+    """
+    
+    titulo: str
+    "Título do evento."
+
+    arte: str | None = None
+    "Caminho para a arte do evento."
+
 
 class Usuario(BaseModel):
     """

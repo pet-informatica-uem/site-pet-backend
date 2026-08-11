@@ -24,7 +24,7 @@ from src.email.operacoesEmail import (
     enviarEmailVerificacao,
 )
 from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
-from src.modelos.bd import EventoBD, RegistroLoginBD, TokenAutenticacaoBD, UsuarioBD, cliente
+from src.modelos.bd import RegistroLoginBD, TokenAutenticacaoBD, UsuarioBD, EventoBD, cliente
 from src.modelos.excecao import (
     APIExcecaoBase,
     EmailNaoConfirmadoExcecao,
@@ -37,7 +37,7 @@ from src.modelos.excecao import (
     UsuarioNaoEncontradoExcecao,
 )
 from src.modelos.registro.registroLogin import RegistroLogin
-from src.modelos.usuario.usuario import Petiano, TipoConta, Usuario
+from src.modelos.usuario.usuario import Petiano, TipoConta, EventosInscrito, Usuario
 from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizar,
     UsuarioAtualizarEmail,
@@ -330,23 +330,19 @@ class UsuarioControlador:
             urlFoto = None
             if petiano.foto:
                 urlFoto = f"{config.CAMINHO_BASE}/img/usuarios/{petiano.id}/foto"
-            
-            eventos = []
+
+            # transforma os IDs em objetos EventosInscrito
+            eventos: list[EventosInscrito] = []
+
             for evento_id in petiano.eventosInscrito:
                 try:
-                    evento = EventoBD.buscar("_id", evento_id)
-                    url_arte = (
-                        f"{config.CAMINHO_BASE}/img/eventos/{evento.id}/arte"
-                        if evento.arte
-                        else None
+                    ev: Evento = EventoBD.buscar("_id", evento_id)
+
+                    eventos.append(
+                        EventosInscrito(titulo=ev.titulo, arte=f"{config.CAMINHO_BASE}/img/eventos/{ev.id}/arte")
                     )
-                    eventos.append({
-                        "id": evento.id,
-                        "titulo": evento.titulo,
-                        "arte": url_arte,
-                    })
-                except Exception:
-                    pass  
+                except Exception as e:
+                    print("Evento não encontrado:", e)
 
             # adiciona o petiano ou egresso à lista
             petianos.append(
