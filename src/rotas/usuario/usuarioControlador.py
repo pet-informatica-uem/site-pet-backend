@@ -37,7 +37,7 @@ from src.modelos.excecao import (
     UsuarioNaoEncontradoExcecao,
 )
 from src.modelos.registro.registroLogin import RegistroLogin
-from src.modelos.usuario.usuario import Petiano, TipoConta, EventosInscrito, Usuario
+from src.modelos.usuario.usuario import Petiano, TipoConta, EventosInscrito, EventoResumido, Usuario
 from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizar,
     UsuarioAtualizarEmail,
@@ -331,16 +331,20 @@ class UsuarioControlador:
             if petiano.foto:
                 urlFoto = f"{config.CAMINHO_BASE}/img/usuarios/{petiano.id}/foto"
 
-            # transforma os IDs em objetos EventosInscrito
-            eventos: list[EventosInscrito] = []
+            # transforma os IDs em objetos EventoResumido
+            eventos: list[EventoResumido] = []
 
             for evento_id in petiano.eventosInscrito:
                 try:
                     ev: Evento = EventoBD.buscar("_id", evento_id)
+                    url_arte = f"{config.CAMINHO_BASE}/img/eventos/{ev.id}/arte" if ev.arte else None
 
-                    eventos.append(
-                        EventosInscrito(titulo=ev.titulo, arte=f"{config.CAMINHO_BASE}/img/eventos/{ev.id}/arte")
-                    )
+                    eventos.append({
+                        "id": ev.id,
+                        "titulo": ev.titulo,
+                        "arte": url_arte
+                    })
+
                 except Exception as e:
                     print("Evento não encontrado:", e)
 
