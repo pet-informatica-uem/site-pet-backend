@@ -8,7 +8,7 @@ from datetime import UTC, datetime, timedelta
 from jose import JWTError, jwt
 
 from src.config import config
-from src.modelos.excecao import TokenInvalidoExcecao
+from src.modelos.excecao import TokenInvalidoExcecao, TipoTokenInvalidoExcecao, IdEventoOuUsuarioInvalidoExcecao
 
 
 def geraTokenAtivaConta(idUsuario: str, email: str, duracao: timedelta) -> str:
@@ -99,3 +99,59 @@ def processaTokenTrocaSenha(token: str) -> str:
 
     # Retorna o email
     return email
+
+
+def geraTokenPresencaEvento(idEvento: str, idUsuario: str) -> str: 
+    """
+    Gera um token JWT que identifica a inscrição do usuário com id `idUsuario` no evento `idEvento`, para registro de presença.
+
+    :param idEvento: ID do evento.
+    :param idUsuario: ID do usuário.
+    :param horario: Horário de geração do token.
+
+    :return token: Token JWT gerado.
+    """
+    afirmacoes = {
+        "sub": idUsuario,
+        "idEvento": idEvento,
+        "tipo": "presenca_evento",
+        "iat": int(datetime.now(UTC).timestamp()),
+    }
+    token = jwt.encode(afirmacoes, config.SEGREDO_JWT, algorithm="HS256")
+    return token
+
+
+def processaTokenPresencaEvento(token: str) -> dict[str, str]:
+    """
+    Verifica a validade do token e retorna o id do evento e o id do usuário nele contidos.
+    Falha, se o token for inválido (corrompido ou inexistente).
+
+    :param token: Token JWT a ser processado.
+    :return: Dicionário com os campos "idEvento" e "idUsuario".
+    :raises TokenInvalidoExcecao: Se o token for inválido.
+    :raises TipoTokenInvalidoExcecao: Se o tipo do token for inválido.
+    :raises IdEventoOuUsuarioInvalidoExcecao: Se o id do evento ou do usuário for inválido.
+    """
+    # Tenta decodificar o token
+    try:
+        token_info: dict[str, str] = jwt.decode(
+            token, config.SEGREDO_JWT, algorithms=["HS256"]
+        )
+        if token_info.get("tipo") != "presenca_evento":
+            logging.warning("Tipo de token inválido")
+            raise TipoTokenInvalidoExcecao()
+
+    except JWTError as e:
+        logging.warning(f"Token de presença inválido, erro:\n {str(e)}")
+        raise TokenInvalidoExcecao()
+
+    # Recupera as informações do token
+    idUsuario: str = token_info["sub"]
+    idEvento: str = token_info["idEvento"]
+
+    if not isinstance(idEvento, str) or not isinstance(idUsuario, str):
+        logging.warning("Id do usuário ou do evento inválido")
+        raise IdEventoOuUsuarioInvalidoExcecao()
+    
+    # Retorna o idEvento e idUsuario
+    return {"idUsuario": idUsuario, "idEvento": idEvento}
