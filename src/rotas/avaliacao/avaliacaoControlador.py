@@ -19,7 +19,8 @@ from src.modelos.avaliacao.avaliacaoClad import (
     SubmissaoAvaliacaoCriar,
 )
 from src.modelos.bd import AvaliacaoBD, EventoBD
-from src.modelos.excecao import APIExcecaoBase, NaoEncontradoExcecao
+from src.modelos.excecao import ErroValidacaoExcecao, NaoEncontradoExcecao
+from src.modelos.usuario.usuario import Usuario
 
 
 class AvaliacaoControlador:
@@ -206,8 +207,14 @@ class AvaliacaoControlador:
 
         :raises NaoEncontradoExcecao: Lancada caso o evento informado nao exista.
         """
-        # Garante que o evento exista antes de configurar o formulario.
-        EventoBD.buscar("_id", idEvento)
+        # Garante que o evento exista antes de configurar o formulario e obtem o fim
+        # do evento como valor padrao para liberarApos.
+        evento = EventoBD.buscar("_id", idEvento)
+        liberar_apos = (
+            dadosFormulario.liberarApos
+            if dadosFormulario.liberarApos is not None
+            else evento.fimEvento
+        )
 
         perguntas = AvaliacaoControlador._montar_perguntas_fixas()
 
@@ -233,7 +240,7 @@ class AvaliacaoControlador:
             dados_formulario = formulario_existente.model_dump(by_alias=True)
             dados_formulario.update(
                 perguntas=perguntas,
-                liberarApos=dadosFormulario.liberarApos,
+                liberarApos=liberar_apos,
                 habilitado=dadosFormulario.habilitado,
                 dataAtualizacao=agora,
             )
@@ -245,7 +252,7 @@ class AvaliacaoControlador:
                 _id=secrets.token_hex(16),
                 idEvento=idEvento,
                 perguntas=perguntas,
-                liberarApos=dadosFormulario.liberarApos,
+                liberarApos=liberar_apos,
                 habilitado=dadosFormulario.habilitado,
                 dataCriacao=agora,
                 dataAtualizacao=agora,
@@ -266,22 +273,22 @@ class AvaliacaoControlador:
 
         :return submissaoAnonima: Submissao registrada de forma anonima.
 
-        :raises APIExcecaoBase: Lancada quando o formulario esta desabilitado,
+        :raises ErroValidacaoExcecao: Lancada quando o formulario esta desabilitado,
         fora do periodo, com respostas inconsistentes ou com submissao duplicada.
         """
         formulario = AvaliacaoControlador.obterFormulario(idEvento)
 
         if not formulario.habilitado:
-            raise APIExcecaoBase(message="Formulário de avaliação desabilitado.")
+            raise ErroValidacaoExcecao(message="Formulário de avaliação desabilitado.")
 
         if datetime.now() < formulario.liberarApos:
-            raise APIExcecaoBase(message="Formulário de avaliação ainda não liberado.")
+            raise ErroValidacaoExcecao(message="Formulário de avaliação ainda não liberado.")
 
         if not EventoBD.verificarInscricaoExistente(idEvento, idUsuario):
-          raise APIExcecaoBase(message="Apenas usuários inscritos no evento podem enviar avaliação.")
+          raise ErroValidacaoExcecao(message="Apenas usuários inscritos no evento podem enviar avaliação.")
 
         if AvaliacaoBD.verificarSubmissaoExistente(idEvento, idUsuario):
-            raise APIExcecaoBase(message="Avaliação já realizada para este evento.")
+            raise ErroValidacaoExcecao(message="Avaliação já realizada para este evento.")
 
         perguntas_por_id = {pergunta.idPergunta: pergunta for pergunta in formulario.perguntas}
         respostas_por_pergunta: dict[str, bool] = {}
@@ -289,26 +296,26 @@ class AvaliacaoControlador:
         for resposta in submissao.respostas:
             pergunta = perguntas_por_id.get(resposta.idPergunta)
             if pergunta is None:
-                raise APIExcecaoBase(message="Resposta enviada para pergunta inexistente no formulário.")
+                raise ErroValidacaoExcecao(message="Resposta enviada para pergunta inexistente no formulário.")
 
             if resposta.idPergunta in respostas_por_pergunta:
-                raise APIExcecaoBase(message="Cada pergunta deve receber no máximo uma resposta.")
+                raise ErroValidacaoExcecao(message="Cada pergunta deve receber no máximo uma resposta.")
             respostas_por_pergunta[resposta.idPergunta] = True
 
             if resposta.tipoPergunta != pergunta.tipo:
-                raise APIExcecaoBase(message="Tipo de resposta não corresponde a pergunta.")
+                raise ErroValidacaoExcecao(message="Tipo de resposta não corresponde a pergunta.")
 
             if pergunta.tipo == TipoPerguntaAvaliacao.MULTIPLA_ESCOLHA:
                 if resposta.respostaOpcao not in (pergunta.opcoes or []):
-                    raise APIExcecaoBase(message="Opção selecionada não é válida.")
+                    raise ErroValidacaoExcecao(message="Opção selecionada não é válida.")
             elif pergunta.tipo == TipoPerguntaAvaliacao.CAIXAS_DE_SELECAO:
                 opcoes_validas = set(pergunta.opcoes or [])
                 if not set(resposta.respostasOpcoes or []).issubset(opcoes_validas):
-                    raise APIExcecaoBase(message="Uma ou mais opções selecionadas são inválidas.")
+                    raise ErroValidacaoExcecao(message="Uma ou mais opções selecionadas são inválidas.")
 
         for pergunta in formulario.perguntas:
             if pergunta.obrigatoria and pergunta.idPergunta not in respostas_por_pergunta:
-                raise APIExcecaoBase(message="Existem perguntas obrigatórias sem resposta.")
+                raise ErroValidacaoExcecao(message="Existem perguntas obrigatórias sem resposta.")
 
         submissao_anonima = SubmissaoAvaliacaoAnonima(
             _id=secrets.token_hex(16),
@@ -342,6 +349,41 @@ class AvaliacaoControlador:
         return AvaliacaoBD.buscarFormularioPorEvento(idEvento)
 
     @staticmethod
+    def obterFormularioParaPreenchimento(
+        idEvento: str, usuario: Usuario
+    ) -> FormularioAvaliacaoEvento:
+        """
+        Recupera o formulario de avaliacao de um evento para um usuario responder.
+
+        :param idEvento: Identificador unico do evento.
+        :param usuario: Usuario autenticado que deseja visualizar o formulario.
+
+        :return formulario: Formulario de avaliacao do evento.
+
+        :raises NaoEncontradoExcecao: Lancada se o formulario nao existir.
+        :raises ErroValidacaoExcecao: Lancada se o usuario nao estiver inscrito no evento.
+        """
+        EventoBD.buscar("_id", idEvento)
+        if not EventoBD.verificarInscricaoExistente(idEvento, usuario.id):
+            raise ErroValidacaoExcecao(
+                message="Apenas usuários inscritos no evento podem visualizar a avaliação."
+            )
+
+        return AvaliacaoControlador.obterFormulario(idEvento)
+
+    @staticmethod
+    def obterSituacaoUsuario(idEvento: str, idUsuario: str) -> bool:
+        """
+        Verifica se o usuario ja enviou uma avaliacao para o evento.
+
+        :param idEvento: Identificador unico do evento.
+        :param idUsuario: Identificador unico do usuario.
+
+        :return jaRespondeu: True se o usuario ja enviou uma avaliacao, False caso contrario.
+        """
+        return AvaliacaoBD.verificarSubmissaoExistente(idEvento, idUsuario)
+
+    @staticmethod
     def obterRespostaFormulario(
         idEvento: str, idSubmissao: str
     ) -> SubmissaoAvaliacaoAnonima:
@@ -356,6 +398,17 @@ class AvaliacaoControlador:
         :raises NaoEncontradoExcecao: Lancada quando a submissao nao e encontrada.
         """
         return AvaliacaoBD.buscarSubmissaoAnonima(idEvento, idSubmissao)
+
+    @staticmethod
+    def listarSubmissoes(idEvento: str) -> list[SubmissaoAvaliacaoAnonima]:
+        """
+        Lista todas as submissoes anonimas de avaliacao enviadas para um evento.
+
+        :param idEvento: Identificador unico do evento.
+
+        :return submissoes: Lista de submissoes anonimas do evento.
+        """
+        return AvaliacaoBD.listarSubmissoesPorEvento(idEvento)
 
     @staticmethod
     def obterResultados(idEvento: str) -> ResultadoAvaliacaoEvento:

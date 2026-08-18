@@ -68,3 +68,12 @@ class SubmissaoAvaliacaoCriar(BaseModel):
 
     respostas: list[RespostaPerguntaAvaliacao]
     "Lista de respostas para as perguntas do formulario."
+
+
+class SituacaoAvaliacaoUsuario(BaseModel):
+    """
+    Situacao do usuario autenticado em relacao a avaliacao de um evento.
+    """
+
+    jaRespondeu: bool
+    "Indica se o usuario ja enviou uma avaliacao para o evento."
