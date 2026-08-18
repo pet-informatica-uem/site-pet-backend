@@ -363,8 +363,11 @@ class AvaliacaoControlador:
         :raises NaoEncontradoExcecao: Lancada se o formulario nao existir.
         :raises ErroValidacaoExcecao: Lancada se o usuario nao estiver inscrito no evento.
         """
+        EventoBD.buscar("_id", idEvento)
         if not EventoBD.verificarInscricaoExistente(idEvento, usuario.id):
-            raise ErroValidacaoExcecao(message="Apenas usuários inscritos no evento podem visualizar a avaliação.")
+            raise ErroValidacaoExcecao(
+                message="Apenas usuários inscritos no evento podem visualizar a avaliação."
+            )
 
         return AvaliacaoControlador.obterFormulario(idEvento)
 
