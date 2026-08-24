@@ -86,6 +86,7 @@ def enviarEmailConfirmacaoEvento(
 
         :param emailDestino: E-mail do destinatário.
         :param idEvento: Identificador único do evento.
+        :param idUsuario: Identificador único do usuário inscrito.
         :param tipoVaga: Tipo de vaga escolhida pelo inscrito.
     """
     # Recupera o evento
