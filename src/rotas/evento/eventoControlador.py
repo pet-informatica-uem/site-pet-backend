@@ -360,14 +360,13 @@ class EventoControlador:
             raise ErroInternoExcecao(message="Erro ao criar inscrito (Banco de Dados).")
 
         # Envia email de confirmação de inscrição
-        """
         tasks.add_task(
             enviarEmailConfirmacaoEvento,
-            usuario.email,
+            str(usuario.email),
             evento.id,
+            usuario.id,
             dadosInscrito.tipoVaga,
         )
-        """
 
     # Métodos adicionados do InscritosControlador
     @staticmethod

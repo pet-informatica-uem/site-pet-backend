@@ -23,6 +23,7 @@ apscheduler = "^3.11.0"
 pypdf2 = "^3.0.1"
 slowapi = "^0.1.9"
 pdf2image = "^1.17.0"
+qrcode = "^8.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"

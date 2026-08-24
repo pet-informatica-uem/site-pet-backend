@@ -159,11 +159,17 @@ class TokenInvalidoExcecao(APIExcecaoBase):
     message = "O token é inválido."
     code = status.HTTP_400_BAD_REQUEST
 
+class TipoTokenInvalidoExcecao(APIExcecaoBase):
+    message = "O tipo do token é inválido."
+    code = status.HTTP_400_BAD_REQUEST
+
+class IdEventoOuUsuarioInvalidoExcecao(APIExcecaoBase):
+    message = "O id do usuário ou do evento é inválido"
+    code = status.HTTP_404_NOT_FOUND
 
 class TamanhoLimiteExcedidoExcecao(APIExcecaoBase):
     message = "O tamanho da requisição ultrapassou o limite."
     code = status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
-
 
 class TempoLimiteExcedidoExcecao(APIExcecaoBase):
     message = "Tempo limite excedido."
