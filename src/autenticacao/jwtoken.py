@@ -105,8 +105,8 @@ def geraTokenPresencaEvento(idEvento: str, idUsuario: str) -> str:
     """
     Gera um token JWT que identifica a inscrição do usuário com id `idUsuario` no evento `idEvento`, para registro de presença.
 
-    :param idEvento: ID do evento.
     :param idUsuario: ID do usuário.
+    :param idEvento: ID do evento.
     :param horario: Horário de geração do token.
 
     :return token: Token JWT gerado.
@@ -146,10 +146,10 @@ def processaTokenPresencaEvento(token: str) -> dict[str, str]:
         raise TokenInvalidoExcecao()
 
     # Recupera as informações do token
-    idUsuario: str = token_info["sub"]
-    idEvento: str = token_info["idEvento"]
+    idUsuario = token_info.get("sub")
+    idEvento = token_info.get("idEvento")
 
-    if not isinstance(idEvento, str) or not isinstance(idUsuario, str):
+    if not isinstance(idEvento, str) or not idEvento.strip() or not isinstance(idUsuario, str) or not idUsuario.strip():
         logging.warning("Id do usuário ou do evento inválido")
         raise IdEventoOuUsuarioInvalidoExcecao()
     

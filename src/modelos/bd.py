@@ -3,7 +3,8 @@ Classes que encapsulam operações de banco de dados.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from pymongo import MongoClient
 from pymongo.errors import DuplicateKeyError
@@ -136,6 +137,30 @@ class UsuarioBD:
 
 
 class EventoBD:
+    @staticmethod
+    def registrarPresenca(idEvento: str, idUsuario: str, dataLeitura: datetime) -> bool:
+        """Registra a primeira leitura do dia atomicamente, sem duplicar presenças."""
+        inicio = dataLeitura.astimezone(ZoneInfo("America/Sao_Paulo")).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        resultado = colecaoEventos.update_one(
+            {
+                "_id": idEvento,
+                "inscritos": {"$elemMatch": {
+                    "idUsuario": idUsuario,
+                    "presencas": {"$not": {"$elemMatch": {
+                        "$gte": inicio, "$lt": inicio + timedelta(days=1)
+                    }}},
+                }},
+            },
+            {"$push": {"inscritos.$.presencas": dataLeitura}},
+        )
+        if resultado.modified_count:
+            return True
+        # Diferencia uma leitura repetida de evento/inscrição inexistentes.
+        EventoBD.buscarInscrito(idEvento, idUsuario)
+        return False
+
     @staticmethod
     def criar(modelo: Evento):
         try:

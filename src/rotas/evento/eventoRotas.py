@@ -11,6 +11,7 @@ from src.modelos.evento.eventoClad import (
     InscritoCriar,
     InscritoLer,
     VerificacaoInscricao,
+    PresencaCriar,
 )
 from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import NaoAutorizadoExcecao
@@ -23,6 +24,14 @@ from src.rotas.usuario.usuarioRotas import (
 )
 
 roteador = APIRouter(prefix="/eventos", tags=["Eventos"])
+
+
+@roteador.post("/presencas", name="Registrar presença por QR Code")
+def registrarPresenca(
+    dados: PresencaCriar,
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
+):
+    return EventoControlador.registrarPresenca(dados.codigoPresenca)
 
 
 @roteador.get(

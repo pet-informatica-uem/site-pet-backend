@@ -1,11 +1,15 @@
 from datetime import datetime
 from typing import Self
 
-from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator, model_validator
 
 from src.modelos.evento.enums import TipoVaga, TipoEvento, NivelConhecimento
 from src.modelos.evento.evento import Evento, Inscrito
 from src.modelos.evento.validacaoEvento import ValidacaoEvento
+
+
+class PresencaCriar(BaseModel):
+    codigoPresenca: str = Field(min_length=1, max_length=8192)
 
 
 class EventoCriar(BaseModel):

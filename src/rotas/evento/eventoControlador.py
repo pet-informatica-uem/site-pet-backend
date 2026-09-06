@@ -7,6 +7,7 @@ from fastapi import File, UploadFile
 # Importações dos módulos internos
 from src.config import config
 from src.img.criaPastas import criaPastaEvento
+from src.img.operacoesQrCode import leQRCode
 from src.img.operacoesImagem import (
     armazenaArteEvento,
     armazenaCrachaEvento,
@@ -55,6 +56,24 @@ class EventoControlador:
     Classe controladora para gerenciar operações sobre eventos, incluindo
     criação, atualização, remoção e manipulação de dados e imagens.
     """
+
+    @staticmethod
+    def registrarPresenca(codigo: str):
+        leitura = leQRCode(codigo)
+        registrada = EventoBD.registrarPresenca(
+            leitura["idEvento"], 
+            leitura["idUsuario"], 
+            leitura["data_leitura"],
+        )
+        return {
+            "idEvento": leitura["idEvento"], 
+            "idUsuario": leitura["idUsuario"], 
+            "data_leitura": leitura["data_leitura"],
+            "registrada": registrada,
+            "message": "Presença registrada com sucesso." if registrada
+            else "Presença já registrada hoje.",
+        }
+
 
     @staticmethod
     def getEventos(query: IntervaloBusca) -> list[Evento]:

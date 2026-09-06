@@ -28,6 +28,9 @@ class Inscrito(BaseModel):
     dataInscricao: datetime
     "Data e hora da inscrição."
 
+    presencas: list[datetime] = Field(default_factory=list)
+    "Datas de leitura em UTC, com uma presença por dia no fuso de São Paulo."
+
 
 class Evento(BaseModel):
     """
