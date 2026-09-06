@@ -402,7 +402,13 @@ def demitirPetiano(
     egresso: bool | None = True,
     _usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)] = ...,
 ):
-    UsuarioControlador.demitirPetiano(id, UsuarioControlador.DemitirPetianoPara.EXTERNO if egresso is not None else UsuarioControlador.DemitirPetianoPara.EGRESSO)
+    UsuarioControlador.demitirPetiano(id,
+        (
+            UsuarioControlador.DemitirPetianoPara.EGRESSO
+            if egresso
+            else UsuarioControlador.DemitirPetianoPara.EXTERNO
+        ),
+    )
 
 
 @roteador.get(

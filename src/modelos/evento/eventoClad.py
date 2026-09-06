@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Self
+from typing import Self, Literal
 
 from pydantic import BaseModel, ValidationInfo, field_validator, model_validator
 
@@ -310,9 +310,6 @@ class InscritoCriar(BaseModel):
     comprovante: str | None = None
     """Comprovante de pagamento anexado pelo inscrito."""
 
-    estadoDeVerificacao: bool | None = None
-    """Indica se o comprovante de pagamento anexado foi verificado."""
-
     tipoVaga: TipoVaga
     """Indica se o inscrito utilizará ou não o próprio notebook no evento."""
 
@@ -340,14 +337,25 @@ class InscritoLer(Inscrito):
     comprovante: str | None = None
     """Comprovante de pagamento anexado pelo inscrito."""
 
-    estadoDeVerificacao: bool | None = None
-    """Indica se o comprovante de pagamento anexado foi verificado."""
+    tipoConta: str
+    """Tipo da conta do participante."""
 
     tipoVaga: TipoVaga
     """Indica se o inscrito utilizará ou não o próprio notebook no evento."""
 
     nivelConhecimento: NivelConhecimento
     """Nível de conhecimento do usuário (1 a 5)."""
+
+
+class InscritoProprio(BaseModel):
+    """Dados seguros da inscrição consultada pelo próprio participante."""
+
+    idUsuario: str
+    tipoVaga: TipoVaga
+    nivelConhecimento: NivelConhecimento | None = None
+    dataInscricao: datetime
+    statusComprovante: Literal["pendente", "aceito", "rejeitado"] | None = None
+    temComprovante: bool
 
 
 class InscritoAtualizar(BaseModel):
@@ -355,21 +363,22 @@ class InscritoAtualizar(BaseModel):
     Atualiza um dado em um inscrito no evento.
     """
 
-    comprovante: str | None = None
-    """Comprovante de pagamento anexado pelo inscrito."""
-
-    estadoDeVerificacao: bool | None = None
-    """Indica se o comprovante de pagamento anexado foi verificado."""
-
-    tipoVaga: TipoVaga
+    tipoVaga: TipoVaga | None = None
     """Indica se o inscrito utilizará ou não o próprio notebook no evento."""
 
-    nivelConhecimento: NivelConhecimento
+    nivelConhecimento: NivelConhecimento | None = None
     """Nível de conhecimento do usuário (1 a 5)."""
 
 
 class VerificacaoInscricao(BaseModel):
     """Decisão de um petiano sobre o comprovante de uma inscrição."""
 
-    estadoDeVerificacao: bool
-    """Verdadeiro para aceitar e falso para rejeitar o comprovante."""
+    statusComprovante: Literal["aceito", "rejeitado"]
+    """Status do comprovante da inscrição."""
+
+class ComunicadoInscritos(BaseModel):
+    """E-mail enviado para os inscritos de um evento."""
+    assunto: str
+    mensagem: str
+    idInscrito: str | None = None
+    confirmarSemAnexo: bool = False

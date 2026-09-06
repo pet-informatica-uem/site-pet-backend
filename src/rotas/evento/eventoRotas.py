@@ -3,15 +3,17 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, UploadFile, status, BackgroundTasks, Form, File
 from src.modelos.evento.evento import NivelConhecimento, TipoVaga
-from src.modelos.evento.evento import Evento
+from src.modelos.evento.evento import Evento, Inscrito
 from src.modelos.evento.eventoClad import (
     EventoAtualizarAdmin,
     EventoCriar,
     InscritoAtualizar,
     InscritoCriar,
     InscritoLer,
+    InscritoProprio,
     VerificacaoInscricao,
 )
+from src.email.operacoesEmail import enviarEmailGenerico
 from src.modelos.evento.intervaloBusca import IntervaloBusca
 from src.modelos.excecao import NaoAutorizadoExcecao
 from src.modelos.usuario.usuario import Usuario
@@ -68,6 +70,7 @@ def getEvento(id: str) -> Evento:
     name=" Cadastrar evento.",
     description="Cadastra um novo evento.",
     status_code=status.HTTP_201_CREATED,
+    response_model=InscritoProprio,
 )
 def cadastrarEvento(
     evento: EventoCriar, usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)]
@@ -173,8 +176,10 @@ def cadastrarInscrito(
         nivelConhecimento=nivelConhecimento,
     )
 
-    EventoControlador.cadastrarInscrito(
-        idEvento, usuario.id, inscrito, comprovante, tasks
+    return _inscricao_propria(
+        EventoControlador.cadastrarInscrito(
+            idEvento, usuario.id, inscrito, comprovante, tasks
+        )
     )
 
 
@@ -197,19 +202,65 @@ def getInscritos(
     return EventoControlador.getInscritos(idEvento)
 
 
+def _inscricao_propria(inscrito: Inscrito):
+    return {
+        **inscrito.model_dump(exclude={"comprovante"}),
+        "temComprovante": bool(inscrito.comprovante),
+    }
+
+
+@roteador.get("/{idEvento}/inscritos/eu", response_model=InscritoProprio)
+def getMinhaInscricao(idEvento: str, usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)]):
+    return _inscricao_propria(EventoControlador.getInscrito(idEvento, usuario.id))
+
+@roteador.put("/{idEvento}/inscritos/eu/comprovante", response_model=InscritoProprio)
+def substituirMeuComprovante(
+    idEvento: str,
+    usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
+    comprovante: UploadFile = File(...),
+):
+    return _inscricao_propria(
+        EventoControlador.substituirComprovante(idEvento, usuario.id, comprovante)
+    )
+
+
+@roteador.post("/{idEvento}/inscritos/comunicados")
+async def enviarComunicado(
+    tasks: BackgroundTasks,
+    idEvento: str,
+    usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
+    assunto: str = Form(...),
+    mensagem: str = Form(...),
+    idInscrito: str | None = Form(None),
+    confirmarSemAnexo: bool = Form(False),
+    anexos: list[UploadFile] = File(default=[]),
+):
+    arquivos = [(a.filename or "anexo", await a.read()) for a in anexos]
+    return EventoControlador.enviarComunicado(
+        idEvento,
+        assunto.strip(),
+        mensagem.strip(),
+        idInscrito,
+        arquivos,
+        confirmarSemAnexo,
+        tasks,
+    )
+
+
 @roteador.patch(
     "/{idEvento}/inscritos/{idInscrito}/verificacao",
     name="Verificar comprovante de inscrição",
     description="Aceita ou rejeita o comprovante enviado por um inscrito.",
 )
 def verificarInscricao(
+    tasks: BackgroundTasks,
     idEvento: str,
     idInscrito: str,
     verificacao: VerificacaoInscricao,
     usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)],
 ):
-    EventoControlador.verificarInscricao(
-        idEvento, idInscrito, verificacao.estadoDeVerificacao
+    return EventoControlador.verificarInscricao(
+        idEvento, idInscrito, verificacao.statusComprovante, tasks
     )
 
 
@@ -243,6 +294,7 @@ def editarInscrito(
     description="Remove um inscrito.",
 )
 def removerInscrito(
+    tasks: BackgroundTasks,
     idEvento: str,
     idInscrito: str,
     usuario: Annotated[Usuario, Depends(getUsuarioAutenticado)],
@@ -258,4 +310,11 @@ def removerInscrito(
     """
     if usuario.id != idInscrito and not temPermissaoPetianoAdmin(usuario):
         raise NaoAutorizadoExcecao()
-    return EventoControlador.removerInscrito(idEvento, idInscrito)
+    participante, evento = EventoControlador.removerInscrito(idEvento, idInscrito)
+    tasks.add_task(
+        enviarEmailGenerico,
+        str(participante.email),
+        f"PET-Info - Inscrição cancelada em {evento.titulo}",
+        f"Sua inscrição no evento {evento.titulo} foi cancelada.",
+    )
+    return {"mensagem": "Inscrição cancelada."}

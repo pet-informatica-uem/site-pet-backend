@@ -236,7 +236,7 @@ def __geraNomeImagem(nomeBase: str, extensao: str) -> str:
 
     :return -- nome como será salva a imagem
     """
-    estampa = int(time.time())
+    estampa = time.time_ns()
     nome = f"{nomeBase}-{estampa}.{extensao}"
 
     return nome

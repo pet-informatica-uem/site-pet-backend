@@ -1,6 +1,7 @@
 import logging
 import secrets
 from typing import BinaryIO
+from pathlib import Path
 from bson.objectid import ObjectId
 from fastapi import File, UploadFile
 
@@ -45,7 +46,11 @@ from fastapi import BackgroundTasks, UploadFile
 from PIL import Image
 
 from src.config import config
-from src.email.operacoesEmail import enviarEmailConfirmacaoEvento
+from src.email.operacoesEmail import (
+    enviarEmailConfirmacaoEvento,
+    enviarEmailGenerico,
+    enviarEmailComAnexos,
+)
 from src.img.operacoesImagem import armazenaComprovante, deletaImagem, validaComprovante
 from src.modelos.usuario.usuario import Usuario
 
@@ -287,79 +292,41 @@ class EventoControlador:
         ):
             raise ForaDoPeriodoDeInscricaoExcecao(message="Fora do período de inscrição")
 
-        # Verifica se há vagas disponíveis
-        if dadosInscrito.tipoVaga == TipoVaga.COM_NOTE:
-            if evento.vagasDisponiveisComNote == 0:
-                raise SemVagasDisponiveisExcecao(message="Não há vagas disponíveis com note")
-        else:
-            if evento.vagasDisponiveisSemNote == 0:
-                raise SemVagasDisponiveisExcecao(message="Não há vagas disponíveis sem note")
-        
+        caminhoComprovante = None
         if evento.valor != 0:
-            if comprovante:
-                if not validaComprovante(comprovante.file):
-                    raise ComprovanteInvalido(message="Comprovante inválido.")
-
-                deletaImagem(idUsuario, ["eventos", evento.id, "comprovantes"])
-                caminhoComprovante = armazenaComprovante(
-                    evento.id, idUsuario, comprovante.file
-                )
-            else:
+            if not comprovante:
                 raise ComprovanteObrigatorioExcecao(
                     message="Comprovante obrigatório para eventos pagos."
                 )
-        else:
-            caminhoComprovante = None
-
-        dictInscrito = {
-            "idUsuario": idUsuario,
-            "tipoVaga": dadosInscrito.tipoVaga,
-            "nivelConhecimento": dadosInscrito.nivelConhecimento,
-            "comprovante": comprovante,
-            "dataInscricao": datetime.now(),
-        }
-
-        # dictInscrito.update(**dadosInscrito.model_dump())
-        dictInscrito["comprovante"] = (
-            str(caminhoComprovante) if caminhoComprovante else None
-        )
-
-        inscrito = Inscrito(**dictInscrito)
-
-        if inscrito.tipoVaga == TipoVaga.COM_NOTE:
-            evento.vagasDisponiveisComNote -= 1
-        else:
-            evento.vagasDisponiveisSemNote -= 1
-
-        # Recupera o usuário
-        usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
-
-        # Adiciona o evento na lista de eventos inscritos do usuário
-        usuario.eventosInscrito.append(idEvento)
-
-        # Realiza as operações no BD usando uma transação
-        session = cliente.start_session()
-        try:
-            session.start_transaction()
-
-            EventoBD.criarInscrito(idEvento, inscrito)
-            UsuarioBD.atualizar(usuario)
-
-            # Commita a transação se der tudo certo
-            session.commit_transaction()
-            session.end_session()
-
-        # Aborta a transação caso ocorra algum erro
-        except Exception as e:
-            logging.error(
-                f"Erro ao inscrever usuário em {evento.titulo}. Erro: {str(e)}"
+            if not validaComprovante(comprovante.file):
+                raise ComprovanteInvalido(message="Comprovante inválido.")
+            comprovante.file.seek(0)
+            caminhoComprovante = armazenaComprovante(
+                evento.id, idUsuario, comprovante.file
             )
+            if not caminhoComprovante:
+                raise ImagemNaoSalvaExcecao()
 
-            session.abort_transaction()
-            session.end_session()
-            raise ErroInternoExcecao(message="Erro ao criar inscrito (Banco de Dados).")
-
-        # Envia email de confirmação de inscrição
+        inscrito = Inscrito(
+            idUsuario=idUsuario,
+            tipoVaga=dadosInscrito.tipoVaga,
+            nivelConhecimento=dadosInscrito.nivelConhecimento,
+            comprovante=str(caminhoComprovante) if caminhoComprovante else None,
+            statusComprovante="pendente" if caminhoComprovante else None,
+            dataInscricao=datetime.now(),
+        )
+        usuario: Usuario = UsuarioBD.buscar("_id", idUsuario)
+        try:
+            EventoBD.criarInscrito(idEvento, inscrito)
+            try:
+                UsuarioBD.adicionarEventoInscrito(idUsuario, idEvento)
+            except Exception:
+                EventoBD.deletarInscrito(idEvento, idUsuario)
+                raise
+        except Exception:
+            if caminhoComprovante:
+                Path(caminhoComprovante).unlink(missing_ok=True)
+            raise
         tasks.add_task(
             enviarEmailConfirmacaoEvento,
             str(usuario.email),
@@ -367,6 +334,7 @@ class EventoControlador:
             usuario.id,
             dadosInscrito.tipoVaga,
         )
+        return inscrito
 
     # Métodos adicionados do InscritosControlador
     @staticmethod
@@ -383,21 +351,15 @@ class EventoControlador:
 
         for inscrito in inscritos:
             usuario = UsuarioBD.buscar("_id", inscrito.idUsuario)
-            comprovante = (
-                f"{config.CAMINHO_BASE}/img/eventos/{idEvento}/inscritos/"
-                f"{inscrito.idUsuario}/comprovante"
-                if inscrito.comprovante
-                else None
-            )
-
             resultado.append(
                 InscritoLer(
                     **inscrito.model_dump(exclude={"comprovante"}),
-                    comprovante=comprovante,
+                    comprovante="disponivel" if inscrito.comprovante else None,
                     nome=usuario.nome,
                     cpf=usuario.cpf,
                     email=str(usuario.email),
                     curso=usuario.curso,
+                    tipoConta=usuario.tipoConta.value,
                 )
             )
 
@@ -417,18 +379,25 @@ class EventoControlador:
 
     @staticmethod
     def verificarInscricao(
-        idEvento: str, idUsuario: str, estadoDeVerificacao: bool
-    ) -> None:
+        idEvento: str, idUsuario: str, statusComprovante: str, tasks: BackgroundTasks
+    ) -> Inscrito:
         """Registra a aceitação ou rejeição do comprovante de uma inscrição."""
         evento = EventoControlador.getEvento(idEvento)
-
-        for inscrito in evento.inscritos:
-            if inscrito.idUsuario == idUsuario:
-                inscrito.estadoDeVerificacao = estadoDeVerificacao
-                EventoBD.atualizar(evento)
-                return
-
-        raise NaoEncontradoExcecao(message="O inscrito não foi encontrado.")
+        inscrito = EventoBD.buscarInscrito(idEvento, idUsuario)
+        if not inscrito.comprovante:
+            raise NaoEncontradoExcecao(message="A inscrição não possui comprovante.")
+        EventoBD.atualizarInscrito(
+            idEvento, idUsuario, {"statusComprovante": statusComprovante}
+        )
+        if statusComprovante == "rejeitado":
+            usuario = UsuarioBD.buscar("_id", idUsuario)
+            tasks.add_task(
+                enviarEmailGenerico,
+                str(usuario.email),
+                f"PET-Info - Comprovante do evento {evento.titulo}",
+                "Seu comprovante foi rejeitado. Acesse sua inscrição para enviar um novo arquivo.",
+            )
+        return EventoBD.buscarInscrito(idEvento, idUsuario)
 
     @staticmethod
     def editarInscrito(
@@ -443,38 +412,80 @@ class EventoControlador:
 
         :raises SemVagasDisponiveisExcecao: Se não houver vaga disponível no novo tipo.
         """
-        # Recupera o evento e o inscrito
-        evento = EventoControlador.getEvento(idEvento)
+         # Recupera o inscrito
         inscrito = EventoBD.buscarInscrito(idEvento, idUsuario)
-
         # Atualiza o tipo de vaga se necessário
         if (
             inscritoAtualizar.tipoVaga
             and inscritoAtualizar.tipoVaga != inscrito.tipoVaga
         ):
-            # Verifica disponibilidade e atualiza vagas
-            if inscritoAtualizar.tipoVaga == TipoVaga.COM_NOTE:
-                if evento.vagasDisponiveisComNote <= 0:
-                    raise SemVagasDisponiveisExcecao()
-                evento.vagasDisponiveisComNote -= 1
-                evento.vagasDisponiveisSemNote += 1
-            else:
-                if evento.vagasDisponiveisSemNote <= 0:
-                    raise SemVagasDisponiveisExcecao()
-                evento.vagasDisponiveisSemNote -= 1
-                evento.vagasDisponiveisComNote += 1
-            inscrito.tipoVaga = inscritoAtualizar.tipoVaga
+            EventoBD.trocarTipoVaga(idEvento, idUsuario, inscrito.tipoVaga, inscritoAtualizar.tipoVaga)
 
-        # Atualiza o inscrito na lista de inscritos do evento
-        for idx, inscrito_item in enumerate(evento.inscritos):
-            if inscrito_item.idUsuario == idUsuario:
-                evento.inscritos[idx] = inscrito
-                break
+        if inscritoAtualizar.nivelConhecimento is not None:
+            EventoBD.atualizarInscrito(
+                idEvento,
+                idUsuario,
+                {"nivelConhecimento": inscritoAtualizar.nivelConhecimento},
+            )
+        return EventoBD.buscarInscrito(idEvento, idUsuario)
 
-        # Atualiza o evento no banco de dados
-        EventoBD.atualizar(evento)
+    @staticmethod
+    def substituirComprovante(
+        idEvento: str, idUsuario: str, comprovante: UploadFile
+    ) -> Inscrito:
+        evento = EventoControlador.getEvento(idEvento)
+        inscrito = EventoBD.buscarInscrito(idEvento, idUsuario)
+        if evento.valor == 0:
+            raise ComprovanteInvalido(
+                message="Eventos gratuitos não possuem comprovante."
+            )
+        if not validaComprovante(comprovante.file):
+            raise ComprovanteInvalido(message="Comprovante inválido.")
+        comprovante.file.seek(0)
+        novo = armazenaComprovante(idEvento, idUsuario, comprovante.file)
+        if not novo:
+            raise ImagemNaoSalvaExcecao()
+        try:
+            EventoBD.atualizarInscrito(
+                idEvento,
+                idUsuario,
+                {"comprovante": str(novo), "statusComprovante": "pendente"},
+            )
+        except Exception:
+            Path(novo).unlink(missing_ok=True)
+            raise
+        if inscrito.comprovante and Path(inscrito.comprovante) != Path(novo):
+            Path(inscrito.comprovante).unlink(missing_ok=True)
+        return EventoBD.buscarInscrito(idEvento, idUsuario)
 
-        return inscrito
+    @staticmethod
+    def enviarComunicado(
+        idEvento: str,
+        assunto: str,
+        mensagem: str,
+        idInscrito: str | None,
+        anexos: list[tuple[str, bytes]],
+        confirmarSemAnexo: bool,
+        tasks: BackgroundTasks,
+    ):
+        EventoControlador.getEvento(idEvento)
+        if not assunto or not mensagem:
+            raise ErroNaAlteracaoExcecao(message="Assunto e mensagem são obrigatórios.")
+        if "em anexo" in mensagem.lower() and not anexos and not confirmarSemAnexo:
+            raise ErroNaAlteracaoExcecao(
+                message="Confirme o envio da mensagem sem anexos."
+            )
+        inscritos = (
+            [EventoBD.buscarInscrito(idEvento, idInscrito)]
+            if idInscrito
+            else EventoBD.listarInscritosEvento(idEvento)
+        )
+        for inscrito in inscritos:
+            usuario = UsuarioBD.buscar("_id", inscrito.idUsuario)
+            tasks.add_task(
+                enviarEmailComAnexos, str(usuario.email), assunto, mensagem, anexos
+            )
+        return {"destinatarios": len(inscritos)}
 
     @staticmethod
     def removerInscrito(idEvento: str, idUsuario: str):
@@ -487,13 +498,11 @@ class EventoControlador:
         :raises NaoEncontradoExcecao: Se o inscrito não for encontrado no evento.
         """
         # Recupera o evento (valida a existência)
-        EventoControlador.getEvento(idEvento)
-
-        # Remove o inscrito de forma atômica (ajusta também as vagas disponíveis)
+        evento = EventoControlador.getEvento(idEvento)
+        inscrito = EventoBD.buscarInscrito(idEvento, idUsuario)
         EventoBD.deletarInscrito(idEvento, idUsuario)
-
-        # Atualiza a lista de eventos inscritos do usuário
         usuario = UsuarioBD.buscar("_id", idUsuario)
-        if idEvento in usuario.eventosInscrito:
-            usuario.eventosInscrito.remove(idEvento)
-            UsuarioBD.atualizar(usuario)
+        UsuarioBD.removerEventoInscrito(idUsuario, idEvento)
+        if inscrito.comprovante:
+            Path(inscrito.comprovante).unlink(missing_ok=True)
+        return usuario, evento

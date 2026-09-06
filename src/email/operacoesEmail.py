@@ -4,6 +4,7 @@ from datetime import datetime
 from email.mime.image import MIMEImage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from email.mime.application import MIMEApplication
 from enum import Enum
 from html import escape
 
@@ -32,6 +33,20 @@ def enviarEmailGenerico(emailDestino: str, titulo: str, texto: str) -> None:
     mensagem["Subject"] = titulo
     mensagem.attach(MIMEText(texto, "plain", "utf-8"))
 
+    return enviarEmail(emailDestino, mensagem)
+
+
+def enviarEmailComAnexos(emailDestino: str, titulo: str, texto: str, anexos: list[tuple[str, bytes]]) -> None:
+    """Envia um comunicado individual, mantendo cada destinatário isolado."""
+    mensagem = MIMEMultipart()
+    mensagem["From"] = config.EMAIL_SMTP
+    mensagem["To"] = emailDestino
+    mensagem["Subject"] = titulo
+    mensagem.attach(MIMEText(texto, "plain", "utf-8"))
+    for nome, conteudo in anexos:
+        parte = MIMEApplication(conteudo)
+        parte.add_header("Content-Disposition", "attachment", filename=nome)
+        mensagem.attach(parte)
     return enviarEmail(emailDestino, mensagem)
 
 

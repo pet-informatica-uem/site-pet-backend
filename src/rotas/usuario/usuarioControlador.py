@@ -6,6 +6,7 @@ from enum import StrEnum
 import logging
 import secrets
 from datetime import datetime, timedelta
+from pathlib import Path
 
 from fastapi import BackgroundTasks, UploadFile
 
@@ -24,7 +25,13 @@ from src.email.operacoesEmail import (
     enviarEmailVerificacao,
 )
 from src.img.operacoesImagem import armazenaFotoUsuario, deletaImagem, validaImagem
-from src.modelos.bd import RegistroLoginBD, TokenAutenticacaoBD, UsuarioBD, EventoBD, cliente
+from src.modelos.bd import (
+    RegistroLoginBD,
+    TokenAutenticacaoBD,
+    UsuarioBD,
+    EventoBD,
+    cliente,
+)
 from src.modelos.excecao import (
     APIExcecaoBase,
     EmailNaoConfirmadoExcecao,
@@ -37,7 +44,13 @@ from src.modelos.excecao import (
     UsuarioNaoEncontradoExcecao,
 )
 from src.modelos.registro.registroLogin import RegistroLogin
-from src.modelos.usuario.usuario import Petiano, TipoConta, EventosInscrito, EventoResumido, Usuario
+from src.modelos.usuario.usuario import (
+    Petiano,
+    TipoConta,
+    EventosInscrito,
+    EventoResumido,
+    Usuario,
+)
 from src.modelos.usuario.usuarioClad import (
     UsuarioAtualizar,
     UsuarioAtualizarEmail,
@@ -337,13 +350,13 @@ class UsuarioControlador:
             for evento_id in petiano.eventosInscrito:
                 try:
                     ev: Evento = EventoBD.buscar("_id", evento_id)
-                    url_arte = f"{config.CAMINHO_BASE}/img/eventos/{ev.id}/arte" if ev.arte else None
+                    url_arte = (
+                        f"{config.CAMINHO_BASE}/img/eventos/{ev.id}/arte"
+                        if ev.arte
+                        else None
+                    )
 
-                    eventos.append({
-                        "id": ev.id,
-                        "titulo": ev.titulo,
-                        "arte": url_arte
-                    })
+                    eventos.append({"id": ev.id, "titulo": ev.titulo, "arte": url_arte})
 
                 except Exception as e:
                     print("Evento não encontrado:", e)
@@ -417,8 +430,17 @@ class UsuarioControlador:
         :param id: ID do usuário a ser deletado.
         :raises UsuarioNaoEncontradoExcecao: Se o usuário com o ID fornecido não existir.
         """
-        UsuarioControlador.getUsuario(id)
+        usuario = UsuarioControlador.getUsuario(id)
 
+        # Cancela as inscrições antes da conta para não deixar participantes órfãos nem vagas ocupadas nos eventos.
+        for idEvento in list(usuario.eventosInscrito):
+            try:
+                inscrito = EventoBD.buscarInscrito(idEvento, id)
+                EventoBD.deletarInscrito(idEvento, id)
+                if inscrito.comprovante:
+                    Path(inscrito.comprovante).unlink(missing_ok=True)
+            except NaoEncontradoExcecao:
+                pass
         UsuarioBD.deletar(id)
 
     @staticmethod
