@@ -1,6 +1,7 @@
 from datetime import datetime
 from src.modelos.evento.enums import TipoVaga, TipoEvento, NivelConhecimento
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+from typing import Literal, Any
 from bson.objectid import ObjectId
 from uuid import uuid4
 
@@ -22,11 +23,28 @@ class Inscrito(BaseModel):
     comprovante: str | None = None
     "Comprovante de pagamento da inscrição."
 
-    estadoDeVerificacao: bool | None = None
-    "Resultado da verificação do comprovante: pendente, aceito ou rejeitado."
+    statusComprovante: Literal["pendente", "aceito", "rejeitado"] | None = None
+    "Estado do comprovante desta inscrição."
 
     dataInscricao: datetime
     "Data e hora da inscrição."
+
+    @model_validator(mode="before")
+    @classmethod
+    def normalizar_status_legado(cls, dados: Any):
+        """Aceita documentos antigos sem perpetuar o estado booleano legado."""
+        if isinstance(dados, dict) and "statusComprovante" not in dados:
+            dados = dict(dados)
+            legado = dados.pop("estadoDeVerificacao", None)
+            if legado is True:
+                dados["statusComprovante"] = "aceito"
+            elif legado is False:
+                dados["statusComprovante"] = "rejeitado"
+            elif dados.get("comprovante"):
+                dados["statusComprovante"] = "pendente"
+            else:
+                dados["statusComprovante"] = None
+        return dados
 
 
 class Evento(BaseModel):

@@ -17,11 +17,13 @@ from src.modelos.registro.registroLogin import RegistroLogin
 from src.modelos.usuario.usuario import TipoConta, Usuario
 from src.modelos.avaliacao.avaliacao import FormularioAvaliacaoEvento, SubmissaoAvaliacaoAnonima, ControleSubmissaoAvaliacao
 
-cliente: MongoClient = MongoClient(str(config.URI_BD))
-
 if config.MOCK_BD:
+    import mongomock
+
+    cliente = mongomock.MongoClient()
     config.NOME_BD = "petBD-test"
-    cliente.drop_database(config.NOME_BD)
+else:
+    cliente = MongoClient(str(config.URI_BD))
 
 colecaoTokens = cliente[config.NOME_BD]["authTokens"]
 
@@ -88,6 +90,20 @@ class UsuarioBD:
         """
         colecaoUsuarios.update_one(
             {"_id": modelo.id}, {"$set": modelo.model_dump(by_alias=True)}
+        )
+
+    @staticmethod
+    def adicionarEventoInscrito(idUsuario: str, idEvento: str):
+        resultado = colecaoUsuarios.update_one(
+            {"_id": idUsuario}, {"$addToSet": {"eventosInscrito": idEvento}}
+        )
+        if resultado.matched_count == 0:
+            raise NaoEncontradoExcecao(message="O Usuário não foi encontrado.")
+
+    @staticmethod
+    def removerEventoInscrito(idUsuario: str, idEvento: str):
+        colecaoUsuarios.update_one(
+            {"_id": idUsuario}, {"$pull": {"eventosInscrito": idEvento}}
         )
 
     @staticmethod
@@ -195,47 +211,71 @@ class EventoBD:
 
     @staticmethod
     def criarInscrito(id_evento: str, inscrito: Inscrito):
-        try:
-            # Busca o evento pelo id
-            evento = colecaoEventos.find_one({"_id": id_evento})
-            
-            if not evento:
-                raise Exception("Evento não encontrado")
-
-            # Verifica se o usuário já está inscrito
-            for i in evento.get("inscritos", []):
-                if i["idUsuario"] == inscrito.idUsuario:
-                    logging.error("Inscrito já existe no evento")
-                    raise JaExisteExcecao(message="Inscrito já existe no evento")
-
-            # Adiciona o novo inscrito à lista de inscritos do evento
-            novo_inscrito = inscrito.model_dump()
-
-            # Atualiza o documento no MongoDB
-            update_result = colecaoEventos.update_one(
-                {"_id": id_evento},
-                {
-                    "$push": {"inscritos": novo_inscrito},
-                    "$inc": {
-                        "vagasDisponiveisComNote": -1
-                        if inscrito.tipoVaga == TipoVaga.COM_NOTE
-                        else 0,
-                        "vagasDisponiveisSemNote": -1
-                        if inscrito.tipoVaga == TipoVaga.SEM_NOTE
-                        else 0,
-                    },
-                }
-            )
-
-            if update_result.modified_count == 0:
-                raise Exception("Falha ao atualizar o evento com o novo inscrito.")
-
-        except DuplicateKeyError:
-            logging.error("Inscrito já existe no evento")
+        campo_vaga = (
+            "vagasDisponiveisComNote"
+            if inscrito.tipoVaga == TipoVaga.COM_NOTE
+            else "vagasDisponiveisSemNote"
+        )
+        resultado = colecaoEventos.update_one(
+            {
+                "_id": id_evento,
+                "inscritos": {
+                    "$not": {"$elemMatch": {"idUsuario": inscrito.idUsuario}}
+                },
+                campo_vaga: {"$gt": 0},
+            },
+            {"$push": {"inscritos": inscrito.model_dump()}, "$inc": {campo_vaga: -1}},
+        )
+        if resultado.modified_count:
+            return
+        if not colecaoEventos.find_one({"_id": id_evento}):
+            raise NaoEncontradoExcecao(message="Evento não encontrado")
+        if EventoBD.verificarInscricaoExistente(id_evento, inscrito.idUsuario):
             raise JaExisteExcecao(message="Inscrito já existe no evento")
-        except Exception as e:
-            logging.error(f"Erro inesperado: {str(e)}")
-            raise
+        from src.modelos.excecao import SemVagasDisponiveisExcecao
+
+        raise SemVagasDisponiveisExcecao(message="Não há vagas disponíveis.")
+
+    @staticmethod
+    def atualizarInscrito(idEvento: str, idUsuario: str, dados: dict):
+        sets = {f"inscritos.$.{campo}": valor for campo, valor in dados.items()}
+        resultado = colecaoEventos.update_one(
+            {"_id": idEvento, "inscritos.idUsuario": idUsuario}, {"$set": sets}
+        )
+        if resultado.matched_count == 0:
+            raise NaoEncontradoExcecao(message="O inscrito não foi encontrado.")
+
+    @staticmethod
+    def trocarTipoVaga(idEvento: str, idUsuario: str, atual: TipoVaga, novo: TipoVaga):
+        campo_novo = (
+            "vagasDisponiveisComNote"
+            if novo == TipoVaga.COM_NOTE
+            else "vagasDisponiveisSemNote"
+        )
+        campo_atual = (
+            "vagasDisponiveisComNote"
+            if atual == TipoVaga.COM_NOTE
+            else "vagasDisponiveisSemNote"
+        )
+        resultado = colecaoEventos.update_one(
+            {
+                "_id": idEvento,
+                "inscritos": {
+                    "$elemMatch": {"idUsuario": idUsuario, "tipoVaga": atual}
+                },
+                campo_novo: {"$gt": 0},
+            },
+            {
+                "$set": {"inscritos.$.tipoVaga": novo},
+                "$inc": {campo_novo: -1, campo_atual: 1},
+            },
+        )
+        if resultado.modified_count == 0:
+            from src.modelos.excecao import SemVagasDisponiveisExcecao
+
+            if not EventoBD.verificarInscricaoExistente(idEvento, idUsuario):
+                raise NaoEncontradoExcecao(message="O inscrito não foi encontrado.")
+            raise SemVagasDisponiveisExcecao(message="Não há vagas disponíveis.")
 
     @staticmethod
     def buscarInscrito(idEvento: str, idUsuario: str) -> Inscrito:
@@ -279,7 +319,7 @@ class EventoBD:
             incComNote, incSemNote = 0, 1
 
         resultado = colecaoEventos.update_one(
-            {"_id": idEvento},
+            {"_id": idEvento, "inscritos.idUsuario": idUsuario},
             {
                 "$pull": {"inscritos": {"idUsuario": idUsuario}},
                 "$inc": {
