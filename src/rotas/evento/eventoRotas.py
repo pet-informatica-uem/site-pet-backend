@@ -233,9 +233,9 @@ async def enviarComunicado(
     mensagem: str = Form(...),
     idInscrito: str | None = Form(None),
     confirmarSemAnexo: bool = Form(False),
-    anexos: list[UploadFile] = File(default=[]),
+    anexos: list[UploadFile] | None = File(None),
 ):
-    arquivos = [(a.filename or "anexo", await a.read()) for a in anexos]
+    arquivos = [(a.filename or "anexo", await a.read()) for a in (anexos or [])]
     return EventoControlador.enviarComunicado(
         idEvento,
         assunto.strip(),
