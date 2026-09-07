@@ -44,6 +44,7 @@ origins = [
     "http://www.din.uem.br",
     "https://www.din.uem.br",
     "https://www.petinfouem.com.br",
+    "https://pet.fafox.dev",
 ]
 
 petBack = FastAPI(root_path=config.ROOT_PATH)
