@@ -70,7 +70,7 @@ def getEvento(id: str) -> Evento:
     name=" Cadastrar evento.",
     description="Cadastra um novo evento.",
     status_code=status.HTTP_201_CREATED,
-    response_model=InscritoProprio,
+    response_model=Evento,
 )
 def cadastrarEvento(
     evento: EventoCriar, usuario: Annotated[Usuario, Depends(getPetianoAdminAutenticado)]
