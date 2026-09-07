@@ -412,7 +412,7 @@ class EventoControlador:
 
         :raises SemVagasDisponiveisExcecao: Se não houver vaga disponível no novo tipo.
         """
-         # Recupera o inscrito
+        # Recupera o inscrito
         inscrito = EventoBD.buscarInscrito(idEvento, idUsuario)
         # Atualiza o tipo de vaga se necessário
         if (
