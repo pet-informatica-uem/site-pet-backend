@@ -28,30 +28,28 @@ def validaImagem(imagem: bytes | BinaryIO | str) -> bool:
 
 
 def validaComprovante(comprovante: bytes | BinaryIO | str) -> bool:
-    """Retorna se 'comprovante' é válido.
-
-    :param comprovante -- o comprovante em si ou o caminho do comprovante
-
-    :return -- valor booleano
-    """
-    eh_valida = True
-
     try:
         with Image.open(comprovante) as img:
-            if img.format not in ["PNG", "JPEG", "PDF"]:
-                eh_valida = False
+            return img.format in ["PNG", "JPEG"]
+
     except IOError:
         try:
-            # Abre o PDF
-            pdf_reader = PyPDF2.PdfReader(comprovante)  # type: ignore
+            if hasattr(comprovante, "seek"):
+                comprovante.seek(0)
 
-            # Checa se o PDF está criptografado
+            pdf_reader = PyPDF2.PdfReader(comprovante)
+
             if pdf_reader.is_encrypted:
                 return False
-        except Exception as e:
+
+            return True
+
+        except Exception:
             return False
 
-    return eh_valida
+    finally:
+        if hasattr(comprovante, "seek"):
+            comprovante.seek(0)
 
 
 def armazenaFotoUsuario(idUsuario: str, arquivo: str | bytes | BinaryIO) -> Path | None:
@@ -176,54 +174,60 @@ def __armazenaImagem(
 def __armazenaComprovante(
     path: Path, nomeBase: str, comprovante: bytes | BinaryIO | str
 ) -> Path | None:
-    """Armazena o comprovante no path fornecido usando um nome base.
+    """Armazena o comprovante no path fornecido usando um nome base."""
 
-    :param path -- caminho onde será armazenado o comprovante
-    :param nomeBase -- nome como será salvo o comprovante
-    :param imagem -- o comprovante em si que será salvo
-
-    :return -- caminho para o comprovante salvo : str. None, se o comprovante for inválido.
-    """
     try:
         with Image.open(comprovante, formats=["PNG", "JPEG"]) as img:
             extensao = img.format.lower()  # type: ignore
             nome = __geraNomeImagem(nomeBase, extensao=extensao)
             pathDefinitivo = path / nome
             img.save(pathDefinitivo)
+
         return pathDefinitivo
+
     except IOError:
         try:
-            # Lê o arquivo, em binário, do PDF
+            # IMPORTANTE: volta para o início do arquivo
+            if hasattr(comprovante, "seek"):
+                comprovante.seek(0)
+
+            # Lê o PDF completo
             arquivo_pdf = comprovante.read()
 
-            # Converte o PDF na memória para uma lista de imagens
+            # Converte as páginas do PDF em imagens
             imagens = convert_from_bytes(arquivo_pdf)
 
             # Converte as imagens para RGB, caso necessário
-            for image in imagens:
+            for i, image in enumerate(imagens):
                 if image.mode != "RGB":
-                    image = image.convert("RGB")
+                    imagens[i] = image.convert("RGB")
 
-            # Define as dimensões máximas das imagens
+            # Define as dimensões da imagem final
             largura_saida = max(image.width for image in imagens)
             altura_saida = sum(image.height for image in imagens)
 
             # Cria a imagem de saída
-            imagem_saida = Image.new("RGB", (largura_saida, altura_saida))
+            imagem_saida = Image.new(
+                "RGB",
+                (largura_saida, altura_saida)
+            )
 
-            # Concatena as imagens na vertical
+            # Concatena todas as páginas verticalmente
             pos_y = 0
+
             for imagem_chunk in imagens:
                 imagem_saida.paste(imagem_chunk, (0, pos_y))
                 pos_y += imagem_chunk.height
 
-            # Salva a imagem de saída
+            # Salva como PNG
             nome = __geraNomeImagem(nomeBase, "png")
             pathDefinitivo = path / nome
+
             imagem_saida.save(pathDefinitivo)
+
             return pathDefinitivo
 
-        except Exception as e:
+        except Exception:
             return None
 
 
